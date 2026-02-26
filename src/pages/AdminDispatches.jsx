@@ -19,7 +19,6 @@ const statusColors = {
   Dispatched: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   Amended: 'bg-amber-50 text-amber-700 border-amber-200',
   Canceled: 'bg-red-50 text-red-700 border-red-200',
-  Completed: 'bg-slate-100 text-slate-600 border-slate-200',
 };
 
 export default function AdminDispatches() {
@@ -80,25 +79,18 @@ export default function AdminDispatches() {
   };
 
   const copyShift = (d) => {
-    setEditing(null);
-    // We'll pre-fill by passing a modified version
+    const { id, company_id, trucks_assigned, ...rest } = d;
     const copy = {
-      ...d,
-      id: undefined,
-      date: '',
-      start_time: '',
+      ...rest,
+      company_id: '',
       trucks_assigned: [],
       status: 'Confirmed',
       amendment_history: [],
       canceled_reason: '',
+      _isCopy: true
     };
     setEditing(copy);
-    setEditing(null);
-    // Use a trick: open dialog with a prefilled dispatch
-    setTimeout(() => {
-      setEditing({ ...copy, _isCopy: true });
-      setOpen(true);
-    }, 50);
+    setOpen(true);
   };
 
   const handleSave = (formData) => {
@@ -136,7 +128,7 @@ export default function AdminDispatches() {
                 <SelectTrigger className="text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  {['Confirmed', 'Dispatched', 'Amended', 'Canceled', 'Completed'].map(s => (
+                  {['Confirmed', 'Dispatched', 'Amended', 'Canceled'].map(s => (
                     <SelectItem key={s} value={s}>{s}</SelectItem>
                   ))}
                 </SelectContent>

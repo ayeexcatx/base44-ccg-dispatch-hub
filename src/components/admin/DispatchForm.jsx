@@ -41,6 +41,10 @@ export default function DispatchForm({ dispatch, companies, onSave, onCancel, sa
   const selectedCompany = companies.find(c => c.id === form.company_id);
   const availableTrucks = selectedCompany?.trucks || [];
 
+  const isConfirmed = form.status === 'Confirmed';
+  const isFullDispatch = form.status === 'Dispatched' || form.status === 'Amended';
+  const isCanceled = form.status === 'Canceled';
+
   const toggleTruck = (t) => {
     setForm(prev => ({
       ...prev,
@@ -68,23 +72,46 @@ export default function DispatchForm({ dispatch, companies, onSave, onCancel, sa
   };
 
   const handleSubmit = () => {
-    if (!form.company_id || !form.date || !form.start_location || form.trucks_assigned.length === 0) return;
+    // Base validation
+    if (!form.company_id || !form.date || !form.shift_time || form.trucks_assigned.length === 0) {
+      alert('Please fill in Company, Date, Shift Time, and assign at least one truck');
+      return;
+    }
+
+    // Status-specific validation
+    if (isFullDispatch && !form.start_location) {
+      alert('Start Location is required for Dispatched/Amended status');
+      return;
+    }
+
+    if (isCanceled && !form.canceled_reason) {
+      alert('Cancellation reason is required for Canceled status');
+      return;
+    }
+
+    // Warnings for recommended fields
+    if (isFullDispatch) {
+      if (!form.start_time && !window.confirm('Start Time is blank. Continue anyway?')) return;
+      if (!form.instructions && !window.confirm('Instructions are blank. Continue anyway?')) return;
+    }
 
     // Track amendments
     let finalForm = { ...form };
-    if (dispatch) {
+    if (dispatch && form.status === 'Amended' && dispatch.status !== 'Amended') {
       const changes = [];
-      if (dispatch.status !== form.status) changes.push(`Status: ${dispatch.status} → ${form.status}`);
-      if (dispatch.start_location !== form.start_location) changes.push(`Location changed`);
-      if (dispatch.start_time !== form.start_time) changes.push(`Time changed`);
-      if (JSON.stringify(dispatch.trucks_assigned) !== JSON.stringify(form.trucks_assigned)) changes.push(`Trucks changed`);
+      if (dispatch.start_location !== form.start_location) changes.push('location');
+      if (dispatch.start_time !== form.start_time) changes.push('time');
+      if (dispatch.instructions !== form.instructions) changes.push('instructions');
+      if (JSON.stringify(dispatch.trucks_assigned) !== JSON.stringify(form.trucks_assigned)) changes.push('trucks');
+      
       if (changes.length > 0) {
         finalForm.amendment_history = [
           ...(finalForm.amendment_history || []),
-          { amended_at: new Date().toISOString(), changes: changes.join('; ') }
+          { amended_at: new Date().toISOString(), changes: `Updated: ${changes.join(', ')}` }
         ];
       }
     }
+
     onSave(finalForm);
   };
 
@@ -107,9 +134,10 @@ export default function DispatchForm({ dispatch, companies, onSave, onCancel, sa
           <Select value={form.status} onValueChange={v => setForm({ ...form, status: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              {['Confirmed', 'Dispatched', 'Amended', 'Canceled', 'Completed'].map(s => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
-              ))}
+              <SelectItem value="Confirmed">Confirmed (pending dispatch)</SelectItem>
+              <SelectItem value="Dispatched">Dispatched (full details)</SelectItem>
+              <SelectItem value="Amended">Amended</SelectItem>
+              <SelectItem value="Canceled">Canceled</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -118,7 +146,7 @@ export default function DispatchForm({ dispatch, companies, onSave, onCancel, sa
           <Input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} />
         </div>
         <div>
-          <Label>Shift</Label>
+          <Label>Shift *</Label>
           <Select value={form.shift_time} onValueChange={v => setForm({ ...form, shift_time: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -127,47 +155,59 @@ export default function DispatchForm({ dispatch, companies, onSave, onCancel, sa
             </SelectContent>
           </Select>
         </div>
-        <div>
-          <Label>Client Name</Label>
-          <Input value={form.client_name} onChange={e => setForm({ ...form, client_name: e.target.value })} />
-        </div>
-        <div>
-          <Label>Job Number</Label>
-          <Input value={form.job_number} onChange={e => setForm({ ...form, job_number: e.target.value })} />
-        </div>
-        <div>
-          <Label>Start Time</Label>
-          <Input type="time" value={form.start_time} onChange={e => setForm({ ...form, start_time: e.target.value })} />
-        </div>
-        <div>
-          <Label>Toll Status</Label>
-          <Select value={form.toll_status} onValueChange={v => setForm({ ...form, toll_status: v })}>
-            <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Authorized">Authorized</SelectItem>
-              <SelectItem value="Unauthorized">Unauthorized</SelectItem>
-              <SelectItem value="Included in Rate">Included in Rate</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+
+        {!isConfirmed && (
+          <>
+            <div>
+              <Label>Client Name</Label>
+              <Input value={form.client_name} onChange={e => setForm({ ...form, client_name: e.target.value })} />
+            </div>
+            <div>
+              <Label>Job Number</Label>
+              <Input value={form.job_number} onChange={e => setForm({ ...form, job_number: e.target.value })} />
+            </div>
+          </>
+        )}
       </div>
 
-      <div>
-        <Label>Start Location *</Label>
-        <Input value={form.start_location} onChange={e => setForm({ ...form, start_location: e.target.value })} />
-      </div>
-      <div>
-        <Label>Instructions</Label>
-        <Textarea value={form.instructions} onChange={e => setForm({ ...form, instructions: e.target.value })} rows={2} />
-      </div>
-      <div>
-        <Label>Notes</Label>
-        <Textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={2} />
-      </div>
+      {!isConfirmed && !isCanceled && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label>Start Time {isFullDispatch && '(recommended)'}</Label>
+              <Input type="time" value={form.start_time} onChange={e => setForm({ ...form, start_time: e.target.value })} />
+            </div>
+            <div>
+              <Label>Toll Status</Label>
+              <Select value={form.toll_status} onValueChange={v => setForm({ ...form, toll_status: v })}>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Authorized">Authorized</SelectItem>
+                  <SelectItem value="Unauthorized">Unauthorized</SelectItem>
+                  <SelectItem value="Included in Rate">Included in Rate</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
-      {form.status === 'Canceled' && (
+          <div>
+            <Label>Start Location {isFullDispatch && '*'}</Label>
+            <Input value={form.start_location} onChange={e => setForm({ ...form, start_location: e.target.value })} />
+          </div>
+          <div>
+            <Label>Instructions {isFullDispatch && '(recommended)'}</Label>
+            <Textarea value={form.instructions} onChange={e => setForm({ ...form, instructions: e.target.value })} rows={2} />
+          </div>
+          <div>
+            <Label>Notes</Label>
+            <Textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={2} />
+          </div>
+        </>
+      )}
+
+      {isCanceled && (
         <div>
-          <Label>Cancel Reason</Label>
+          <Label>Cancellation Reason *</Label>
           <Textarea value={form.canceled_reason} onChange={e => setForm({ ...form, canceled_reason: e.target.value })} rows={2} />
         </div>
       )}
@@ -196,27 +236,29 @@ export default function DispatchForm({ dispatch, companies, onSave, onCancel, sa
         </div>
       </div>
 
-      {/* Additional Assignments */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <Label>Additional Assignments</Label>
-          <Button type="button" variant="outline" size="sm" onClick={addAssignment} className="text-xs">
-            <Plus className="h-3 w-3 mr-1" />Add
-          </Button>
-        </div>
-        {form.additional_assignments.map((a, i) => (
-          <div key={i} className="flex gap-2 items-start mb-2 bg-slate-50 p-3 rounded-lg">
-            <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <Input placeholder="Time" type="time" value={a.start_time} onChange={e => updateAssignment(i, 'start_time', e.target.value)} />
-              <Input placeholder="Location" value={a.start_location} onChange={e => updateAssignment(i, 'start_location', e.target.value)} />
-              <Input placeholder="Instructions" value={a.instructions} onChange={e => updateAssignment(i, 'instructions', e.target.value)} />
-            </div>
-            <Button variant="ghost" size="icon" onClick={() => removeAssignment(i)} className="h-8 w-8 text-red-500 shrink-0">
-              <Trash2 className="h-3.5 w-3.5" />
+      {/* Additional Assignments - only for full dispatches */}
+      {!isConfirmed && !isCanceled && (
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <Label>Additional Assignments</Label>
+            <Button type="button" variant="outline" size="sm" onClick={addAssignment} className="text-xs">
+              <Plus className="h-3 w-3 mr-1" />Add
             </Button>
           </div>
-        ))}
-      </div>
+          {form.additional_assignments.map((a, i) => (
+            <div key={i} className="flex gap-2 items-start mb-2 bg-slate-50 p-3 rounded-lg">
+              <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <Input placeholder="Time" type="time" value={a.start_time} onChange={e => updateAssignment(i, 'start_time', e.target.value)} />
+                <Input placeholder="Location" value={a.start_location} onChange={e => updateAssignment(i, 'start_location', e.target.value)} />
+                <Input placeholder="Instructions" value={a.instructions} onChange={e => updateAssignment(i, 'instructions', e.target.value)} />
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => removeAssignment(i)} className="h-8 w-8 text-red-500 shrink-0">
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="flex gap-3 pt-2">
         <Button variant="outline" onClick={onCancel} className="flex-1">Cancel</Button>

@@ -16,7 +16,6 @@ const statusColors = {
   Dispatched: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   Amended: 'bg-amber-50 text-amber-700 border-amber-200',
   Canceled: 'bg-red-50 text-red-700 border-red-200',
-  Completed: 'bg-slate-100 text-slate-600 border-slate-200',
 };
 
 const tollColors = {
@@ -92,31 +91,42 @@ export default function DispatchCard({
           </div>
 
           <div className="space-y-2">
-            {dispatch.client_name && (
-              <h3 className="font-semibold text-slate-900">{dispatch.client_name}</h3>
-            )}
-            {companyName && (
-              <p className="text-xs text-slate-400">{companyName}</p>
-            )}
+            {dispatch.status === 'Confirmed' ? (
+              <>
+                <h3 className="font-semibold text-slate-900">Confirmed Dispatch</h3>
+                <p className="text-sm text-slate-500">Details to follow</p>
+              </>
+            ) : (
+              <>
+                {dispatch.client_name && (
+                  <h3 className="font-semibold text-slate-900">{dispatch.client_name}</h3>
+                )}
+                {companyName && (
+                  <p className="text-xs text-slate-400">{companyName}</p>
+                )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-              {dispatch.job_number && (
-                <div className="flex items-center gap-2 text-slate-600">
-                  <FileText className="h-3.5 w-3.5 text-slate-400" />
-                  Job #{dispatch.job_number}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                  {dispatch.job_number && (
+                    <div className="flex items-center gap-2 text-slate-600">
+                      <FileText className="h-3.5 w-3.5 text-slate-400" />
+                      Job #{dispatch.job_number}
+                    </div>
+                  )}
+                  {dispatch.start_time && (
+                    <div className="flex items-center gap-2 text-slate-600">
+                      <Clock className="h-3.5 w-3.5 text-slate-400" />
+                      {dispatch.start_time}
+                    </div>
+                  )}
+                  {dispatch.start_location && (
+                    <div className="flex items-center gap-2 text-slate-600 sm:col-span-2">
+                      <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                      {dispatch.start_location}
+                    </div>
+                  )}
                 </div>
-              )}
-              {dispatch.start_time && (
-                <div className="flex items-center gap-2 text-slate-600">
-                  <Clock className="h-3.5 w-3.5 text-slate-400" />
-                  {dispatch.start_time}
-                </div>
-              )}
-              <div className="flex items-center gap-2 text-slate-600 sm:col-span-2">
-                <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                {dispatch.start_location}
-              </div>
-            </div>
+              </>
+            )}
 
             <div className="flex items-center gap-1.5 flex-wrap mt-2">
               <Truck className="h-3.5 w-3.5 text-slate-400" />
@@ -140,18 +150,23 @@ export default function DispatchCard({
         {/* Expanded */}
         {expanded && (
           <div className="border-t border-slate-100 p-4 sm:p-5 space-y-4 bg-slate-50/50">
-            {dispatch.instructions && (
-              <div>
-                <p className="text-xs font-medium text-slate-500 mb-1">Instructions</p>
-                <p className="text-sm text-slate-700">{dispatch.instructions}</p>
-              </div>
+            {dispatch.status === 'Confirmed' && (
+              <p className="text-sm text-slate-500 italic">Full dispatch details will be provided soon.</p>
             )}
-            {dispatch.notes && (
-              <div>
-                <p className="text-xs font-medium text-slate-500 mb-1">Notes</p>
-                <p className="text-sm text-slate-700">{dispatch.notes}</p>
-              </div>
-            )}
+            {dispatch.status !== 'Confirmed' && (
+              <>
+                {dispatch.instructions && (
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 mb-1">Instructions</p>
+                    <p className="text-sm text-slate-700">{dispatch.instructions}</p>
+                  </div>
+                )}
+                {dispatch.notes && (
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 mb-1">Notes</p>
+                    <p className="text-sm text-slate-700">{dispatch.notes}</p>
+                  </div>
+                )}
 
             {(dispatch.additional_assignments || []).length > 0 && (
               <div>
@@ -191,8 +206,11 @@ export default function DispatchCard({
               </div>
             )}
 
+              </>
+            )}
+
             {/* Actions */}
-            {dispatch.status !== 'Completed' && dispatch.status !== 'Canceled' && (
+            {dispatch.status !== 'Canceled' && (
               <div className="space-y-3 pt-2">
                 {session.code_type === 'CompanyOwner' && myTrucks.length > 1 && (
                   <Select value={selectedTruck} onValueChange={setSelectedTruck}>
