@@ -119,9 +119,9 @@ export default function DispatchCard({
                     </div>
                   )}
                   {dispatch.start_location && (
-                    <div className="flex items-center gap-2 text-slate-600 sm:col-span-2">
-                      <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                      {dispatch.start_location}
+                    <div className="flex items-start gap-2 text-slate-600 sm:col-span-2">
+                      <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0 mt-0.5" />
+                      <span className="whitespace-pre-wrap">{dispatch.start_location}</span>
                     </div>
                   )}
                 </div>
@@ -130,11 +130,17 @@ export default function DispatchCard({
 
             <div className="flex items-center gap-1.5 flex-wrap mt-2">
               <Truck className="h-3.5 w-3.5 text-slate-400" />
-              {(dispatch.trucks_assigned || []).map(t => (
-                <Badge key={t} variant="outline" className={`text-xs ${myTrucks.includes(t) ? 'border-slate-900 text-slate-900 font-medium' : 'text-slate-500'}`}>
-                  {t}
+              {session.code_type === 'Truck' ? (
+                <Badge variant="outline" className="text-xs border-slate-900 text-slate-900 font-medium">
+                  {myTrucks[0]}
                 </Badge>
-              ))}
+              ) : (
+                myTrucks.map(t => (
+                  <Badge key={t} variant="outline" className="text-xs border-slate-900 text-slate-900 font-medium">
+                    {t}
+                  </Badge>
+                ))
+              )}
             </div>
           </div>
 
@@ -158,13 +164,13 @@ export default function DispatchCard({
                 {dispatch.instructions && (
                   <div>
                     <p className="text-xs font-medium text-slate-500 mb-1">Instructions</p>
-                    <p className="text-sm text-slate-700">{dispatch.instructions}</p>
+                    <p className="text-sm text-slate-700 whitespace-pre-wrap">{dispatch.instructions}</p>
                   </div>
                 )}
                 {dispatch.notes && (
                   <div>
                     <p className="text-xs font-medium text-slate-500 mb-1">Notes</p>
-                    <p className="text-sm text-slate-700">{dispatch.notes}</p>
+                    <p className="text-sm text-slate-700 whitespace-pre-wrap">{dispatch.notes}</p>
                   </div>
                 )}
 

@@ -192,7 +192,7 @@ export default function DispatchForm({ dispatch, companies, onSave, onCancel, sa
 
           <div>
             <Label>Start Location {isFullDispatch && '*'}</Label>
-            <Input value={form.start_location} onChange={e => setForm({ ...form, start_location: e.target.value })} />
+            <Textarea value={form.start_location} onChange={e => setForm({ ...form, start_location: e.target.value })} rows={2} placeholder="Enter address (multi-line supported)" />
           </div>
           <div>
             <Label>Instructions {isFullDispatch && '(recommended)'}</Label>
