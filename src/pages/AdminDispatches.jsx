@@ -338,49 +338,13 @@ export default function AdminDispatches() {
                 />
               </div>
 
-              {/* Confirmations Panel */}
+              {/* Confirmations by Status */}
               <div className="border-t pt-4">
-                <h3 className="text-sm font-semibold text-slate-700 mb-3">Truck Confirmations</h3>
-                <div className="space-y-2">
-                  {(previewDispatch.trucks_assigned || []).map(truck => {
-                    const truckConfirmations = confirmations.filter(c => 
-                      c.dispatch_id === previewDispatch.id && c.truck_number === truck
-                    ).sort((a, b) => new Date(b.confirmed_at || 0) - new Date(a.confirmed_at || 0));
-                    const latestConfirmation = truckConfirmations[0];
-                    const isConfirmed = !!latestConfirmation;
-
-                    return (
-                      <Card key={truck}>
-                        <CardContent className="p-3 flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <Badge variant="outline" className="font-mono text-xs">
-                              {truck}
-                            </Badge>
-                            {isConfirmed ? (
-                              <div className="flex items-center gap-2 text-emerald-600">
-                                <CheckCircle2 className="h-4 w-4" />
-                                <span className="text-sm">Confirmed</span>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2 text-slate-400">
-                                <XCircle className="h-4 w-4" />
-                                <span className="text-sm">Not Confirmed</span>
-                              </div>
-                            )}
-                          </div>
-                          {isConfirmed && latestConfirmation.confirmed_at && (
-                            <span className="text-xs text-slate-500">
-                              {format(new Date(latestConfirmation.confirmed_at), 'MMM d, yyyy h:mm a')}
-                            </span>
-                          )}
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                  {(!previewDispatch.trucks_assigned || previewDispatch.trucks_assigned.length === 0) && (
-                    <p className="text-sm text-slate-500 text-center py-4">No trucks assigned</p>
-                  )}
-                </div>
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">Confirmations by Status</h3>
+                <AdminConfirmationsPanel
+                  dispatch={previewDispatch}
+                  confirmations={confirmations.filter(c => c.dispatch_id === previewDispatch.id)}
+                />
               </div>
             </div>
           )}
