@@ -30,38 +30,50 @@ export default function DispatchCard({
   const [expanded, setExpanded] = useState(false);
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
-  const [selectedTruck, setSelectedTruck] = useState(
-    session.code_type === 'Truck' ? session.allowed_trucks?.[0] : ''
-  );
 
   const myTrucks = (session.allowed_trucks || []).filter(t =>
     (dispatch.trucks_assigned || []).includes(t)
   );
 
-  const truckConfirmations = confirmations.filter(c =>
-    c.dispatch_id === dispatch.id && myTrucks.includes(c.truck_number)
-  );
+  const isOwner = session.code_type === 'CompanyOwner';
 
-  const truckTimeEntries = timeEntries.filter(te =>
-    te.dispatch_id === dispatch.id && myTrucks.includes(te.truck_number)
-  );
+  // Per-truck confirmation check: same dispatch + truck + confirmation_type
+  const confType = (() => {
+    if (dispatch.status === 'Amended') return 'Amended';
+    if (dispatch.status === 'Canceled') return 'Canceled';
+    if (dispatch.status === 'Dispatched') return 'Dispatched';
+    return 'Dispatched';
+  })();
 
-  const handleConfirm = () => {
-    const truck = session.code_type === 'Truck' ? myTrucks[0] : selectedTruck;
-    if (!truck) return;
+  const isTruckConfirmed = (truck) =>
+    confirmations.some(c =>
+      c.dispatch_id === dispatch.id &&
+      c.truck_number === truck &&
+      c.confirmation_type === confType
+    );
+
+  const getTruckConfirmation = (truck) =>
+    confirmations.find(c =>
+      c.dispatch_id === dispatch.id &&
+      c.truck_number === truck &&
+      c.confirmation_type === confType
+    );
+
+  const handleConfirmTruck = (truck) => {
     onConfirm(dispatch, truck);
   };
 
-  const handleTimeEntry = () => {
-    const truck = session.code_type === 'Truck' ? myTrucks[0] : selectedTruck;
+  const handleTimeEntry = (truck) => {
     if (!truck) return;
     onTimeEntry(dispatch, truck, startTime, endTime);
     setStartTime('');
     setEndTime('');
   };
 
-  const existingEntry = truckTimeEntries.find(te =>
-    te.truck_number === (session.code_type === 'Truck' ? myTrucks[0] : selectedTruck)
+  // For time entry: use single truck for Truck type, or first truck for owner
+  const singleTruck = session.code_type === 'Truck' ? myTrucks[0] : null;
+  const existingEntry = timeEntries.find(te =>
+    te.dispatch_id === dispatch.id && te.truck_number === singleTruck
   );
 
   return (
@@ -217,70 +229,81 @@ export default function DispatchCard({
             {/* Actions */}
             {dispatch.status !== 'Canceled' && (
               <div className="space-y-3 pt-2">
-                {session.code_type === 'CompanyOwner' && myTrucks.length > 1 && (
-                  <Select value={selectedTruck} onValueChange={setSelectedTruck}>
-                    <SelectTrigger className="w-full bg-white">
-                      <SelectValue placeholder="Select truck" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {myTrucks.map(t => (
-                        <SelectItem key={t} value={t}>Truck {t}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
 
-                {/* Confirm */}
-                {truckConfirmations.length === 0 && (
-                  <Button
-                    onClick={handleConfirm}
-                    className="w-full bg-slate-900 hover:bg-slate-800"
-                    disabled={session.code_type === 'CompanyOwner' && !selectedTruck}
-                  >
-                    <CheckCircle2 className="h-4 w-4 mr-2" />
-                    Confirm Receipt
-                  </Button>
-                )}
-                {truckConfirmations.length > 0 && (
-                  <div className="text-center text-xs text-emerald-600 flex items-center justify-center gap-1">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    Confirmed by truck {truckConfirmations.map(c => c.truck_number).join(', ')}
+                {/* CompanyOwner: per-truck confirm list */}
+                {isOwner && myTrucks.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 mb-2">Confirm Receipt per Truck</p>
+                    <div className="space-y-2">
+                      {myTrucks.map(truck => {
+                        const confirmed = isTruckConfirmed(truck);
+                        const conf = getTruckConfirmation(truck);
+                        return (
+                          <div key={truck} className="flex items-center justify-between bg-white rounded-lg border border-slate-200 px-3 py-2">
+                            <div className="flex items-center gap-2">
+                              <Truck className="h-3.5 w-3.5 text-slate-400" />
+                              <span className="text-sm font-mono font-medium">{truck}</span>
+                            </div>
+                            {confirmed ? (
+                              <div className="flex items-center gap-1.5 text-emerald-600">
+                                <CheckCircle2 className="h-4 w-4" />
+                                <span className="text-xs font-medium">Confirmed</span>
+                                {conf?.confirmed_at && (
+                                  <span className="text-xs text-slate-400 ml-1">
+                                    {format(new Date(conf.confirmed_at), 'MMM d, h:mm a')}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <Button
+                                size="sm"
+                                className="bg-slate-900 hover:bg-slate-800 h-7 text-xs"
+                                onClick={() => handleConfirmTruck(truck)}
+                              >
+                                <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                                Confirm Receipt
+                              </Button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
 
-                {/* Time Entry */}
-                <div>
-                  <p className="text-xs font-medium text-slate-500 mb-2">Log Time</p>
-                  {existingEntry && (
-                    <p className="text-xs text-slate-500 mb-2">
-                      Current: {existingEntry.start_time || '—'} → {existingEntry.end_time || '—'}
-                    </p>
-                  )}
-                  <div className="flex gap-2">
-                    <Input
-                      type="time"
-                      value={startTime}
-                      onChange={e => setStartTime(e.target.value)}
-                      placeholder="Start"
-                      className="bg-white text-sm"
-                    />
-                    <Input
-                      type="time"
-                      value={endTime}
-                      onChange={e => setEndTime(e.target.value)}
-                      placeholder="End"
-                      className="bg-white text-sm"
-                    />
-                    <Button
-                      variant="outline"
-                      onClick={handleTimeEntry}
-                      disabled={!startTime && !endTime}
-                      className="shrink-0"
-                    >
-                      <Clock className="h-4 w-4" />
-                    </Button>
+                {/* Time Entry (Truck code type only) */}
+                {session.code_type === 'Truck' && singleTruck && (
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 mb-2">Log Time</p>
+                    {existingEntry && (
+                      <p className="text-xs text-slate-500 mb-2">
+                        Current: {existingEntry.start_time || '—'} → {existingEntry.end_time || '—'}
+                      </p>
+                    )}
+                    <div className="flex gap-2">
+                      <Input
+                        type="time"
+                        value={startTime}
+                        onChange={e => setStartTime(e.target.value)}
+                        className="bg-white text-sm"
+                      />
+                      <Input
+                        type="time"
+                        value={endTime}
+                        onChange={e => setEndTime(e.target.value)}
+                        className="bg-white text-sm"
+                      />
+                      <Button
+                        variant="outline"
+                        onClick={() => handleTimeEntry(singleTruck)}
+                        disabled={!startTime && !endTime}
+                        className="shrink-0"
+                      >
+                        <Clock className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
           </div>
