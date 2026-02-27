@@ -90,11 +90,7 @@ export default function Portal() {
   const companyMap = {};
   companies.forEach(c => { companyMap[c.id] = c.name; });
 
-  const handleConfirm = (dispatch, truck) => {
-    let confType = 'Dispatched';
-    if (dispatch.status === 'Amended') confType = 'Amended';
-    if (dispatch.status === 'Canceled') confType = 'Canceled';
-
+  const handleConfirm = (dispatch, truck, confType) => {
     // Prevent duplicate: same dispatch + truck + type
     const alreadyConfirmed = confirmations.some(c =>
       c.dispatch_id === dispatch.id &&
