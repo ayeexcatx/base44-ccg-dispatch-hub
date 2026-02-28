@@ -92,7 +92,7 @@ export default function Notifications() {
             <Card 
               key={n.id} 
               className={`hover:shadow-sm transition-shadow cursor-pointer ${!n.read_flag ? 'border-blue-200 bg-blue-50/30' : ''}`}
-              onClick={() => !n.read_flag && markAsReadMutation.mutate(n.id)}
+              onClick={() => handleNotificationClick(n)}
             >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-3">
@@ -100,6 +100,9 @@ export default function Notifications() {
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-semibold text-sm text-slate-900">{n.title}</h3>
                       {!n.read_flag && <Badge className="bg-blue-500 text-xs">New</Badge>}
+                      {n.related_dispatch_id && (
+                        <ExternalLink className="h-3.5 w-3.5 text-slate-400 ml-auto shrink-0" />
+                      )}
                     </div>
                     <p className="text-sm text-slate-600">{n.message}</p>
                     <p className="text-xs text-slate-400 mt-2">
