@@ -15,15 +15,6 @@ import { Link, useNavigate } from 'react-router-dom';
 
 export default function NotificationBell({ session }) {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
-
-  const handleNotificationClick = (n) => {
-    if (!n.read_flag) markAsReadMutation.mutate(n.id);
-    if (n.related_dispatch_id) {
-      const page = session.code_type === 'Admin' ? 'AdminDispatches' : 'Portal';
-      navigate(createPageUrl(`${page}?dispatchId=${n.related_dispatch_id}`));
-    }
-  };
 
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications', session?.id],
