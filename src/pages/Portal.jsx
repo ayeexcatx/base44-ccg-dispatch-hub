@@ -97,38 +97,6 @@ export default function Portal() {
   const companyMap = {};
   companies.forEach(c => { companyMap[c.id] = c.name; });
 
-  // Auto-navigate to dispatch from notification link
-  useEffect(() => {
-    if (!targetDispatchId || didAutoScroll.current || dispatches.length === 0) return;
-
-    const inActive = activeDispatches.find(d => d.id === targetDispatchId);
-    const inHistory = historyDispatches.find(d => d.id === targetDispatchId);
-
-    if (!inActive && !inHistory) {
-      // Dispatch not found — will be shown via notFoundDispatch below
-      didAutoScroll.current = true;
-      return;
-    }
-
-    const correctTab = inActive ? 'active' : 'history';
-    setTab(correctTab);
-    setExpandedDispatchId(targetDispatchId);
-    didAutoScroll.current = true;
-
-    // Scroll after a short delay to let the tab render
-    setTimeout(() => {
-      const el = dispatchRefs.current[targetDispatchId];
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 150);
-  }, [targetDispatchId, dispatches]);
-
-  // Check if the target dispatch exists in any list
-  const targetDispatchExists = targetDispatchId
-    ? filteredDispatches.some(d => d.id === targetDispatchId)
-    : true;
-
   const handleConfirm = (dispatch, truck, confType) => {
     // Prevent duplicate: same dispatch + truck + type
     const alreadyConfirmed = confirmations.some(c =>
@@ -158,6 +126,43 @@ export default function Portal() {
   const currentList = tab === 'active' ? activeDispatches : historyDispatches;
   const sortedNotes = [...templateNotes].sort((a, b) => (a.priority || 0) - (b.priority || 0));
 
+  // Auto-navigate to target dispatch when data is loaded
+  useEffect(() => {
+    if (!targetDispatchId || didAutoScroll.current || dispatches.length === 0) return;
+
+    // Check if dispatch exists at all (even if not in filteredDispatches)
+    const target = dispatches.find(d => d.id === targetDispatchId);
+    if (!target) {
+      didAutoScroll.current = true;
+      return; // dispatch not found/available
+    }
+
+    const filteredTarget = filteredDispatches.find(d => d.id === targetDispatchId);
+    if (!filteredTarget) return; // dispatch exists but not assigned to this user
+
+    // Determine correct tab
+    const isActive = activeDispatches.some(d => d.id === targetDispatchId);
+    const isHistory = historyDispatches.some(d => d.id === targetDispatchId);
+    if (!isActive && !isHistory) return; // not visible in any tab
+
+    const correctTab = isActive ? 'active' : 'history';
+    if (tab !== correctTab) {
+      setTab(correctTab);
+      return; // wait for re-render
+    }
+
+    // Expand and scroll
+    setExpandedDispatchId(targetDispatchId);
+    didAutoScroll.current = true;
+
+    setTimeout(() => {
+      const el = dispatchRefs.current[targetDispatchId];
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 150);
+  }, [targetDispatchId, filteredDispatches, tab, activeDispatches, historyDispatches]);
+
   return (
     <div className="space-y-6">
       <div>
@@ -173,12 +178,6 @@ export default function Portal() {
           ))}
         </div>
       </div>
-
-      {targetDispatchId && !targetDispatchExists && dispatches.length > 0 && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-          Dispatch no longer available.
-        </div>
-      )}
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="bg-slate-100">
@@ -201,19 +200,19 @@ export default function Portal() {
       ) : (
         <div className="space-y-3">
           {currentList.map(d => (
-            <DispatchCard
-              key={d.id}
-              ref={el => { dispatchRefs.current[d.id] = el; }}
-              dispatch={d}
-              session={session}
-              confirmations={confirmations}
-              timeEntries={timeEntries}
-              templateNotes={sortedNotes}
-              onConfirm={handleConfirm}
-              onTimeEntry={handleTimeEntry}
-              companyName={companyMap[d.company_id]}
-              defaultExpanded={d.id === expandedDispatchId}
-            />
+            <div key={d.id} ref={el => dispatchRefs.current[d.id] = el}>
+              <DispatchCard
+                dispatch={d}
+                session={session}
+                confirmations={confirmations}
+                timeEntries={timeEntries}
+                templateNotes={sortedNotes}
+                onConfirm={handleConfirm}
+                onTimeEntry={handleTimeEntry}
+                companyName={companyMap[d.company_id]}
+                forceExpanded={expandedDispatchId === d.id}
+              />
+            </div>
           ))}
         </div>
       )}
