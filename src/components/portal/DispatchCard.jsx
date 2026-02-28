@@ -28,6 +28,11 @@ const DispatchCard = React.forwardRef(function DispatchCard({
   onConfirm, onTimeEntry, companyName, defaultExpanded = false
 }, ref) {
   const [expanded, setExpanded] = useState(defaultExpanded);
+
+  // If defaultExpanded changes (e.g. from notification link), sync
+  useEffect(() => {
+    if (defaultExpanded) setExpanded(true);
+  }, [defaultExpanded]);
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
 
