@@ -174,6 +174,12 @@ export default function Portal() {
         </div>
       </div>
 
+      {targetDispatchId && !targetDispatchExists && dispatches.length > 0 && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          Dispatch no longer available.
+        </div>
+      )}
+
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="bg-slate-100">
           <TabsTrigger value="active" className="text-xs">
@@ -197,6 +203,7 @@ export default function Portal() {
           {currentList.map(d => (
             <DispatchCard
               key={d.id}
+              ref={el => { dispatchRefs.current[d.id] = el; }}
               dispatch={d}
               session={session}
               confirmations={confirmations}
@@ -205,6 +212,7 @@ export default function Portal() {
               onConfirm={handleConfirm}
               onTimeEntry={handleTimeEntry}
               companyName={companyMap[d.company_id]}
+              defaultExpanded={d.id === expandedDispatchId}
             />
           ))}
         </div>
