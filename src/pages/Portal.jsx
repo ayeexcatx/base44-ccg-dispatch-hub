@@ -154,42 +154,29 @@ export default function Portal() {
   useEffect(() => {
     if (!targetDispatchId || didAutoScroll.current || dispatches.length === 0) return;
 
-    // Check if dispatch exists at all (even if not in filteredDispatches)
     const target = dispatches.find(d => d.id === targetDispatchId);
-    if (!target) {
-      didAutoScroll.current = true;
-      return; // dispatch not found/available
-    }
+    if (!target) { didAutoScroll.current = true; return; }
 
     const filteredTarget = filteredDispatches.find(d => d.id === targetDispatchId);
-    if (!filteredTarget) return; // dispatch exists but not assigned to this user
+    if (!filteredTarget) return;
 
-    // Determine correct tab
-    const isActive = activeDispatches.some(d => d.id === targetDispatchId);
+    const isUpcoming = upcomingDispatches.some(d => d.id === targetDispatchId);
+    const isToday = todayDispatches.some(d => d.id === targetDispatchId);
     const isHistory = historyDispatches.some(d => d.id === targetDispatchId);
-    if (!isActive && !isHistory) {
-      // Dispatch is assigned to this user but falls outside 30-day history window
-      didAutoScroll.current = true;
-      return;
-    }
 
-    const correctTab = isActive ? 'active' : 'history';
-    if (tab !== correctTab) {
-      setTab(correctTab);
-      return; // wait for re-render
-    }
+    const correctTab = isUpcoming ? 'upcoming' : isToday ? 'today' : isHistory ? 'history' : null;
+    if (!correctTab) { didAutoScroll.current = true; return; }
 
-    // Expand and scroll
+    if (tab !== correctTab) { setTab(correctTab); return; }
+
     setExpandedDispatchId(targetDispatchId);
     didAutoScroll.current = true;
 
     setTimeout(() => {
       const el = dispatchRefs.current[targetDispatchId];
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 150);
-  }, [targetDispatchId, filteredDispatches, tab, activeDispatches, historyDispatches]);
+  }, [targetDispatchId, filteredDispatches, tab, upcomingDispatches, todayDispatches, historyDispatches]);
 
   return (
     <div className="space-y-6">
