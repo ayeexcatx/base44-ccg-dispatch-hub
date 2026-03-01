@@ -342,6 +342,11 @@ export default function AdminDispatches() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-2">
                       <Badge className={`${statusColors[d.status]} border text-xs`}>{d.status}</Badge>
+                      {d.archived_flag && (
+                        <Badge className="bg-amber-50 text-amber-700 border border-amber-200 text-xs flex items-center gap-1">
+                          <Archive className="h-2.5 w-2.5" />Archived
+                        </Badge>
+                      )}
                       <span className="text-xs text-slate-400 flex items-center gap-1">
                         {d.shift_time === 'Day' ? <Sun className="h-3 w-3" /> : <Moon className="h-3 w-3" />}
                         {d.shift_time}
