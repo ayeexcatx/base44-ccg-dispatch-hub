@@ -125,6 +125,8 @@ export default function AdminDispatches() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [previewDispatch, setPreviewDispatch] = useState(null);
+  const [drawerConfirmations, setDrawerConfirmations] = useState([]);
+  const [drawerTimeEntries, setDrawerTimeEntries] = useState([]);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteCode, setDeleteCode] = useState('');
   const [deleteError, setDeleteError] = useState('');
