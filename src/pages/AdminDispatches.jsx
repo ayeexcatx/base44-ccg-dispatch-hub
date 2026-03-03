@@ -129,6 +129,7 @@ export default function AdminDispatches() {
   const [deleteError, setDeleteError] = useState('');
   const [filters, setFilters] = useState({ status: 'all', company_id: 'all', truck: '', dateFrom: '', dateTo: '' });
   const [showFilters, setShowFilters] = useState(false);
+  const [tab, setTab] = useState('today');
   const dispatchRefs = useRef({});
   const didAutoScroll = useRef(false);
 
