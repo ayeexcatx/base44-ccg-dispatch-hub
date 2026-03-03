@@ -111,42 +111,32 @@ export default function Portal() {
 
   const today = startOfDay(new Date());
 
-  const upcomingDispatches = useMemo(() => {
-    return filteredDispatches
-      .filter(d => !d.archived_flag && d.status !== 'Canceled' && d.date && new Date(d.date) > today)
-      .sort((a, b) => {
-        const dateDiff = new Date(a.date) - new Date(b.date);
-        if (dateDiff !== 0) return dateDiff;
-        const aTime = a.start_time || 'zzz';
-        const bTime = b.start_time || 'zzz';
-        return aTime.localeCompare(bTime);
-      });
-  }, [filteredDispatches, today]);
+  const upcomingDispatches = useMemo(() => filteredDispatches
+    .filter(d => getDispatchBucket(d) === 'upcoming')
+    .sort((a, b) => {
+      const dateDiff = parseISO(a.date) - parseISO(b.date);
+      if (dateDiff !== 0) return dateDiff;
+      return (a.start_time || 'zzz').localeCompare(b.start_time || 'zzz');
+    }), [filteredDispatches]);
 
-  const todayDispatches = useMemo(() => {
-    return filteredDispatches
-      .filter(d => !d.archived_flag && d.status !== 'Canceled' && d.date && isToday(new Date(d.date)))
-      .sort((a, b) => {
-        if (!a.start_time && !b.start_time) return 0;
-        if (!a.start_time) return 1;
-        if (!b.start_time) return -1;
-        return a.start_time.localeCompare(b.start_time);
-      });
-  }, [filteredDispatches]);
+  const todayDispatches = useMemo(() => filteredDispatches
+    .filter(d => getDispatchBucket(d) === 'today')
+    .sort((a, b) => {
+      if (!a.start_time && !b.start_time) return 0;
+      if (!a.start_time) return 1;
+      if (!b.start_time) return -1;
+      return a.start_time.localeCompare(b.start_time);
+    }), [filteredDispatches]);
 
-  const historyDispatches = useMemo(() => {
-    return filteredDispatches
-      .filter(d => {
-        if (d.archived_flag) return true;
-        if (d.status === 'Canceled') return true;
-        if (d.date && isBefore(new Date(d.date), today)) {
-          // past date: include if time entry exists for any of their trucks
-          return myTrucksForHistory(d, timeEntries, session);
-        }
-        return false;
-      })
-      .sort((a, b) => new Date(b.date) - new Date(a.date));
-  }, [filteredDispatches, today, timeEntries]);
+  const historyDispatches = useMemo(() => filteredDispatches
+    .filter(d => {
+      if (getDispatchBucket(d) !== 'history') return false;
+      // For past (non-archived) dispatches, only show if time entry exists
+      if (!d.archived_flag) return myTrucksForHistory(d, timeEntries, session);
+      return true;
+    })
+    .sort((a, b) => parseISO(b.date) - parseISO(a.date)),
+  [filteredDispatches, timeEntries]);
 
   const companyMap = {};
   companies.forEach(c => { companyMap[c.id] = c.name; });
