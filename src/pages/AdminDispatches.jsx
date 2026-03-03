@@ -479,11 +479,11 @@ export default function AdminDispatches() {
                 <DispatchCard
                   dispatch={previewDispatch}
                   session={{
-                    code_type: 'CompanyOwner',
+                    code_type: 'Admin',
                     allowed_trucks: previewDispatch.trucks_assigned || []
                   }}
                   confirmations={confirmations.filter(c => c.dispatch_id === previewDispatch.id)}
-                  timeEntries={[]}
+                  timeEntries={timeEntries.filter(te => te.dispatch_id === previewDispatch.id)}
                   templateNotes={templateNotes}
                   onConfirm={() => {}}
                   onTimeEntry={() => {}}
