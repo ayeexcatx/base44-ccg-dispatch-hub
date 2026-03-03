@@ -276,7 +276,8 @@ export default function Portal() {
                 onConfirm={handleConfirm}
                 onTimeEntry={handleTimeEntry}
                 companyName={companyMap[d.company_id]}
-                forceExpanded={expandedDispatchId === d.id}
+                forceOpen={drawerDispatchId === d.id}
+                onDrawerClose={() => setDrawerDispatchId(null)}
               />
             </div>
           ))}
