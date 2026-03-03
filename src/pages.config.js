@@ -56,6 +56,7 @@ import AdminTemplateNotes from './pages/AdminTemplateNotes';
 import Notifications from './pages/Notifications';
 import Portal from './pages/Portal';
 import Home from './pages/Home';
+import AdminAnnouncements from './pages/AdminAnnouncements';
 import __Layout from './Layout.jsx';
 
 
@@ -69,6 +70,7 @@ export const PAGES = {
     "Notifications": Notifications,
     "Portal": Portal,
     "Home": Home,
+    "AdminAnnouncements": AdminAnnouncements,
 }
 
 export const pagesConfig = {
