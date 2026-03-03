@@ -191,30 +191,34 @@ export default function Portal() {
 
   // Auto-navigate to target dispatch when data is loaded
   useEffect(() => {
-    if (!targetDispatchId || didAutoScroll.current || dispatches.length === 0) return;
+    if (!targetDispatchId || didAutoOpen.current || dispatches.length === 0) return;
 
     const target = dispatches.find(d => d.id === targetDispatchId);
-    if (!target) { didAutoScroll.current = true; return; }
+    if (!target) { didAutoOpen.current = true; return; }
 
     const filteredTarget = filteredDispatches.find(d => d.id === targetDispatchId);
-    if (!filteredTarget) return;
+    if (!filteredTarget) { didAutoOpen.current = true; return; }
 
-    const isUpcoming = upcomingDispatches.some(d => d.id === targetDispatchId);
-    const isToday = todayDispatches.some(d => d.id === targetDispatchId);
-    const isHistory = historyDispatches.some(d => d.id === targetDispatchId);
+    const inUpcoming = upcomingDispatches.some(d => d.id === targetDispatchId);
+    const inToday = todayDispatches.some(d => d.id === targetDispatchId);
+    const inHistory = historyDispatches.some(d => d.id === targetDispatchId);
 
-    const correctTab = isUpcoming ? 'upcoming' : isToday ? 'today' : isHistory ? 'history' : null;
-    if (!correctTab) { didAutoScroll.current = true; return; }
+    const correctTab = inUpcoming ? 'upcoming' : inToday ? 'today' : inHistory ? 'history' : null;
+    if (!correctTab) { didAutoOpen.current = true; return; }
 
-    if (tab !== correctTab) { setTab(correctTab); return; }
+    // Switch tab first, then open drawer once tab is correct
+    if (tab !== correctTab) {
+      setTab(correctTab);
+      return; // re-run effect after tab change
+    }
 
-    setExpandedDispatchId(targetDispatchId);
-    didAutoScroll.current = true;
+    didAutoOpen.current = true;
+    setDrawerDispatchId(targetDispatchId);
 
     setTimeout(() => {
       const el = dispatchRefs.current[targetDispatchId];
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 150);
+    }, 100);
   }, [targetDispatchId, filteredDispatches, tab, upcomingDispatches, todayDispatches, historyDispatches]);
 
   return (
