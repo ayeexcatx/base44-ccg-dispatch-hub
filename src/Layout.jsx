@@ -17,7 +17,7 @@ function LayoutInner({ children, currentPageName }) {
       return;
     }
     // Admin guard
-    const adminPages = ['AdminDashboard', 'AdminCompanies', 'AdminAccessCodes', 'AdminDispatches', 'AdminTemplateNotes'];
+    const adminPages = ['AdminDashboard', 'AdminCompanies', 'AdminAccessCodes', 'AdminDispatches', 'AdminTemplateNotes', 'AdminAnnouncements'];
     if (adminPages.includes(currentPageName) && session.code_type !== 'Admin') {
       window.location.href = createPageUrl('Home');
     }
