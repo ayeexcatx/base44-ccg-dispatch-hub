@@ -33,7 +33,7 @@ export async function notifyDispatchChange(dispatch, oldStatus, newStatus, compa
     const titlePrefix = `Dispatch ${statusText}`;
 
     for (const ac of affectedOwnerCodes) {
-      const dedupKey = `${dispatch.id}:${newStatus}`;
+      const dedupKey = `${dispatch.id}:${newStatus}:${ac.id}`;
 
       // Check for existing notification with this dedup key for this recipient
       const existing = await base44.entities.Notification.filter({
@@ -41,10 +41,7 @@ export async function notifyDispatchChange(dispatch, oldStatus, newStatus, compa
         dispatch_status_key: dedupKey,
       }, '-created_date', 1);
 
-      if (existing && existing.length > 0) {
-        // Already notified for this dispatch+status — skip
-        continue;
-      }
+      if (existing && existing.length > 0) continue;
 
       const relevantTrucks = (dispatch.trucks_assigned || []).filter(t =>
         (ac.allowed_trucks || []).includes(t)
@@ -73,8 +70,8 @@ export async function notifyDispatchChange(dispatch, oldStatus, newStatus, compa
         required_trucks: relevantTrucks,
       });
     }
-  } catch (error) {
-    console.error('Error creating dispatch notifications:', error);
+  } catch (err) {
+    console.error('Error creating dispatch notifications:', err);
   }
 }
 
@@ -85,20 +82,24 @@ export async function notifyDispatchChange(dispatch, oldStatus, newStatus, compa
 export async function resolveOwnerNotificationIfComplete(dispatch, confirmations, accessCodes) {
   try {
     const status = dispatch.status;
-    const dedupKey = `${dispatch.id}:${status}`;
-
-    // Find all owner notifications for this dispatch+status
+    // Find all owner notifications for this dispatch+status (keys now include owner id)
     const ownerNotifs = await base44.entities.Notification.filter({
-      dispatch_status_key: dedupKey,
+      related_dispatch_id: dispatch.id,
+      recipient_type: 'AccessCode',
     }, '-created_date', 50);
 
-    if (!ownerNotifs || ownerNotifs.length === 0) return;
+    const filteredOwnerNotifs = (ownerNotifs || []).filter(n => {
+      const key = n.dispatch_status_key || '';
+      return key.startsWith(`${dispatch.id}:${status}:`);
+    });
+
+    if (!filteredOwnerNotifs || filteredOwnerNotifs.length === 0) return;
 
     const confirmedTrucksForStatus = confirmations
       .filter(c => c.dispatch_id === dispatch.id && c.confirmation_type === status)
       .map(c => c.truck_number);
 
-    for (const notif of ownerNotifs) {
+    for (const notif of filteredOwnerNotifs) {
       if (notif.read_flag) continue; // already resolved
 
       const required = notif.required_trucks || [];
