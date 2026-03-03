@@ -141,11 +141,6 @@ export default function DispatchDetailDrawer({
               <Badge className={`${statusBadgeColors[dispatch.status]} border text-xs font-medium`}>
                 {dispatch.status}
               </Badge>
-              {dispatch.toll_status && (
-                <Badge className={`${tollColors[dispatch.toll_status]} text-xs font-medium`}>
-                  {dispatch.toll_status}
-                </Badge>
-              )}
               <span className="text-xs text-slate-400 flex items-center gap-1 font-normal">
                 {dispatch.shift_time === 'Day' ? <Sun className="h-3 w-3" /> : <Moon className="h-3 w-3" />}
                 {dispatch.shift_time}
@@ -179,18 +174,6 @@ export default function DispatchDetailDrawer({
                   <div className="flex items-center gap-2 text-slate-600">
                     <FileText className="h-4 w-4 text-slate-400 shrink-0" />
                     <span>Job #{dispatch.job_number}</span>
-                  </div>
-                )}
-                {dispatch.start_time && (
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <Clock className="h-4 w-4 text-slate-400 shrink-0" />
-                    <span>{dispatch.start_time}</span>
-                  </div>
-                )}
-                {dispatch.start_location && (
-                  <div className="flex items-start gap-2 text-slate-600">
-                    <MapPin className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
-                    <span className="whitespace-pre-wrap">{dispatch.start_location}</span>
                   </div>
                 )}
               </div>
