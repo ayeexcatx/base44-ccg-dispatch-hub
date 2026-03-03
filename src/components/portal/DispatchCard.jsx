@@ -134,7 +134,7 @@ const DispatchCard = React.forwardRef(function DispatchCard({
 
       <DispatchDetailDrawer
         open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        onClose={handleClose}
         dispatch={dispatch}
         session={session}
         confirmations={confirmations}
