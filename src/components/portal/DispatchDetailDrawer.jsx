@@ -77,7 +77,7 @@ export default function DispatchDetailDrawer({
         <div className="sticky top-0 bg-white border-b border-slate-200 px-5 py-4 z-10">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2 flex-wrap text-base">
-              <Badge className={`${statusColors[dispatch.status]} border text-xs font-medium`}>
+              <Badge className={`${statusBadgeColors[dispatch.status]} border text-xs font-medium`}>
                 {dispatch.status}
               </Badge>
               {dispatch.toll_status && (
@@ -102,7 +102,7 @@ export default function DispatchDetailDrawer({
           {dispatch.status === 'Confirmed' ? (
             <div>
               <h2 className="font-semibold text-slate-900 text-lg">Confirmed Dispatch</h2>
-              <p className="text-sm text-slate-500 mt-1 italic">Full dispatch details will be provided soon.</p>
+              <p className="text-sm text-blue-600 mt-1 italic">Confirmation only — details to follow</p>
             </div>
           ) : (
             <div className="space-y-3">
