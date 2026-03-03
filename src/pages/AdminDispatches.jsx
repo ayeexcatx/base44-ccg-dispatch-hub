@@ -296,7 +296,7 @@ export default function AdminDispatches() {
     setTab(correctTab);
 
     didAutoScroll.current = true;
-    setPreviewDispatch(target);
+    openDrawer(target);
 
     if (targetNotificationId) {
       base44.entities.Notification.update(targetNotificationId, { read_flag: true })
