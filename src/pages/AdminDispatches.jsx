@@ -194,6 +194,8 @@ export default function AdminDispatches() {
   const companyMap = {};
   companies.forEach(c => { companyMap[c.id] = c.name; });
 
+  const today = startOfDay(new Date());
+
   const filtered = useMemo(() => {
     return dispatches.filter(d => {
       if (filters.status !== 'all' && d.status !== filters.status) return false;
@@ -204,6 +206,31 @@ export default function AdminDispatches() {
       return true;
     });
   }, [dispatches, filters]);
+
+  const upcomingDispatches = useMemo(() => filtered
+    .filter(d => !d.archived_flag && d.status !== 'Canceled' && d.date && new Date(d.date) > today)
+    .sort((a, b) => {
+      const dd = new Date(a.date) - new Date(b.date);
+      if (dd !== 0) return dd;
+      return (a.start_time || 'zzz').localeCompare(b.start_time || 'zzz');
+    }), [filtered, today]);
+
+  const todayDispatches = useMemo(() => filtered
+    .filter(d => !d.archived_flag && d.status !== 'Canceled' && d.date && isToday(new Date(d.date)))
+    .sort((a, b) => (a.start_time || 'zzz').localeCompare(b.start_time || 'zzz')),
+  [filtered]);
+
+  const historyDispatches = useMemo(() => filtered
+    .filter(d => {
+      if (d.archived_flag) return true;
+      if (d.status === 'Canceled') return true;
+      if (d.date && isBefore(new Date(d.date), today)) return true;
+      return false;
+    })
+    .sort((a, b) => new Date(b.date) - new Date(a.date)),
+  [filtered, today]);
+
+  const currentList = tab === 'upcoming' ? upcomingDispatches : tab === 'today' ? todayDispatches : historyDispatches;
 
   const openNew = () => {
     setEditing(null);
