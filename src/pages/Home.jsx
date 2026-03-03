@@ -112,31 +112,21 @@ export default function Home() {
     [filteredDispatches]
   );
 
-  // Unread notifications sorted newest first (already sorted by hook)
-  const unreadNotifications = useMemo(() =>
-    notifications.filter(n => !n.read_flag),
-    [notifications]
-  );
+  // Build action items: unread dispatch-change notifications enriched with dispatch data
+  const actionItems = useMemo(() => {
+    const dispatchMap = {};
+    dispatches.forEach(d => { dispatchMap[d.id] = d; });
 
-  const pendingConfirmationsCount = useMemo(() => {
-    if (session?.code_type !== 'CompanyOwner') return 0;
-    return filteredDispatches.filter(d => {
-      if (d.archived_flag || d.status === 'Canceled') return false;
-      const trucks = (d.trucks_assigned || []).filter(t => allowedTrucks.includes(t));
-      if (trucks.length === 0) return false;
-      return trucks.some(t => !confirmations.some(c =>
-        c.dispatch_id === d.id && c.truck_number === t && c.confirmation_type === d.status
-      ));
-    }).length;
-  }, [filteredDispatches, confirmations, allowedTrucks, session]);
+    const unread = notifications.filter(n => !n.read_flag && n.related_dispatch_id);
+    return unread.slice(0, 8).map(n => ({
+      notification: n,
+      dispatch: dispatchMap[n.related_dispatch_id] || null,
+    }));
+  }, [notifications, dispatches]);
 
-  const handleNotificationClick = (n) => {
-    if (n.related_dispatch_id) {
-      const notifParam = !n.read_flag ? `&notificationId=${n.id}` : '';
-      navigate(createPageUrl(`Portal?dispatchId=${n.related_dispatch_id}${notifParam}`));
-    } else {
-      if (!n.read_flag) markRead(n.id);
-    }
+  const handleActionClick = (n) => {
+    const notifParam = !n.read_flag ? `&notificationId=${n.id}` : '';
+    navigate(createPageUrl(`Portal?dispatchId=${n.related_dispatch_id}${notifParam}`));
   };
 
   const priorityBg = { 1: 'bg-red-50 border-red-200', 2: 'bg-orange-50 border-orange-200', 3: 'bg-yellow-50 border-yellow-200', 4: 'bg-blue-50 border-blue-200', 5: 'bg-slate-50 border-slate-200' };
