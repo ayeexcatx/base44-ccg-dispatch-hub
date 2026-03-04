@@ -23,13 +23,13 @@ export default function Portal() {
   const [drawerDispatchId, setDrawerDispatchId] = useState(null);
   const didAutoOpen = useRef(false);
 
+  const urlParams = new URLSearchParams(window.location.search);
+  const targetDispatchId = urlParams.get('dispatchId');
+
   // Reset auto-open flag whenever the URL param changes
   useEffect(() => {
     didAutoOpen.current = false;
   }, [targetDispatchId]);
-
-  const urlParams = new URLSearchParams(window.location.search);
-  const targetDispatchId = urlParams.get('dispatchId');
 
   const { data: dispatches = [] } = useQuery({
     queryKey: ['portal-dispatches', session?.company_id],
