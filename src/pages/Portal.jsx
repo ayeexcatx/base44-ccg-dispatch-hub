@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLocation } from 'react-router-dom';
 import { useSession } from '../components/session/SessionContext';
 import DispatchCard from '../components/portal/DispatchCard';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
