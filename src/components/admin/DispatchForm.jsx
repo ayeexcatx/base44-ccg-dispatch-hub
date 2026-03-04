@@ -10,10 +10,10 @@ import { notifyDispatchChange } from '@/components/notifications/createNotificat
 
 export default function DispatchForm({ dispatch, companies, accessCodes, onSave, onCancel, saving }) {
   const [form, setForm] = useState({
-    company_id: '', date: '', shift_time: 'Day Shift', client_name: '', job_number: '',
-    start_time: '', start_location: '', instructions: 'Deliver material to / from:',
+    company_id: '', date: '', shift_time: 'Day', client_name: '', job_number: '',
+    start_time: '', start_location: '', instructions: 'Deliver material to / from',
     notes: '', toll_status: '', trucks_assigned: [],
-    status: 'Schedule', additional_assignments: [],
+    status: 'Confirmed', additional_assignments: [],
     amendment_history: [], canceled_reason: ''
   });
 
@@ -22,16 +22,16 @@ export default function DispatchForm({ dispatch, companies, accessCodes, onSave,
       setForm({
         company_id: dispatch.company_id || '',
         date: dispatch.date || '',
-        shift_time: dispatch.shift_time || 'Day Shift',
+        shift_time: dispatch.shift_time || 'Day',
         client_name: dispatch.client_name || '',
         job_number: dispatch.job_number || '',
         start_time: dispatch.start_time || '',
         start_location: dispatch.start_location || '',
-        instructions: dispatch.instructions || 'Deliver material to / from:',
+        instructions: dispatch.instructions || 'Deliver material to / from',
         notes: dispatch.notes || '',
         toll_status: dispatch.toll_status || '',
         trucks_assigned: dispatch.trucks_assigned || [],
-        status: dispatch.status || 'Schedule',
+        status: dispatch.status || 'Confirmed',
         additional_assignments: dispatch.additional_assignments || [],
         amendment_history: dispatch.amendment_history || [],
         canceled_reason: dispatch.canceled_reason || ''
@@ -42,9 +42,9 @@ export default function DispatchForm({ dispatch, companies, accessCodes, onSave,
   const selectedCompany = companies.find((c) => c.id === form.company_id);
   const availableTrucks = selectedCompany?.trucks || [];
 
-  const isConfirmed = form.status === 'Schedule';
-  const isFullDispatch = form.status === 'Dispatch' || form.status === 'Amend';
-  const isCanceled = form.status === 'Cancel';
+  const isConfirmed = form.status === 'Confirmed';
+  const isFullDispatch = form.status === 'Dispatched' || form.status === 'Amended';
+  const isCanceled = form.status === 'Canceled';
 
   const toggleTruck = (t) => {
     setForm((prev) => ({
@@ -81,12 +81,12 @@ export default function DispatchForm({ dispatch, companies, accessCodes, onSave,
 
     // Status-specific validation
     if (isFullDispatch && !form.start_location) {
-      alert('Start Location is required for Dispatch/Amend status');
+      alert('Start Location is required for Dispatched/Amended status');
       return;
     }
 
     if (isCanceled && !form.canceled_reason) {
-      alert('Cancellation reason is required for Cancel status');
+      alert('Cancellation reason is required for Canceled status');
       return;
     }
 
@@ -98,7 +98,7 @@ export default function DispatchForm({ dispatch, companies, accessCodes, onSave,
 
     // Track amendments
     let finalForm = { ...form };
-    if (dispatch && form.status === 'Amend' && dispatch.status !== 'Amend') {
+    if (dispatch && form.status === 'Amended' && dispatch.status !== 'Amended') {
       const changes = [];
       if (dispatch.start_location !== form.start_location) changes.push('location');
       if (dispatch.start_time !== form.start_time) changes.push('time');
@@ -142,10 +142,10 @@ export default function DispatchForm({ dispatch, companies, accessCodes, onSave,
           <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="Schedule">Schedule (pending dispatch)</SelectItem>
-              <SelectItem value="Dispatch">Dispatch (full details)</SelectItem>
-              <SelectItem value="Amend">Amend</SelectItem>
-              <SelectItem value="Cancel">Cancel</SelectItem>
+              <SelectItem value="Confirmed">Confirmed (pending dispatch)</SelectItem>
+              <SelectItem value="Dispatched">Dispatched (full details)</SelectItem>
+              <SelectItem value="Amended">Amended</SelectItem>
+              <SelectItem value="Canceled">Canceled</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -159,8 +159,8 @@ export default function DispatchForm({ dispatch, companies, accessCodes, onSave,
           <Select value={form.shift_time} onValueChange={(v) => setForm({ ...form, shift_time: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="Day Shift">Day Shift</SelectItem>
-              <SelectItem value="Night Shift">Night Shift</SelectItem>
+              <SelectItem value="Day">Day</SelectItem>
+              <SelectItem value="Night">Night</SelectItem>
             </SelectContent>
           </Select>
         </div>
