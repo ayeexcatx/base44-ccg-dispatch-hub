@@ -11,12 +11,13 @@ export function useOwnerNotifications(session) {
     queryFn: async () => {
       if (!session) return [];
       if (session.code_type === 'Admin') {
-        return base44.entities.Notification.filter({ recipient_type: 'Admin' }, '-created_date', 100);
+        return base44.entities.Notification.filter({ recipient_type: 'Admin' }, '-created_date', 200);
       }
-      return base44.entities.Notification.filter({
-        recipient_type: 'AccessCode',
-        recipient_access_code_id: session.id,
-      }, '-created_date', 100);
+      // Fetch all AccessCode notifications then client-filter to tolerate either recipient field
+      const all = await base44.entities.Notification.filter({ recipient_type: 'AccessCode' }, '-created_date', 200);
+      return all.filter(n =>
+        n.recipient_access_code_id === session.id || n.recipient_id === session.id
+      );
     },
     enabled: !!session,
     refetchInterval: 30000,

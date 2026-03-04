@@ -61,6 +61,7 @@ export async function notifyDispatchChange(dispatch, oldStatus, newStatus, compa
       await base44.entities.Notification.create({
         recipient_type: 'AccessCode',
         recipient_access_code_id: ac.id,
+        recipient_id: ac.id,
         recipient_company_id: company.id,
         title: titlePrefix,
         message,
