@@ -31,7 +31,7 @@ function MiniDispatchCard({ dispatch }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <Badge className={`${statusColors[dispatch.status]} border text-xs`}>{dispatch.status}</Badge>
-            <span className="text-xs text-slate-500">{dispatch.date && format(new Date(dispatch.date), 'MMM d')}</span>
+            <span className="text-xs text-slate-500">{dispatch.date && format(parseISO(dispatch.date), 'MMM d')}</span>
           </div>
           <p className="text-sm font-medium text-slate-700 truncate">{dispatch.client_name || 'Dispatch'}</p>
           <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500 flex-wrap">
@@ -117,8 +117,7 @@ export default function Home() {
   }, [notifications, dispatches]);
 
   const handleActionClick = (n) => {
-    const notifParam = !n.read_flag ? `&notificationId=${n.id}` : '';
-    navigate(createPageUrl(`Portal?dispatchId=${n.related_dispatch_id}${notifParam}`));
+    navigate(createPageUrl(`Portal?dispatchId=${n.related_dispatch_id}`));
   };
 
   const priorityBg = { 1: 'bg-red-50 border-red-200', 2: 'bg-orange-50 border-orange-200', 3: 'bg-yellow-50 border-yellow-200', 4: 'bg-blue-50 border-blue-200', 5: 'bg-slate-50 border-slate-200' };
