@@ -277,6 +277,7 @@ export default function Portal() {
           {currentList.map(d => (
             <div key={d.id} ref={el => dispatchRefs.current[d.id] = el}>
               <DispatchCard
+                key={drawerDispatchId === d.id ? drawerKey : d.id}
                 dispatch={d}
                 session={session}
                 confirmations={confirmations}
