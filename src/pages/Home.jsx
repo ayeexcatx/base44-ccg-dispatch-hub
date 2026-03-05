@@ -12,6 +12,7 @@ import { createPageUrl } from '@/utils';
 import { Link, useNavigate } from 'react-router-dom';
 import { useOwnerNotifications } from '../components/notifications/useOwnerNotifications';
 import NotificationStatusBadge from '../components/notifications/NotificationStatusBadge';
+import { formatNotificationDetailsMessage } from '../components/notifications/formatNotificationDetailsMessage';
 
 const dateOnly = (v) => (typeof v === 'string' ? v.slice(0, 10) : v);
 
@@ -191,7 +192,7 @@ export default function Home() {
                       <Bell className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-slate-800 truncate">{n.title}</p>
-                        <p className="text-xs text-slate-600 mt-0.5 line-clamp-2">{n.message}</p>
+                        <p className="text-xs text-slate-600 mt-0.5 line-clamp-2">{formatNotificationDetailsMessage(n.message)}</p>
                         {n.required_trucks?.length > 0 && (
                           <div className="mt-1">
                             <NotificationStatusBadge notification={n} confirmations={confirmations} />

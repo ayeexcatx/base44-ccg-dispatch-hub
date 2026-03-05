@@ -11,6 +11,7 @@ import { createPageUrl } from '@/utils';
 import { useNavigate } from 'react-router-dom';
 import NotificationStatusBadge from '@/components/notifications/NotificationStatusBadge';
 import { useOwnerNotifications } from '@/components/notifications/useOwnerNotifications';
+import { formatNotificationDetailsMessage } from '@/components/notifications/formatNotificationDetailsMessage';
 
 export default function Notifications() {
   const { session } = useSession();
@@ -85,7 +86,7 @@ export default function Notifications() {
                         <ExternalLink className="h-3.5 w-3.5 text-slate-400 ml-auto shrink-0" />
                       )}
                     </div>
-                    <p className="text-sm text-slate-600">{n.message}</p>
+                    <p className="text-sm text-slate-600">{formatNotificationDetailsMessage(n.message)}</p>
                     {n.required_trucks?.length > 0 && (
                       <div className="mt-1.5">
                         <NotificationStatusBadge notification={n} confirmations={confirmations} />
