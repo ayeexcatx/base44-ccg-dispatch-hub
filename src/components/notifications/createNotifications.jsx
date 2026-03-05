@@ -43,10 +43,10 @@ export async function notifyDispatchChange(dispatch, oldStatus, newStatus, compa
     if (!affectedOwnerCodes || affectedOwnerCodes.length === 0) return;
 
     const statusLabels = {
-      Schedule: 'Schedule (details to follow)',
+      Scheduled: 'Scheduled (details to follow)',
       Dispatch: 'Dispatch',
-      Amend: 'Amend',
-      Cancel: 'Cancel',
+      Amended: 'Amended',
+      Cancelled: 'Cancelled',
     };
     const statusText = statusLabels[newStatus] || newStatus;
     const titlePrefix = `Status: ${statusText}`;
