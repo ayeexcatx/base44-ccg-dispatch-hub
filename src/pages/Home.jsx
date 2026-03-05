@@ -5,7 +5,7 @@ import { useSession } from '../components/session/SessionContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Bell, Clock, Sun, Moon, ArrowRight, AlertCircle, Megaphone } from 'lucide-react';
+import { Bell, Clock, Sun, Moon, ArrowRight, AlertCircle, Megaphone, Truck } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { getDispatchBucket } from '../components/portal/dispatchBuckets';
 import { createPageUrl } from '@/utils';
@@ -91,6 +91,7 @@ function MiniDispatchCard({ dispatch, companyName }) {
             )}
             {truckNumbers.length > 0 && (
               <div className="flex items-center gap-1 flex-wrap pt-0.5">
+                <Truck className="h-3 w-3 text-slate-600" />
                 {truckNumbers.map((truck) => (
                   <Badge key={truck} variant="outline" className="text-[10px] font-mono px-1.5 py-0 h-5">
                     {truck}
