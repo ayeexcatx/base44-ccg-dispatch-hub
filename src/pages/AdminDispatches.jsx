@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Plus, Pencil, Trash2, Copy, FileText, MapPin,
+  Plus, Pencil, Trash2, Copy, FileText,
   Sun, Moon, Truck, Filter, ChevronDown, ChevronUp, Eye, CheckCircle2, XCircle, History, Archive, ArchiveX
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
@@ -470,19 +470,20 @@ export default function AdminDispatches() {
                     </div>
                     <div className="flex items-center gap-3 text-sm text-slate-700 flex-wrap">
                       {d.client_name && <span className="font-medium">{d.client_name}</span>}
-                      <span className="text-slate-400 text-xs">{companyMap[d.company_id] || '—'}</span>
                     </div>
                     <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 flex-wrap">
                       {d.job_number && (
                         <span className="flex items-center gap-1"><FileText className="h-3 w-3" />#{d.job_number}</span>
                       )}
-                      {d.start_location && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{d.start_location}</span>}
                     </div>
-                    <div className="flex items-center gap-1 mt-2 flex-wrap">
+                    <div className="mt-2">
+                      <div className="text-slate-400 text-xs mb-1">{companyMap[d.company_id] || '—'}</div>
+                      <div className="flex items-center gap-1 flex-wrap">
                       <Truck className="h-3 w-3 text-slate-400" />
                       {(d.trucks_assigned || []).map(t => (
                         <Badge key={t} variant="outline" className="text-xs font-mono">{t}</Badge>
                       ))}
+                      </div>
                     </div>
                   </div>
                   <div className="flex gap-1 shrink-0" onClick={e => e.stopPropagation()}>
