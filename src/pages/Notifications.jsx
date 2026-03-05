@@ -11,11 +11,25 @@ import { createPageUrl } from '@/utils';
 import { useNavigate } from 'react-router-dom';
 import NotificationStatusBadge from '@/components/notifications/NotificationStatusBadge';
 import { useOwnerNotifications } from '@/components/notifications/useOwnerNotifications';
+import { formatNotificationDetailsMessage } from '@/components/notifications/formatNotificationDetailsMessage';
 
 export default function Notifications() {
   const { session } = useSession();
   const navigate = useNavigate();
   const { notifications, unreadCount, isLoading, markRead, markAllRead, markAllReadPending } = useOwnerNotifications(session);
+
+
+  const { data: dispatches = [] } = useQuery({
+    queryKey: ['notification-dispatches-page', session?.company_id],
+    queryFn: () => base44.entities.Dispatch.filter({ company_id: session.company_id }, '-date', 200),
+    enabled: !!session?.company_id,
+  });
+
+  const dispatchById = React.useMemo(() => {
+    const map = {};
+    dispatches.forEach(d => { map[d.id] = d; });
+    return map;
+  }, [dispatches]);
 
   const { data: confirmations = [] } = useQuery({
     queryKey: ['confirmations-notif-page'],
@@ -85,7 +99,7 @@ export default function Notifications() {
                         <ExternalLink className="h-3.5 w-3.5 text-slate-400 ml-auto shrink-0" />
                       )}
                     </div>
-                    <p className="text-sm text-slate-600">{n.message}</p>
+                    <p className="text-sm text-slate-600">{formatNotificationDetailsMessage(n.message, dispatchById[n.related_dispatch_id])}</p>
                     {n.required_trucks?.length > 0 && (
                       <div className="mt-1.5">
                         <NotificationStatusBadge notification={n} confirmations={confirmations} />

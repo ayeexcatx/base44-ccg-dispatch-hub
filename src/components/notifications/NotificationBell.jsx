@@ -10,11 +10,25 @@ import { createPageUrl } from '@/utils';
 import { Link, useNavigate } from 'react-router-dom';
 import NotificationStatusBadge from './NotificationStatusBadge';
 import { useOwnerNotifications } from './useOwnerNotifications';
+import { formatNotificationDetailsMessage } from './formatNotificationDetailsMessage';
 
 export default function NotificationBell({ session }) {
   const navigate = useNavigate();
   const [open, setOpen] = React.useState(false);
   const { notifications, unreadCount, markRead } = useOwnerNotifications(session);
+
+
+  const { data: dispatches = [] } = useQuery({
+    queryKey: ['notification-dispatches-bell', session?.company_id],
+    queryFn: () => base44.entities.Dispatch.filter({ company_id: session.company_id }, '-date', 200),
+    enabled: !!session?.company_id,
+  });
+
+  const dispatchById = React.useMemo(() => {
+    const map = {};
+    dispatches.forEach(d => { map[d.id] = d; });
+    return map;
+  }, [dispatches]);
 
   const { data: confirmations = [] } = useQuery({
     queryKey: ['confirmations-bell'],
@@ -69,7 +83,7 @@ export default function NotificationBell({ session }) {
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-slate-900">{n.title}</p>
-                    <p className="text-xs text-slate-600 mt-0.5">{n.message}</p>
+                    <p className="text-xs text-slate-600 mt-0.5">{formatNotificationDetailsMessage(n.message, dispatchById[n.related_dispatch_id])}</p>
                     {n.required_trucks?.length > 0 && (
                       <div className="mt-1">
                         <NotificationStatusBadge notification={n} confirmations={confirmations} />
