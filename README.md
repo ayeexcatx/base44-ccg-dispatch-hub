@@ -1,4 +1,4 @@
-**Welcome to your Base44 project** woop
+**Welcome to your Base44 project**
 
 **About**
 
