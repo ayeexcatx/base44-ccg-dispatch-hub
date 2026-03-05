@@ -65,17 +65,17 @@ function MiniDispatchCard({ dispatch, companyName }) {
             : <Moon className="h-4 w-4 text-slate-400" />}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="grid grid-cols-3 items-center text-xs text-slate-500 mb-1 gap-2">
-            <div className="flex items-center">
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <div className="min-w-0">
               <Badge className={`${statusColors[dispatch.status]} border text-xs`}>{dispatch.status}</Badge>
             </div>
-            <div className="text-center truncate">{formatDispatchDate(dispatch.date)}</div>
-            <div className="flex items-center justify-end gap-1 min-w-0">
+            <div className="shrink-0 text-right text-xs text-slate-500 leading-tight">
+              <div className="whitespace-nowrap">{formatDispatchDate(dispatch.date)}</div>
               {dispatch.start_time && (
-                <>
+                <div className="flex items-center justify-end gap-1 whitespace-nowrap">
                   <Clock className="h-3 w-3" />
-                  <span className="truncate">{formatDispatchTime(dispatch.start_time)}</span>
-                </>
+                  <span>{formatDispatchTime(dispatch.start_time)}</span>
+                </div>
               )}
             </div>
           </div>
