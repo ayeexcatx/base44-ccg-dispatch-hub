@@ -11,11 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Plus, Pencil, Trash2, Copy, FileText,
-  Sun, Moon, Truck, Filter, ChevronDown, ChevronUp, Eye, CheckCircle2, XCircle, History, Archive, ArchiveX
-} from 'lucide-react';
+  Sun, Moon, Truck, Filter, ChevronDown, ChevronUp, Eye, CheckCircle2, XCircle, History, Archive, ArchiveX } from
+'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { getDispatchBucket } from '../components/portal/dispatchBuckets';
-import { sortTemplateNotesForDispatch } from '@/lib/templateNotes';
 import DispatchForm from '../components/admin/DispatchForm';
 import DispatchDetailDrawer from '../components/portal/DispatchDetailDrawer';
 import { useSession } from '../components/session/SessionContext';
@@ -52,12 +51,12 @@ function AdminConfirmationsPanel({ dispatch, confirmations }) {
 
   // Group confirmations by confirmation_type
   const byType = {};
-  confirmations.forEach(c => {
+  confirmations.forEach((c) => {
     if (!byType[c.confirmation_type]) byType[c.confirmation_type] = [];
     byType[c.confirmation_type].push(c);
   });
 
-  const priorStatuses = STATUS_ORDER.filter(s => s !== currentStatus && byType[s]);
+  const priorStatuses = STATUS_ORDER.filter((s) => s !== currentStatus && byType[s]);
 
   return (
     <div className="space-y-4">
@@ -68,78 +67,78 @@ function AdminConfirmationsPanel({ dispatch, confirmations }) {
           <span className="text-xs text-slate-500">current status</span>
         </div>
         <div className="space-y-1.5">
-          {trucks.map(truck => {
-            const conf = (byType[currentStatus] || []).find(c => c.truck_number === truck);
+          {trucks.map((truck) => {
+            const conf = (byType[currentStatus] || []).find((c) => c.truck_number === truck);
             return (
               <div key={truck} className="flex items-center justify-between bg-white border border-slate-200 rounded-lg px-3 py-2">
                 <div className="flex items-center gap-2">
                   <Truck className="h-3.5 w-3.5 text-slate-400" />
                   <span className="text-sm font-mono font-medium">{truck}</span>
                 </div>
-                {conf ? (
-                  <div className="flex items-center gap-1.5 text-emerald-600">
+                {conf ?
+                <div className="flex items-center gap-1.5 text-emerald-600">
                     <CheckCircle2 className="h-4 w-4" />
                     <span className="text-xs font-medium">Confirmed</span>
-                    {conf.confirmed_at && (
-                      <span className="text-xs text-slate-400 ml-1">
+                    {conf.confirmed_at &&
+                  <span className="text-xs text-slate-400 ml-1">
                         {format(new Date(conf.confirmed_at), 'MMM d, h:mm a')}
                       </span>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1.5 text-slate-400">
+                  }
+                  </div> :
+
+                <div className="flex items-center gap-1.5 text-slate-400">
                     <XCircle className="h-4 w-4" />
                     <span className="text-xs">Not confirmed for {currentStatus}</span>
                   </div>
-                )}
-              </div>
-            );
+                }
+              </div>);
+
           })}
-          {trucks.length === 0 && (
-            <p className="text-xs text-slate-400 py-2">No trucks assigned</p>
-          )}
+          {trucks.length === 0 &&
+          <p className="text-xs text-slate-400 py-2">No trucks assigned</p>
+          }
         </div>
       </div>
 
       {/* Prior statuses collapsible */}
-      {priorStatuses.length > 0 && (
-        <div>
+      {priorStatuses.length > 0 &&
+      <div>
           <button
-            onClick={() => setHistoryOpen(h => !h)}
-            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 transition-colors"
-          >
+          onClick={() => setHistoryOpen((h) => !h)}
+          className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 transition-colors">
+
             <History className="h-3.5 w-3.5" />
             {historyOpen ? 'Hide' : 'Show'} prior confirmations ({priorStatuses.join(', ')})
             {historyOpen ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
           </button>
-          {historyOpen && (
-            <div className="mt-2 space-y-3">
-              {priorStatuses.map(status => (
-                <div key={status}>
+          {historyOpen &&
+        <div className="mt-2 space-y-3">
+              {priorStatuses.map((status) =>
+          <div key={status}>
                   <div className="flex items-center gap-2 mb-1.5">
                     <Badge className={`${statusBadgeColors[status]} border text-xs`}>{status}</Badge>
                     <span className="text-xs text-slate-400">prior status</span>
                   </div>
                   <div className="space-y-1">
-                    {(byType[status] || []).map((c, i) => (
-                      <div key={i} className="flex items-center gap-2 text-xs text-slate-600 bg-slate-50 rounded px-3 py-1.5">
+                    {(byType[status] || []).map((c, i) =>
+              <div key={i} className="flex items-center gap-2 text-xs text-slate-600 bg-slate-50 rounded px-3 py-1.5">
                         <Truck className="h-3 w-3 text-slate-400" />
                         <span className="font-mono font-medium">{c.truck_number}</span>
                         <CheckCircle2 className="h-3 w-3 text-emerald-500 ml-1" />
-                        {c.confirmed_at && (
-                          <span className="text-slate-400">{format(new Date(c.confirmed_at), 'MMM d, yyyy h:mm a')}</span>
-                        )}
+                        {c.confirmed_at &&
+                <span className="text-slate-400">{format(new Date(c.confirmed_at), 'MMM d, yyyy h:mm a')}</span>
+                }
                       </div>
-                    ))}
+              )}
                   </div>
                 </div>
-              ))}
-            </div>
           )}
+            </div>
+        }
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 }
 
 export default function AdminDispatches() {
@@ -169,50 +168,50 @@ export default function AdminDispatches() {
 
   const { data: dispatches = [], isLoading } = useQuery({
     queryKey: ['dispatches-admin'],
-    queryFn: () => base44.entities.Dispatch.list('-date', 500),
+    queryFn: () => base44.entities.Dispatch.list('-date', 500)
   });
 
   const { data: companies = [] } = useQuery({
     queryKey: ['companies'],
-    queryFn: () => base44.entities.Company.list(),
+    queryFn: () => base44.entities.Company.list()
   });
 
   const { data: accessCodes = [] } = useQuery({
     queryKey: ['access-codes'],
-    queryFn: () => base44.entities.AccessCode.list(),
+    queryFn: () => base44.entities.AccessCode.list()
   });
 
   const { data: confirmations = [] } = useQuery({
     queryKey: ['confirmations-admin'],
-    queryFn: () => base44.entities.Confirmation.list('-confirmed_at', 500),
+    queryFn: () => base44.entities.Confirmation.list('-confirmed_at', 500)
   });
 
   const { data: timeEntries = [] } = useQuery({
     queryKey: ['time-entries-admin'],
-    queryFn: () => base44.entities.TimeEntry.list('-created_date', 500),
+    queryFn: () => base44.entities.TimeEntry.list('-created_date', 500)
   });
 
   const openDrawer = async (d) => {
     setPreviewDispatch(d);
     const [confs, times, adminNotifs] = await Promise.all([
-      base44.entities.Confirmation.filter({ dispatch_id: d.id }, '-confirmed_at', 100),
-      base44.entities.TimeEntry.filter({ dispatch_id: d.id }, '-created_date', 100),
-      base44.entities.Notification.filter({
-        recipient_type: 'Admin',
-        related_dispatch_id: d.id,
-      }, '-created_date', 50),
-    ]);
+    base44.entities.Confirmation.filter({ dispatch_id: d.id }, '-confirmed_at', 100),
+    base44.entities.TimeEntry.filter({ dispatch_id: d.id }, '-created_date', 100),
+    base44.entities.Notification.filter({
+      recipient_type: 'Admin',
+      related_dispatch_id: d.id
+    }, '-created_date', 50)]
+    );
     setDrawerConfirmations(confs);
     setDrawerTimeEntries(times);
 
     // Bulk-mark as read all unread admin notifications for this dispatch+status group
     const groupKey = `${d.id}:${d.status}`;
-    const unreadGroup = (adminNotifs || []).filter(n =>
-      !n.read_flag && (n.admin_group_key === groupKey || n.related_dispatch_id === d.id)
+    const unreadGroup = (adminNotifs || []).filter((n) =>
+    !n.read_flag && (n.admin_group_key === groupKey || n.related_dispatch_id === d.id)
     );
     if (unreadGroup.length > 0) {
-      await Promise.all(unreadGroup.map(n =>
-        base44.entities.Notification.update(n.id, { read_flag: true })
+      await Promise.all(unreadGroup.map((n) =>
+      base44.entities.Notification.update(n.id, { read_flag: true })
       ));
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     }
@@ -220,14 +219,14 @@ export default function AdminDispatches() {
 
   const { data: templateNotes = [] } = useQuery({
     queryKey: ['template-notes'],
-    queryFn: () => base44.entities.DispatchTemplateNotes.filter({ active_flag: true }, 'priority', 50),
+    queryFn: () => base44.entities.DispatchTemplateNotes.filter({ active_flag: true }, 'priority', 50)
   });
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
       if (editing && !editing._isCopy) {
         await base44.entities.Dispatch.update(editing.id, data);
-        const savedDispatch = await base44.entities.Dispatch.filter({ id: editing.id }, '-created_date', 1).then(r => r[0]);
+        const savedDispatch = await base44.entities.Dispatch.filter({ id: editing.id }, '-created_date', 1).then((r) => r[0]);
 
         if (savedDispatch) {
           await reconcileOwnerNotificationsForDispatch(savedDispatch, accessCodes);
@@ -245,52 +244,52 @@ export default function AdminDispatches() {
       queryClient.invalidateQueries({ predicate: (query) => String(query.queryKey?.[0] || '').startsWith('confirmations') });
       setOpen(false);
       setEditing(null);
-    },
+    }
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Dispatch.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dispatches-admin'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dispatches-admin'] })
   });
 
   const archiveMutation = useMutation({
-    mutationFn: ({ id, archive }) => base44.entities.Dispatch.update(id, archive
-      ? { archived_flag: true, archived_at: new Date().toISOString(), archived_reason: 'Admin archived' }
-      : { archived_flag: false, archived_at: null, archived_reason: null }
+    mutationFn: ({ id, archive }) => base44.entities.Dispatch.update(id, archive ?
+    { archived_flag: true, archived_at: new Date().toISOString(), archived_reason: 'Admin archived' } :
+    { archived_flag: false, archived_at: null, archived_reason: null }
     ),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dispatches-admin'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dispatches-admin'] })
   });
 
   const companyMap = {};
-  companies.forEach(c => { companyMap[c.id] = c.name; });
+  companies.forEach((c) => {companyMap[c.id] = c.name;});
 
   const filtered = useMemo(() => {
-    return dispatches.filter(d => {
+    return dispatches.filter((d) => {
       if (filters.status !== 'all' && d.status !== filters.status) return false;
       if (filters.company_id !== 'all' && d.company_id !== filters.company_id) return false;
-      if (filters.truck && !(d.trucks_assigned || []).some(t => t.includes(filters.truck))) return false;
+      if (filters.truck && !(d.trucks_assigned || []).some((t) => t.includes(filters.truck))) return false;
       if (filters.dateFrom && d.date < filters.dateFrom) return false;
       if (filters.dateTo && d.date > filters.dateTo) return false;
       return true;
     });
   }, [dispatches, filters]);
 
-  const upcomingDispatches = useMemo(() => filtered
-    .filter(d => getDispatchBucket(d) === 'upcoming')
-    .sort((a, b) => {
-      const dd = a.date.localeCompare(b.date);
-      if (dd !== 0) return dd;
-      return (a.start_time || 'zzz').localeCompare(b.start_time || 'zzz');
-    }), [filtered]);
+  const upcomingDispatches = useMemo(() => filtered.
+  filter((d) => getDispatchBucket(d) === 'upcoming').
+  sort((a, b) => {
+    const dd = a.date.localeCompare(b.date);
+    if (dd !== 0) return dd;
+    return (a.start_time || 'zzz').localeCompare(b.start_time || 'zzz');
+  }), [filtered]);
 
-  const todayDispatches = useMemo(() => filtered
-    .filter(d => getDispatchBucket(d) === 'today')
-    .sort((a, b) => (a.start_time || 'zzz').localeCompare(b.start_time || 'zzz')),
+  const todayDispatches = useMemo(() => filtered.
+  filter((d) => getDispatchBucket(d) === 'today').
+  sort((a, b) => (a.start_time || 'zzz').localeCompare(b.start_time || 'zzz')),
   [filtered]);
 
-  const historyDispatches = useMemo(() => filtered
-    .filter(d => getDispatchBucket(d) === 'history')
-    .sort((a, b) => b.date.localeCompare(a.date)),
+  const historyDispatches = useMemo(() => filtered.
+  filter((d) => getDispatchBucket(d) === 'history').
+  sort((a, b) => b.date.localeCompare(a.date)),
   [filtered]);
 
   const currentList = tab === 'upcoming' ? upcomingDispatches : tab === 'today' ? todayDispatches : historyDispatches;
@@ -327,7 +326,7 @@ export default function AdminDispatches() {
   };
 
   const handleDeleteConfirm = () => {
-    const sessionCode = accessCodes.find(ac => ac.id === session?.id);
+    const sessionCode = accessCodes.find((ac) => ac.id === session?.id);
     if (!sessionCode || sessionCode.code !== deleteCode || sessionCode.code_type !== 'Admin') {
       setDeleteError('Invalid admin code. Please try again.');
       return;
@@ -343,11 +342,11 @@ export default function AdminDispatches() {
     const idToOpen = targetDispatchId || pendingOpenIdRef.current;
     if (!idToOpen || dispatches.length === 0) return;
 
-    const target = dispatches.find(d => d.id === idToOpen);
+    const target = dispatches.find((d) => d.id === idToOpen);
     if (!target) return;
 
-    const inUpcoming = upcomingDispatches.some(d => d.id === idToOpen);
-    const inToday = todayDispatches.some(d => d.id === idToOpen);
+    const inUpcoming = upcomingDispatches.some((d) => d.id === idToOpen);
+    const inToday = todayDispatches.some((d) => d.id === idToOpen);
     const correctTab = inUpcoming ? 'upcoming' : inToday ? 'today' : 'history';
 
     if (tab !== correctTab) {
@@ -359,8 +358,8 @@ export default function AdminDispatches() {
     pendingOpenIdRef.current = null;
 
     if (targetNotificationId) {
-      base44.entities.Notification.update(targetNotificationId, { read_flag: true })
-        .then(() => queryClient.invalidateQueries({ queryKey: ['notifications'] }));
+      base44.entities.Notification.update(targetNotificationId, { read_flag: true }).
+      then(() => queryClient.invalidateQueries({ queryKey: ['notifications'] }));
     }
 
     setPreviewDispatch(null);
@@ -390,7 +389,7 @@ export default function AdminDispatches() {
     return new Promise((resolve, reject) => {
       saveMutation.mutate(formData, {
         onSuccess: (saved) => resolve(saved),
-        onError: reject,
+        onError: reject
       });
       if (!editing || editing._isCopy) setEditing(null);
     });
@@ -419,82 +418,82 @@ export default function AdminDispatches() {
         </div>
       </div>
 
-      {showFilters && (
-        <Card>
+      {showFilters &&
+      <Card>
           <CardContent className="p-4">
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-              <Select value={filters.status} onValueChange={v => setFilters({ ...filters, status: v })}>
+              <Select value={filters.status} onValueChange={(v) => setFilters({ ...filters, status: v })}>
                 <SelectTrigger className="text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  {['Scheduled', 'Dispatch', 'Amended', 'Cancelled'].map(s => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
-                  ))}
+                  {['Scheduled', 'Dispatch', 'Amended', 'Cancelled'].map((s) =>
+                <SelectItem key={s} value={s}>{s}</SelectItem>
+                )}
                 </SelectContent>
               </Select>
-              <Select value={filters.company_id} onValueChange={v => setFilters({ ...filters, company_id: v })}>
+              <Select value={filters.company_id} onValueChange={(v) => setFilters({ ...filters, company_id: v })}>
                 <SelectTrigger className="text-xs"><SelectValue placeholder="Company" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Companies</SelectItem>
-                  {companies.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
+                  {companies.map((c) =>
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                )}
                 </SelectContent>
               </Select>
-              <Input placeholder="Truck #" value={filters.truck} onChange={e => setFilters({ ...filters, truck: e.target.value })} className="text-xs" />
-              <Input type="date" value={filters.dateFrom} onChange={e => setFilters({ ...filters, dateFrom: e.target.value })} className="text-xs" />
-              <Input type="date" value={filters.dateTo} onChange={e => setFilters({ ...filters, dateTo: e.target.value })} className="text-xs" />
+              <Input placeholder="Truck #" value={filters.truck} onChange={(e) => setFilters({ ...filters, truck: e.target.value })} className="text-xs" />
+              <Input type="date" value={filters.dateFrom} onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })} className="text-xs" />
+              <Input type="date" value={filters.dateTo} onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })} className="text-xs" />
             </div>
           </CardContent>
         </Card>
-      )}
+      }
 
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="bg-slate-100">
+      <Tabs value={tab} onValueChange={setTab} className="bg-slate-400 rounded">
+        <TabsList className="bg-blue-50 text-muted-foreground p-1 rounded-[10007px] inline-flex h-9 items-center justify-center">
           <TabsTrigger value="today" className="text-xs">Today ({todayDispatches.length})</TabsTrigger>
           <TabsTrigger value="upcoming" className="text-xs">Upcoming ({upcomingDispatches.length})</TabsTrigger>
           <TabsTrigger value="history" className="text-xs">History ({historyDispatches.length})</TabsTrigger>
         </TabsList>
       </Tabs>
 
-      {isLoading ? (
-        <div className="flex justify-center py-12">
+      {isLoading ?
+      <div className="flex justify-center py-12">
           <div className="animate-spin h-6 w-6 border-2 border-slate-300 border-t-slate-700 rounded-full" />
-        </div>
-      ) : currentList.length === 0 ? (
-        <div className="text-center py-16 text-slate-500 text-sm">No dispatches found</div>
-      ) : (
-        <div className="grid gap-3">
-          {currentList.map(d => {
-            const assignmentList = Array.isArray(d.assignments)
-              ? d.assignments
-              : Array.isArray(d.additional_assignments)
-                ? d.additional_assignments
-                : [];
-            const firstAssignmentStartTime = assignmentList[0]?.start_time || assignmentList[0]?.startTime;
-            const firstLineTimeText = formatDispatchTime(firstAssignmentStartTime || d.start_time);
+        </div> :
+      currentList.length === 0 ?
+      <div className="text-center py-16 text-slate-500 text-sm">No dispatches found</div> :
 
-            return (
-            <div key={d.id} ref={el => dispatchRefs.current[d.id] = el} className="rounded-lg transition-all duration-500">
+      <div className="grid gap-3">
+          {currentList.map((d) => {
+          const assignmentList = Array.isArray(d.assignments) ?
+          d.assignments :
+          Array.isArray(d.additional_assignments) ?
+          d.additional_assignments :
+          [];
+          const firstAssignmentStartTime = assignmentList[0]?.start_time || assignmentList[0]?.startTime;
+          const firstLineTimeText = formatDispatchTime(firstAssignmentStartTime || d.start_time);
+
+          return (
+            <div key={d.id} ref={(el) => dispatchRefs.current[d.id] = el} className="rounded-lg transition-all duration-500">
               <Card
                 className={`hover:shadow-md transition-shadow cursor-pointer ${statusBorderAccent[d.status] || ''}`}
-                onClick={() => openDrawer(d)}
-              >
+                onClick={() => openDrawer(d)}>
+
               <CardContent className="p-4 sm:p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-2">
                       <Badge className={`${statusBadgeColors[d.status]} border text-xs`}>{d.status}</Badge>
-                      {d.archived_flag && (
+                      {d.archived_flag &&
                         <Badge className="bg-amber-50 text-amber-700 border border-amber-200 text-xs flex items-center gap-1">
                           <Archive className="h-2.5 w-2.5" />Archived
                         </Badge>
-                      )}
-                      <span className="text-xs text-slate-400 flex items-center gap-1">
+                        }
+                      <span className="text-slate-400 text-sm text-left normal-case flex items-center gap-1">
                         {d.shift_time === 'Day Shift' ? <Sun className="h-3 w-3" /> : <Moon className="h-3 w-3" />}
                         {d.shift_time}
                       </span>
-                      <span className="text-xs text-slate-500">
+                      <span className="text-slate-500 text-sm font-semibold">
                         {d.date && format(parseISO(d.date), 'EEEE, MMM d, yyyy')}
                         {firstLineTimeText ? ` • ${firstLineTimeText}` : ''}
                       </span>
@@ -503,21 +502,21 @@ export default function AdminDispatches() {
                       {d.client_name && <span className="font-medium">{d.client_name}</span>}
                     </div>
                     <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 flex-wrap">
-                      {d.job_number && (
+                      {d.job_number &&
                         <span className="flex items-center gap-1"><FileText className="h-3 w-3" />#{d.job_number}</span>
-                      )}
+                        }
                     </div>
                     <div className="mt-2">
                       <div className="text-slate-400 text-xs mb-1">{companyMap[d.company_id] || '—'}</div>
                       <div className="flex items-center gap-1 flex-wrap">
                       <Truck className="h-3 w-3 text-slate-400" />
-                      {(d.trucks_assigned || []).map(t => (
-                        <Badge key={t} variant="outline" className="text-xs font-mono">{t}</Badge>
-                      ))}
+                      {(d.trucks_assigned || []).map((t) =>
+                          <Badge key={t} variant="outline" className="text-xs font-mono">{t}</Badge>
+                          )}
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+                  <div className="flex gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                     <Button variant="ghost" size="icon" onClick={() => openDrawer(d)} className="h-8 w-8" title="Preview">
                       <Eye className="h-3.5 w-3.5" />
                     </Button>
@@ -525,11 +524,11 @@ export default function AdminDispatches() {
                       <Copy className="h-3.5 w-3.5" />
                     </Button>
                     <Button
-                      variant="ghost" size="icon"
-                      onClick={() => archiveMutation.mutate({ id: d.id, archive: !d.archived_flag })}
-                      className="h-8 w-8 text-slate-500 hover:text-amber-600"
-                      title={d.archived_flag ? 'Unarchive' : 'Archive'}
-                    >
+                        variant="ghost" size="icon"
+                        onClick={() => archiveMutation.mutate({ id: d.id, archive: !d.archived_flag })}
+                        className="h-8 w-8 text-slate-500 hover:text-amber-600"
+                        title={d.archived_flag ? 'Unarchive' : 'Archive'}>
+
                       {d.archived_flag ? <ArchiveX className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}
                     </Button>
                     <Button variant="ghost" size="icon" onClick={() => openEdit(d)} className="h-8 w-8">
@@ -542,11 +541,11 @@ export default function AdminDispatches() {
                 </div>
               </CardContent>
               </Card>
-            </div>
-            );
-          })}
+            </div>);
+
+        })}
         </div>
-      )}
+      }
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -558,14 +557,14 @@ export default function AdminDispatches() {
             companies={companies}
             accessCodes={accessCodes}
             onSave={handleSave}
-            onCancel={() => { setOpen(false); setEditing(null); }}
-            saving={saveMutation.isPending}
-          />
+            onCancel={() => {setOpen(false);setEditing(null);}}
+            saving={saveMutation.isPending} />
+
         </DialogContent>
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={!!deleteTarget} onOpenChange={() => { setDeleteTarget(null); setDeleteCode(''); setDeleteError(''); }}>
+      <Dialog open={!!deleteTarget} onOpenChange={() => {setDeleteTarget(null);setDeleteCode('');setDeleteError('');}}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-red-600">Confirm Deletion</DialogTitle>
@@ -581,22 +580,22 @@ export default function AdminDispatches() {
               <Input
                 id="admin-code"
                 value={deleteCode}
-                onChange={e => { setDeleteCode(e.target.value); setDeleteError(''); }}
+                onChange={(e) => {setDeleteCode(e.target.value);setDeleteError('');}}
                 placeholder="Enter your access code"
-                className={deleteError ? 'border-red-400 focus-visible:ring-red-400' : ''}
-              />
+                className={deleteError ? 'border-red-400 focus-visible:ring-red-400' : ''} />
+
               {deleteError && <p className="text-xs text-red-500">{deleteError}</p>}
             </div>
             <div className="flex gap-2 pt-1">
-              <Button variant="outline" className="flex-1" onClick={() => { setDeleteTarget(null); setDeleteCode(''); setDeleteError(''); }}>
+              <Button variant="outline" className="flex-1" onClick={() => {setDeleteTarget(null);setDeleteCode('');setDeleteError('');}}>
                 Cancel
               </Button>
               <Button
                 variant="destructive"
                 className="flex-1"
                 disabled={!deleteCode || deleteMutation.isPending}
-                onClick={handleDeleteConfirm}
-              >
+                onClick={handleDeleteConfirm}>
+
                 {deleteMutation.isPending ? 'Deleting...' : 'Confirm Delete'}
               </Button>
             </div>
@@ -613,11 +612,11 @@ export default function AdminDispatches() {
         session={{ code_type: 'Admin', allowed_trucks: previewDispatch?.trucks_assigned || [] }}
         confirmations={drawerConfirmations}
         timeEntries={drawerTimeEntries}
-        templateNotes={sortTemplateNotesForDispatch(templateNotes)}
+        templateNotes={templateNotes}
         onConfirm={() => {}}
         onTimeEntry={() => {}}
-        companyName={previewDispatch ? companyMap[previewDispatch.company_id] : ''}
-      />
-    </div>
-  );
+        companyName={previewDispatch ? companyMap[previewDispatch.company_id] : ''} />
+
+    </div>);
+
 }
