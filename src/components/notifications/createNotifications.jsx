@@ -42,6 +42,18 @@ function getRelevantTrucks(dispatch, accessCode) {
   );
 }
 
+function reconcileExistingRequiredTrucks(notification, dispatch, accessCode) {
+  const originalRequired = Array.isArray(notification?.required_trucks)
+    ? notification.required_trucks
+    : [];
+  const currentDispatchTrucks = new Set(dispatch?.trucks_assigned || []);
+  const allowedTrucks = new Set(accessCode?.allowed_trucks || []);
+
+  return originalRequired.filter(truck =>
+    currentDispatchTrucks.has(truck) && allowedTrucks.has(truck)
+  );
+}
+
 function buildOwnerDispatchMessage(dispatch, statusText, relevantTrucks) {
   const truckSummary = relevantTrucks.length <= 3
     ? `Trucks: ${relevantTrucks.join(', ')}`
@@ -196,7 +208,7 @@ export async function reconcileOwnerNotificationsForDispatch(dispatch, accessCod
       const ownerCode = ownerCodeMap.get(notification.recipient_access_code_id || notification.recipient_id);
       if (!ownerCode) continue;
 
-      const relevantTrucks = getRelevantTrucks(dispatch, ownerCode);
+      const relevantTrucks = reconcileExistingRequiredTrucks(notification, dispatch, ownerCode);
       const statusText = statusLabels[status] || status;
       const message = buildOwnerDispatchMessage(dispatch, statusText, relevantTrucks);
       const confirmedTrucks = (confirmationsByStatus[status] || []).map(c => c.truck_number);
