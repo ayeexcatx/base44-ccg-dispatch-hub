@@ -167,8 +167,13 @@ export default function DispatchForm({ dispatch, companies, accessCodes, onSave,
 
     const isEdit = !!dispatch && !dispatch._isCopy;
     const statusChanged = isEdit ? dispatch.status !== finalForm.status : true;
+    const previousTrucks = isEdit ? (dispatch.trucks_assigned || []) : [];
+    const nextTrucks = finalForm.trucks_assigned || [];
+    const addedTrucks = !statusChanged
+      ? nextTrucks.filter((truck) => !previousTrucks.includes(truck))
+      : [];
 
-    if (isEdit && !statusChanged) {
+    if (isEdit && !statusChanged && addedTrucks.length === 0) {
       setPendingFinalForm(finalForm);
       setShowUpdateNotifyChoice(true);
       return;
