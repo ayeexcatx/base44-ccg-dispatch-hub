@@ -405,7 +405,7 @@ export default function AdminDispatches() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">Dispatches</h2>
+          <h2 className="text-slate-900 text-2xl font-bold text-left uppercase">Dispatches</h2>
           <p className="text-sm text-slate-500">{currentList.length} dispatches</p>
         </div>
         <div className="flex gap-2">
@@ -448,8 +448,8 @@ export default function AdminDispatches() {
         </Card>
       }
 
-      <Tabs value={tab} onValueChange={setTab} className="bg-slate-400 rounded">
-        <TabsList className="bg-blue-50 text-muted-foreground p-1 rounded-[10007px] inline-flex h-9 items-center justify-center">
+      <Tabs value={tab} onValueChange={setTab} className="bg-slate-600 rounded">
+        <TabsList className="bg-slate-700 text-violet-50 p-1 rounded-[10007px] inline-flex h-9 items-center justify-center">
           <TabsTrigger value="today" className="text-xs">Today ({todayDispatches.length})</TabsTrigger>
           <TabsTrigger value="upcoming" className="text-xs">Upcoming ({upcomingDispatches.length})</TabsTrigger>
           <TabsTrigger value="history" className="text-xs">History ({historyDispatches.length})</TabsTrigger>
