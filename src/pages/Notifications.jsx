@@ -35,13 +35,17 @@ export default function Notifications() {
   const dispatchMap = Object.fromEntries(dispatches.map(d => [d.id, d]));
   const allowedTrucks = session?.allowed_trucks || [];
 
+  const isInformationalUpdateNotification = (notification) =>
+    notification?.notification_category === 'dispatch_update_info';
+
   const handleNotificationClick = (n) => {
+    if (isInformationalUpdateNotification(n) && !n.read_flag) {
+      markRead(n.id);
+    }
+
     if (n.related_dispatch_id) {
       const targetPage = session?.code_type === 'Admin' ? 'AdminDispatches' : 'Portal';
-      if (!n.read_flag) markRead(n.id);
       navigate(createPageUrl(`${targetPage}?dispatchId=${n.related_dispatch_id}`));
-    } else {
-      if (!n.read_flag) markRead(n.id);
     }
   };
 

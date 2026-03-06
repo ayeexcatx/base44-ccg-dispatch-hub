@@ -24,14 +24,21 @@ export default function NotificationBell({ session }) {
     refetchInterval: 30000,
   });
 
+  const isInformationalUpdateNotification = (notification) =>
+    notification?.notification_category === 'dispatch_update_info';
+
   const handleNotificationClick = (n) => {
     if (!session) return;
+
+    if (isInformationalUpdateNotification(n) && !n.read_flag) {
+      markRead(n.id);
+    }
+
     if (n.related_dispatch_id) {
       const targetPage = session.code_type === 'Admin' ? 'AdminDispatches' : 'Portal';
       setOpen(false);
       setTimeout(() => navigate(createPageUrl(`${targetPage}?dispatchId=${n.related_dispatch_id}`)), 0);
     } else {
-      if (!n.read_flag) markRead(n.id);
       navigate(createPageUrl('Notifications'));
     }
   };

@@ -179,7 +179,14 @@ export default function Home() {
     }));
   }, [notifications, dispatches]);
 
+  const isInformationalUpdateNotification = (notification) =>
+    notification?.notification_category === 'dispatch_update_info';
+
   const handleActionClick = (n) => {
+    if (isInformationalUpdateNotification(n) && !n.read_flag) {
+      markRead(n.id);
+    }
+
     if (n.related_dispatch_id) {
       navigate(createPageUrl(`Portal?dispatchId=${n.related_dispatch_id}`));
     } else {
