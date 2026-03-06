@@ -2,9 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const DISMISS_KEY = 'pwa_install_prompt_dismissed_at';
-const DISMISS_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
-
 const isStandaloneMode = () => {
   if (typeof window === 'undefined') return false;
 
@@ -35,23 +32,6 @@ const isIosSafari = () => {
   return isWebkit && !isOtherIOSBrowser;
 };
 
-function shouldHideFromDismissal() {
-  if (typeof window === 'undefined') return false;
-
-  const dismissedAt = window.localStorage.getItem(DISMISS_KEY);
-  if (!dismissedAt) return false;
-
-  const dismissedAtTs = Number(dismissedAt);
-  if (!Number.isFinite(dismissedAtTs)) return false;
-
-  const isStillHidden = Date.now() - dismissedAtTs < DISMISS_TTL_MS;
-  if (!isStillHidden) {
-    window.localStorage.removeItem(DISMISS_KEY);
-  }
-
-  return isStillHidden;
-}
-
 export default function InstallPromptBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isEligibleIosSafari, setIsEligibleIosSafari] = useState(false);
@@ -60,7 +40,7 @@ export default function InstallPromptBanner() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    if (isStandaloneMode() || shouldHideFromDismissal()) {
+    if (isStandaloneMode()) {
       return;
     }
 
@@ -97,7 +77,6 @@ export default function InstallPromptBanner() {
   }
 
   const dismiss = () => {
-    window.localStorage.setItem(DISMISS_KEY, String(Date.now()));
     setIsHidden(true);
   };
 
@@ -108,12 +87,7 @@ export default function InstallPromptBanner() {
     const choiceResult = await deferredPrompt.userChoice;
     setDeferredPrompt(null);
 
-    if (choiceResult?.outcome === 'accepted') {
-      setIsHidden(true);
-      return;
-    }
-
-    dismiss();
+    setIsHidden(choiceResult?.outcome === 'accepted');
   };
 
   const isIosContent = mode === 'ios';
@@ -128,7 +102,7 @@ export default function InstallPromptBanner() {
             </h2>
             <p className="mt-1 text-xs text-slate-600">
               {isIosContent
-                ? 'Install this app on your iPhone: tap Share, then Add to Home Screen.'
+                ? 'Install this app on your iPhone. Tap the Share button, then tap Add to Home Screen.'
                 : 'Install this app for faster access and a full-screen experience.'}
             </p>
           </div>
