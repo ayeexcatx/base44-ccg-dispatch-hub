@@ -179,15 +179,64 @@ export default function Home() {
     }));
   }, [notifications, dispatches]);
 
-  const isInformationalUpdateNotification = (notification) =>
-    notification?.notification_category === 'dispatch_update_info' ||
-    notification?.notification_type === 'informational';
+  const isInformationalUpdateNotification = (notification) => {
+    const hasDispatchLink = !!notification?.related_dispatch_id;
+    const hasCategory = notification?.notification_category === 'dispatch_update_info';
+    const isLegacyDispatchInfo =
+      hasDispatchLink &&
+      !notification?.dispatch_status_key &&
+      (!notification?.required_trucks || notification.required_trucks.length === 0) &&
+      notification?.title === 'Dispatch Update';
+
+    return hasCategory || isLegacyDispatchInfo;
+  };
 
   const handleNotificationClick = async (n) => {
     if (!session) return;
 
+    console.log('[Home] handleNotificationClick start', {
+      id: n?.id,
+      related_dispatch_id: n?.related_dispatch_id,
+      read_flag: n?.read_flag,
+      notification_category: n?.notification_category,
+      notification_type: n?.notification_type,
+    });
+
     if (n.related_dispatch_id && isInformationalUpdateNotification(n) && !n.read_flag) {
-      await markReadAsync(n.id);
+      console.log('[Home] informational notification detected', {
+        id: n?.id,
+        related_dispatch_id: n?.related_dispatch_id,
+        read_flag: n?.read_flag,
+        notification_category: n?.notification_category,
+        notification_type: n?.notification_type,
+      });
+      try {
+        console.log('[Home] before markReadAsync', {
+          id: n?.id,
+          related_dispatch_id: n?.related_dispatch_id,
+          read_flag: n?.read_flag,
+          notification_category: n?.notification_category,
+          notification_type: n?.notification_type,
+        });
+        await markReadAsync(n.id);
+        console.log('[Home] after markReadAsync success', {
+          id: n?.id,
+          related_dispatch_id: n?.related_dispatch_id,
+          read_flag: n?.read_flag,
+          notification_category: n?.notification_category,
+          notification_type: n?.notification_type,
+        });
+      } catch (error) {
+        console.log('[Home] markReadAsync failed', {
+          id: n?.id,
+          related_dispatch_id: n?.related_dispatch_id,
+          read_flag: n?.read_flag,
+          notification_category: n?.notification_category,
+          notification_type: n?.notification_type,
+          error,
+        });
+        return;
+      }
     }
 
     if (n.related_dispatch_id) {

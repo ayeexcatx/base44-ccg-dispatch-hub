@@ -190,8 +190,8 @@ export async function notifyDispatchInformationalUpdate(dispatch, customMessage,
 
     if (!affectedOwnerCodes?.length) return;
 
-    await Promise.all(affectedOwnerCodes.map(ac =>
-      base44.entities.Notification.create({
+    await Promise.all(affectedOwnerCodes.map(async (ac) => {
+      const createdNotification = await base44.entities.Notification.create({
         recipient_type: 'AccessCode',
         recipient_access_code_id: ac.id,
         recipient_id: ac.id,
@@ -202,8 +202,24 @@ export async function notifyDispatchInformationalUpdate(dispatch, customMessage,
         read_flag: false,
         notification_category: 'dispatch_update_info',
         notification_type: 'informational',
-      })
-    ));
+      });
+
+      const missingInfoCategory = createdNotification?.notification_category !== 'dispatch_update_info';
+      const missingInfoType = createdNotification?.notification_type !== 'informational';
+
+      if ((missingInfoCategory || missingInfoType) && createdNotification?.id) {
+        console.log('[notifyDispatchInformationalUpdate] created notification missing info fields, applying patch update', {
+          id: createdNotification?.id,
+          notification_category: createdNotification?.notification_category,
+          notification_type: createdNotification?.notification_type,
+        });
+
+        await base44.entities.Notification.update(createdNotification.id, {
+          notification_category: 'dispatch_update_info',
+          notification_type: 'informational',
+        });
+      }
+    }));
   } catch (err) {
     console.error('Error creating informational dispatch update notifications:', err);
   }
