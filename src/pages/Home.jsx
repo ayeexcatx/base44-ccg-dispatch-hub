@@ -180,8 +180,7 @@ export default function Home() {
   }, [notifications, dispatches]);
 
   const isInformationalUpdateNotification = (notification) =>
-    notification?.notification_category === 'dispatch_update_info' ||
-    notification?.notification_type === 'informational';
+    notification?.notification_category === 'dispatch_update_info';
 
   const handleNotificationClick = async (n) => {
     if (!session) return;
