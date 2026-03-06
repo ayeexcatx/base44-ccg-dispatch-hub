@@ -54,8 +54,8 @@ export default function AdminDashboard() {
       color: 'bg-blue-500', link: 'AdminConfirmations'
     },
     {
-      label: 'Access Codes', value: codes.filter(c => c.active_flag !== false).length, icon: Key,
-      color: 'bg-emerald-500', link: 'AdminAccessCodes'
+      label: 'Create New Dispatch', value: 'New', icon: FileText,
+      color: 'bg-emerald-500', link: 'AdminDispatches', state: { openNewDispatch: true }, isAction: true
     },
     {
       label: 'Active Dispatches', value: activeDispatches.length, icon: FileText,
@@ -81,7 +81,7 @@ export default function AdminDashboard() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map(s => (
-          <Link key={s.label} to={createPageUrl(s.link)}>
+          <Link key={s.label} to={createPageUrl(s.link)} state={s.state}>
             <Card className="hover:shadow-md transition-shadow cursor-pointer group">
               <CardContent className="p-5">
                 <div className={`h-10 w-10 rounded-xl ${s.color} bg-opacity-10 flex items-center justify-center mb-3`}>
@@ -89,7 +89,7 @@ export default function AdminDashboard() {
                 </div>
                 <p className="text-2xl font-bold text-slate-900">{s.value}</p>
                 <div className="flex items-center justify-between mt-1">
-                  <p className="text-xs text-slate-500">{s.label}</p>
+                  <p className={`text-xs ${s.isAction ? 'text-emerald-700 font-semibold' : 'text-slate-500'}`}>{s.label}</p>
                   <ArrowRight className="h-3.5 w-3.5 text-slate-300 group-hover:text-slate-500 transition-colors" />
                 </div>
               </CardContent>

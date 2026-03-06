@@ -163,6 +163,7 @@ export default function AdminDispatches() {
   const urlParams = new URLSearchParams(location.search);
   const targetDispatchId = urlParams.get('dispatchId');
   const targetNotificationId = urlParams.get('notificationId');
+  const openNewDispatch = Boolean(location.state?.openNewDispatch);
 
   const { data: dispatches = [], isLoading } = useQuery({
     queryKey: ['dispatches-admin'],
@@ -380,6 +381,12 @@ export default function AdminDispatches() {
       if (!editing || editing._isCopy) setEditing(null);
     });
   };
+
+  useEffect(() => {
+    if (!openNewDispatch) return;
+    setEditing(null);
+    setOpen(true);
+  }, [openNewDispatch]);
 
   return (
     <div className="space-y-6">
