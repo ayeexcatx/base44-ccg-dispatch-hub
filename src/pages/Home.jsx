@@ -214,7 +214,6 @@ export default function Home() {
     navigateFromAction(n);
   };
 
-  const priorityBg = { 1: 'bg-red-50 border-red-200', 2: 'bg-orange-50 border-orange-200', 3: 'bg-yellow-50 border-yellow-200', 4: 'bg-blue-50 border-blue-200', 5: 'bg-slate-50 border-slate-200' };
   const priorityText = { 1: 'text-red-800', 2: 'text-orange-800', 3: 'text-yellow-800', 4: 'text-blue-800', 5: 'text-slate-700' };
 
   return (
@@ -227,19 +226,28 @@ export default function Home() {
       </div>
 
       {/* Announcements */}
-      {announcements.length > 0 && (
-        <section className="space-y-2">
-          {announcements.map(a => (
-            <div key={a.id} className={`rounded-lg border px-4 py-3 flex gap-3 items-start ${priorityBg[a.priority] || priorityBg[3]}`}>
-              <Megaphone className={`h-4 w-4 shrink-0 mt-0.5 ${priorityText[a.priority] || priorityText[3]}`} />
-              <div>
-                <p className={`text-sm font-semibold ${priorityText[a.priority] || priorityText[3]}`}>{a.title}</p>
-                <p className={`text-xs mt-0.5 whitespace-pre-wrap ${priorityText[a.priority] || priorityText[3]} opacity-90`}>{a.message}</p>
+      <section>
+        <Card className="rounded-lg border bg-white shadow-sm">
+          <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-3">
+            <Megaphone className="h-4 w-4 text-slate-600" />
+            <h3 className="text-sm font-semibold text-slate-800">Announcement Center</h3>
+          </div>
+          <CardContent className="p-0">
+            {announcements.length === 0 ? (
+              <p className="px-4 py-5 text-sm text-slate-500">No announcements at this time.</p>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {announcements.map(a => (
+                  <div key={a.id} className="px-4 py-3">
+                    <p className={`text-sm font-semibold leading-tight ${priorityText[a.priority] || priorityText[3]}`}>{a.title}</p>
+                    <p className="mt-1 text-sm text-slate-700 whitespace-pre-wrap break-words">{a.message}</p>
+                  </div>
+                ))}
               </div>
-            </div>
-          ))}
-        </section>
-      )}
+            )}
+          </CardContent>
+        </Card>
+      </section>
 
       {/* Action Needed — always visible for CompanyOwner */}
       {session?.code_type === 'CompanyOwner' && (
