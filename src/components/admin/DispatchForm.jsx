@@ -3,9 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Trash2 } from 'lucide-react';
+import { Copy, Plus, Trash2 } from 'lucide-react';
 import {
   notifyDispatchChange,
   notifyDispatchInformationalUpdate,
@@ -15,7 +16,7 @@ import {
 
 const UPDATE_MESSAGE_MAX_LENGTH = 100;
 
-export default function DispatchForm({ dispatch, companies, accessCodes, onSave, onCancel, saving }) {
+export default function DispatchForm({ dispatch, dispatches = [], companies, accessCodes, onSave, onCancel, saving }) {
   const [form, setForm] = useState({
     company_id: '', date: '', shift_time: 'Day Shift', client_name: '', job_number: '',
     start_time: '', start_location: '', instructions: 'Deliver material to / from',
@@ -27,6 +28,9 @@ export default function DispatchForm({ dispatch, companies, accessCodes, onSave,
   const [showUpdateMessagePrompt, setShowUpdateMessagePrompt] = useState(false);
   const [updateMessage, setUpdateMessage] = useState('');
   const [pendingFinalForm, setPendingFinalForm] = useState(null);
+  const [showCopyPicker, setShowCopyPicker] = useState(false);
+  const [copySearch, setCopySearch] = useState('');
+  const [copySourceSummary, setCopySourceSummary] = useState('');
 
   useEffect(() => {
     if (dispatch) {
@@ -53,9 +57,71 @@ export default function DispatchForm({ dispatch, companies, accessCodes, onSave,
   const selectedCompany = companies.find((c) => c.id === form.company_id);
   const availableTrucks = selectedCompany?.trucks || [];
 
+  const companyMap = {};
+  companies.forEach((c) => {companyMap[c.id] = c.name;});
+
   const isConfirmed = form.status === 'Scheduled';
   const isFullDispatch = form.status === 'Dispatch' || form.status === 'Amended';
   const isCanceled = form.status === 'Cancelled';
+
+  const normalizeAdditionalAssignments = (assignments) => {
+    if (!Array.isArray(assignments)) return [];
+    return assignments.map((assignment) => ({
+      job_number: assignment?.job_number || '',
+      start_time: assignment?.start_time || '',
+      start_location: assignment?.start_location || '',
+      instructions: assignment?.instructions || '',
+      notes: assignment?.notes || '',
+      toll_status: assignment?.toll_status || ''
+    }));
+  };
+
+  const copyEligibleDispatches = (dispatches || [])
+  .filter((candidate) => candidate?.id && candidate.id !== dispatch?.id)
+  .sort((a, b) => {
+    const sameCompanyA = form.company_id && a.company_id === form.company_id ? 1 : 0;
+    const sameCompanyB = form.company_id && b.company_id === form.company_id ? 1 : 0;
+    if (sameCompanyA !== sameCompanyB) return sameCompanyB - sameCompanyA;
+    const dateCompare = String(b.date || '').localeCompare(String(a.date || ''));
+    if (dateCompare !== 0) return dateCompare;
+    return String(b.created_date || '').localeCompare(String(a.created_date || ''));
+  })
+  .filter((candidate) => {
+    const term = copySearch.trim().toLowerCase();
+    if (!term) return true;
+    const searchable = [
+    candidate.date,
+    companyMap[candidate.company_id],
+    candidate.client_name,
+    candidate.job_number,
+    candidate.status]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+    return searchable.includes(term);
+  });
+
+  const copyDetailsFromDispatch = (sourceDispatch) => {
+    if (!sourceDispatch) return;
+    setForm((prev) => ({
+      ...prev,
+      client_name: sourceDispatch.client_name || '',
+      job_number: sourceDispatch.job_number || '',
+      start_time: sourceDispatch.start_time || '',
+      start_location: sourceDispatch.start_location || '',
+      instructions: sourceDispatch.instructions || 'Deliver material to / from',
+      notes: sourceDispatch.notes || '',
+      toll_status: sourceDispatch.toll_status || '',
+      additional_assignments: normalizeAdditionalAssignments(sourceDispatch.additional_assignments),
+      trucks_assigned: Array.isArray(sourceDispatch.trucks_assigned) ? sourceDispatch.trucks_assigned : []
+    }));
+
+    const sourceCompany = companyMap[sourceDispatch.company_id] || 'Unknown company';
+    const summaryBits = [sourceDispatch.date, sourceCompany, sourceDispatch.client_name, sourceDispatch.job_number ? `#${sourceDispatch.job_number}` : null]
+    .filter(Boolean);
+    setCopySourceSummary(summaryBits.join(' • '));
+    setShowCopyPicker(false);
+  };
 
   const toggleTruck = (t) => {
     setForm((prev) => ({
@@ -231,6 +297,23 @@ export default function DispatchForm({ dispatch, companies, accessCodes, onSave,
               <Input value={form.client_name} onChange={(e) => setForm({ ...form, client_name: e.target.value })} />
             </div>
           </>
+        }
+      </div>
+
+      <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-3 space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <p className="text-sm font-medium text-slate-800">Reuse dispatch details</p>
+            <p className="text-xs text-slate-500">Copy operational fields from a previous dispatch into this form.</p>
+          </div>
+          <Button type="button" variant="outline" onClick={() => setShowCopyPicker(true)} className="shrink-0">
+            <Copy className="h-4 w-4 mr-1" />Copy Details From...
+          </Button>
+        </div>
+        {copySourceSummary &&
+        <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-2.5 py-1.5">
+            Details copied from {copySourceSummary}
+          </p>
         }
       </div>
 
@@ -436,6 +519,47 @@ export default function DispatchForm({ dispatch, companies, accessCodes, onSave,
             >
               {saving ? 'Saving...' : 'Save & Send'}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showCopyPicker} onOpenChange={setShowCopyPicker}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Copy Details From...</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 overflow-hidden flex flex-col">
+            <Input
+              placeholder="Search date, company, client, job #, or status"
+              value={copySearch}
+              onChange={(e) => setCopySearch(e.target.value)}
+            />
+            <div className="overflow-y-auto border rounded-md">
+              {copyEligibleDispatches.length === 0 &&
+              <p className="text-sm text-slate-500 px-3 py-4">No matching dispatches found.</p>
+              }
+              {copyEligibleDispatches.map((candidate) => {
+                const sourceCompany = companyMap[candidate.company_id] || '—';
+                const sameCompany = form.company_id && candidate.company_id === form.company_id;
+                return (
+                  <button
+                    type="button"
+                    key={candidate.id}
+                    onClick={() => copyDetailsFromDispatch(candidate)}
+                    className="w-full text-left px-3 py-2.5 border-b last:border-b-0 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium text-slate-800">{candidate.date || 'No date'} • {sourceCompany}</p>
+                      <div className="flex items-center gap-1.5">
+                        {sameCompany && <Badge variant="outline" className="text-[10px]">Same company</Badge>}
+                        <Badge variant="outline" className="text-[10px]">{candidate.status || 'Unknown'}</Badge>
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-600 mt-1">Client: {candidate.client_name || '—'} • Job: {candidate.job_number || '—'}</p>
+                  </button>);
+
+              })}
+            </div>
           </div>
         </DialogContent>
       </Dialog>

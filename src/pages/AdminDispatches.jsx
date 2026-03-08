@@ -573,6 +573,7 @@ export default function AdminDispatches() {
           </DialogHeader>
           <DispatchForm
             dispatch={editing}
+            dispatches={dispatches}
             companies={companies}
             accessCodes={accessCodes}
             onSave={handleSave}
