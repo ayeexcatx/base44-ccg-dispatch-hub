@@ -1,6 +1,21 @@
 export function normalizeTimeValue(value) {
   if (!value) return '';
   const raw = String(value).trim();
+
+  const amPmMatch = raw.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*([AaPp][Mm])$/);
+  if (amPmMatch) {
+    let hour = Number.parseInt(amPmMatch[1], 10);
+    const minute = Number.parseInt(amPmMatch[2], 10);
+    const period = amPmMatch[3].toUpperCase();
+    if (Number.isNaN(hour) || Number.isNaN(minute) || hour < 1 || hour > 12 || minute < 0 || minute > 59) {
+      return raw;
+    }
+
+    if (period === 'AM' && hour === 12) hour = 0;
+    if (period === 'PM' && hour !== 12) hour += 12;
+    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+  }
+
   const m = raw.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
   if (!m) return raw;
   const hh = Number.parseInt(m[1], 10);

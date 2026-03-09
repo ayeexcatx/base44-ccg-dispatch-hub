@@ -56,6 +56,7 @@ function TruckTimeRow({
   onChangeDraft,
   onSaveAll,
   onCopyToAll,
+  isFirstRow,
 }) {
   const existing = timeEntries.find((te) =>
     te.dispatch_id === dispatch.id && te.truck_number === truck
@@ -109,24 +110,25 @@ function TruckTimeRow({
           </div>
         )}
       </div>
-      <div className="flex gap-2 items-center">
+      <div className="flex gap-2 items-end">
         <div className="flex-1">
           <p className="text-xs text-slate-500 mb-1">Check-in</p>
-          <div className="flex gap-2">
-            <Input type="time" value={start} onChange={e => onChangeDraft(truck, 'start', e.target.value)} className="text-sm h-8" />
-            <Button size="sm" variant="outline" className="h-8 text-xs" disabled={!start} onClick={() => onCopyToAll('start', start)}>
-              Copy to all
-            </Button>
-          </div>
+          <Input type="time" value={start} onChange={e => onChangeDraft(truck, 'start', e.target.value)} className="text-sm h-8" />
         </div>
+        {isFirstRow && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 text-xs mb-0"
+            disabled={!start && !end}
+            onClick={() => onCopyToAll(start, end)}
+          >
+            Copy to all
+          </Button>
+        )}
         <div className="flex-1">
           <p className="text-xs text-slate-500 mb-1">Check-out</p>
-          <div className="flex gap-2">
-            <Input type="time" value={end} onChange={e => onChangeDraft(truck, 'end', e.target.value)} className="text-sm h-8" />
-            <Button size="sm" variant="outline" className="h-8 text-xs" disabled={!end} onClick={() => onCopyToAll('end', end)}>
-              Copy to all
-            </Button>
-          </div>
+          <Input type="time" value={end} onChange={e => onChangeDraft(truck, 'end', e.target.value)} className="text-sm h-8" />
         </div>
         <div className="pt-5">
           <Button
@@ -201,13 +203,14 @@ export default function DispatchDetailDrawer({
     }));
   };
 
-  const handleCopyToAll = (field, value) => {
+  const handleCopyToAll = (sourceStart, sourceEnd) => {
     setDraftTimeEntries((prev) => {
       const next = { ...prev };
       myTrucks.forEach((truck) => {
         next[truck] = {
           ...(next[truck] || {}),
-          [field]: value,
+          ...(sourceStart ? { start: sourceStart } : {}),
+          ...(sourceEnd ? { end: sourceEnd } : {}),
         };
       });
       return next;
@@ -538,6 +541,7 @@ export default function DispatchDetailDrawer({
                         onChangeDraft={handleChangeDraft}
                         onSaveAll={handleSaveAll}
                         onCopyToAll={handleCopyToAll}
+                        isFirstRow={truck === myTrucks[0]}
                       />
                     ))}
                   </div>
