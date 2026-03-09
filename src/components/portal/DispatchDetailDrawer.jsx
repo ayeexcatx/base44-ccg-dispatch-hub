@@ -12,7 +12,6 @@ import { format, parseISO } from 'date-fns';
 import { statusBadgeColors } from './statusConfig';
 import { NOTE_TYPES, normalizeTemplateNote, renderSimpleMarkupToHtml } from '@/lib/templateNotes';
 import { calculateWorkedHours, formatTime24h, formatWorkedHours } from '@/lib/timeLogs';
-import { toast } from '@/components/ui/use-toast';
 
 const tollColors = {
   Authorized: 'bg-green-50 text-green-700',
@@ -140,6 +139,7 @@ export default function DispatchDetailDrawer({
   const [isEditingTrucks, setIsEditingTrucks] = useState(false);
   const [draftTrucks, setDraftTrucks] = useState([]);
   const [isSavingTrucks, setIsSavingTrucks] = useState(false);
+  const [truckEditMessage, setTruckEditMessage] = useState(null);
 
   useEffect(() => {
     setDraftTimeEntries({});
@@ -149,7 +149,18 @@ export default function DispatchDetailDrawer({
     setIsEditingTrucks(false);
     setDraftTrucks(dispatch?.trucks_assigned || []);
     setIsSavingTrucks(false);
+    setTruckEditMessage(null);
   }, [dispatch?.id, dispatch?.trucks_assigned]);
+
+  useEffect(() => {
+    if (!truckEditMessage) return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      setTruckEditMessage(null);
+    }, 4000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [truckEditMessage]);
 
   if (!dispatch) return null;
 
@@ -259,6 +270,18 @@ export default function DispatchDetailDrawer({
 
 
   const ownerTruckOptions = session?.code_type === 'CompanyOwner' ? (session?.allowed_trucks || []) : [];
+  const requiredTruckCount = (dispatch?.trucks_assigned || []).filter(Boolean).length;
+
+  const resetTruckEditing = () => {
+    setIsEditingTrucks(false);
+    setDraftTrucks(dispatch?.trucks_assigned || []);
+    setTruckEditMessage(null);
+  };
+
+  const handleDrawerClose = () => {
+    resetTruckEditing();
+    onClose();
+  };
 
   const toggleDraftTruck = (truck) => {
     setDraftTrucks((prev) =>
@@ -270,12 +293,13 @@ export default function DispatchDetailDrawer({
 
   const handleSaveTrucks = async () => {
     if (!onOwnerTruckUpdate) return;
+    setTruckEditMessage(null);
     const nextTrucks = [...new Set(draftTrucks.filter(Boolean))];
 
-    if (nextTrucks.length === 0) {
-      toast({
-        variant: 'destructive',
-        description: 'Please keep at least one truck assigned.',
+    if (nextTrucks.length !== requiredTruckCount) {
+      setTruckEditMessage({
+        type: 'error',
+        text: `Truck count must remain ${requiredTruckCount}. Replace trucks one-for-one before saving.`,
       });
       return;
     }
@@ -284,13 +308,12 @@ export default function DispatchDetailDrawer({
     try {
       const result = await onOwnerTruckUpdate(dispatch, nextTrucks);
       if (result?.updated) {
-        toast({ description: 'Truck assignments updated.' });
-        setIsEditingTrucks(false);
+        resetTruckEditing();
       }
     } catch (error) {
-      toast({
-        variant: 'destructive',
-        description: error?.message || 'Unable to update truck assignments.',
+      setTruckEditMessage({
+        type: 'error',
+        text: error?.message || 'Unable to update truck assignments.',
       });
     } finally {
       setIsSavingTrucks(false);
@@ -310,7 +333,7 @@ export default function DispatchDetailDrawer({
     : '';
 
   return (
-    <Sheet open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+    <Sheet open={open} onOpenChange={(v) => { if (!v) handleDrawerClose(); }}>
       <SheetContent ref={drawerScrollRef} side="right" className="w-full sm:max-w-lg overflow-y-auto p-0">
         {/* Top bar */}
         <div className="sticky top-0 bg-white border-b border-slate-200 px-5 py-4 z-10">
@@ -318,7 +341,7 @@ export default function DispatchDetailDrawer({
             type="button"
             variant="ghost"
             size="sm"
-            onClick={onClose}
+            onClick={handleDrawerClose}
             className="mb-2 -ml-2 h-8 px-2 text-slate-600 hover:text-slate-900"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
@@ -381,11 +404,13 @@ export default function DispatchDetailDrawer({
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-7 text-xs"
+                      className="h-7 text-xs border-red-300 text-red-700 hover:bg-red-50 hover:text-red-800"
                       onClick={() => {
                         if (isEditingTrucks) {
-                          setDraftTrucks(dispatch?.trucks_assigned || []);
+                          resetTruckEditing();
+                          return;
                         }
+                        setTruckEditMessage(null);
                         setIsEditingTrucks((prev) => !prev);
                       }}
                     >
@@ -397,23 +422,31 @@ export default function DispatchDetailDrawer({
 
                 {isOwner && isEditingTrucks && (
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3">
-                    <p className="text-xs text-slate-500">Select assigned trucks</p>
+                    <p className="text-xs text-slate-500">
+                      Select assigned trucks. You must keep exactly {requiredTruckCount} truck{requiredTruckCount === 1 ? '' : 's'}.
+                    </p>
                     <div className="space-y-2">
                       {ownerTruckOptions.map((truck) => (
                         <label key={truck} className="flex items-center gap-2 text-sm text-slate-700">
                           <Checkbox
                             checked={draftTrucks.includes(truck)}
+                            disabled={!draftTrucks.includes(truck) && draftTrucks.filter(Boolean).length >= requiredTruckCount}
                             onCheckedChange={() => toggleDraftTruck(truck)}
                           />
                           <span className="font-mono">{truck}</span>
                         </label>
                       ))}
                     </div>
+                    {truckEditMessage?.text && (
+                      <div className="rounded-md border border-red-200 bg-red-50 px-2.5 py-2 text-xs text-red-700">
+                        {truckEditMessage.text}
+                      </div>
+                    )}
                     <Button
                       type="button"
                       size="sm"
-                      className="bg-slate-900 hover:bg-slate-800"
-                      disabled={!hasTruckDraftChanges || isSavingTrucks}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                      disabled={!hasTruckDraftChanges || isSavingTrucks || draftTrucks.filter(Boolean).length !== requiredTruckCount}
                       onClick={handleSaveTrucks}
                     >
                       {isSavingTrucks ? 'Saving…' : 'Save Truck Assignments'}

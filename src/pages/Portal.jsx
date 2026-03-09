@@ -158,6 +158,10 @@ export default function Portal() {
       if (hasUnauthorizedTruck) throw new Error('You can only assign trucks from your own company.');
 
       const previousTrucks = dispatch.trucks_assigned || [];
+      if (normalizedNext.length !== previousTrucks.length) {
+        throw new Error(`Truck count must remain ${previousTrucks.length}. You can only replace trucks one-for-one.`);
+      }
+
       const removedTrucks = previousTrucks.filter((truck) => !normalizedNext.includes(truck));
       const addedTrucks = normalizedNext.filter((truck) => !previousTrucks.includes(truck));
       const hasChanges = addedTrucks.length > 0 || removedTrucks.length > 0;
