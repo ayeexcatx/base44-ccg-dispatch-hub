@@ -111,6 +111,7 @@ export default function AdminConfirmations() {
         truckNumber: confirmation.truck_number,
         clientName: dispatch.client_name || '',
         jobNumber: dispatch.job_number || '',
+        referenceTag: dispatch.reference_tag || '',
         confirmationType: confirmation.confirmation_type,
         confirmedAt: confirmation.confirmed_at,
         confirmedBy: confirmer?.label || confirmer?.code || '—',
@@ -158,7 +159,9 @@ export default function AdminConfirmations() {
                     <th className="text-left font-medium px-3 py-2">Dispatch Date</th>
                     <th className="text-left font-medium px-3 py-2">Type</th>
                     <th className="text-left font-medium px-3 py-2">Truck</th>
-                    <th className="text-left font-medium px-3 py-2">Client / Job</th>
+                    <th className="text-left font-medium px-3 py-2">Client</th>
+                    <th className="text-left font-medium px-3 py-2">Job Number</th>
+                    <th className="text-left font-medium px-3 py-2">Reference</th>
                     <th className="text-left font-medium px-3 py-2">Notification Time</th>
                     <th className="text-left font-medium px-3 py-2">Pending</th>
                   </tr>
@@ -178,7 +181,9 @@ export default function AdminConfirmations() {
                         </Badge>
                       </td>
                       <td className="px-3 py-2 font-mono">{row.truckNumber}</td>
-                      <td className="px-3 py-2">{[row.clientName, row.jobNumber].filter(Boolean).join(' / ') || '—'}</td>
+                      <td className="px-3 py-2">{row.clientName || '—'}</td>
+                      <td className="px-3 py-2">{row.jobNumber || '—'}</td>
+                      <td className="px-3 py-2">{row.referenceTag || '—'}</td>
                       <td className="px-3 py-2">{formatDateTime(row.createdAt)}</td>
                       <td className="px-3 py-2">{formatPendingAge(row.createdAt)}</td>
                     </tr>
@@ -214,7 +219,9 @@ export default function AdminConfirmations() {
                     <th className="text-left font-medium px-3 py-2">Company</th>
                     <th className="text-left font-medium px-3 py-2">Dispatch Date</th>
                     <th className="text-left font-medium px-3 py-2">Truck</th>
-                    <th className="text-left font-medium px-3 py-2">Client / Job</th>
+                    <th className="text-left font-medium px-3 py-2">Client</th>
+                    <th className="text-left font-medium px-3 py-2">Job Number</th>
+                    <th className="text-left font-medium px-3 py-2">Reference</th>
                     <th className="text-left font-medium px-3 py-2">Type</th>
                     <th className="text-left font-medium px-3 py-2">Confirmed At</th>
                     <th className="text-left font-medium px-3 py-2">Confirmed By</th>
@@ -230,7 +237,9 @@ export default function AdminConfirmations() {
                       <td className="px-3 py-2">{row.companyName}</td>
                       <td className="px-3 py-2">{formatDispatchDate(row.dispatchDate)}</td>
                       <td className="px-3 py-2 font-mono">{row.truckNumber || '—'}</td>
-                      <td className="px-3 py-2">{[row.clientName, row.jobNumber].filter(Boolean).join(' / ') || '—'}</td>
+                      <td className="px-3 py-2">{row.clientName || '—'}</td>
+                      <td className="px-3 py-2">{row.jobNumber || '—'}</td>
+                      <td className="px-3 py-2">{row.referenceTag || '—'}</td>
                       <td className="px-3 py-2">
                         <Badge className={`${statusBadgeColors[row.confirmationType] || 'bg-slate-100 text-slate-700 border-slate-200'} border`}>
                           {row.confirmationType || '—'}

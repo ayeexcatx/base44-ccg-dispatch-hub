@@ -91,6 +91,7 @@ export function buildOpenConfirmationRows({
         truckNumber,
         clientName: dispatch.client_name || '',
         jobNumber: dispatch.job_number || '',
+        referenceTag: dispatch.reference_tag || '',
         createdAt: notification.created_date || notification.created_at || null,
       });
     });

@@ -17,7 +17,7 @@ const UPDATE_MESSAGE_MAX_LENGTH = 100;
 
 export default function DispatchForm({ dispatch, dispatches = [], companies, accessCodes, onSave, onCancel, saving }) {
   const [form, setForm] = useState({
-    company_id: '', date: '', shift_time: 'Day Shift', client_name: '', job_number: '',
+    company_id: '', date: '', shift_time: 'Day Shift', client_name: '', job_number: '', reference_tag: '',
     start_time: '', start_location: '', instructions: 'Deliver material to / from',
     notes: '', toll_status: '', trucks_assigned: [],
     status: 'Scheduled', additional_assignments: [],
@@ -40,6 +40,7 @@ export default function DispatchForm({ dispatch, dispatches = [], companies, acc
         shift_time: dispatch.shift_time || 'Day Shift',
         client_name: dispatch.client_name || '',
         job_number: dispatch.job_number || '',
+        reference_tag: dispatch.reference_tag || '',
         start_time: dispatch.start_time || '',
         start_location: dispatch.start_location || '',
         instructions: dispatch.instructions || 'Deliver material to / from',
@@ -53,6 +54,35 @@ export default function DispatchForm({ dispatch, dispatches = [], companies, acc
       });
     }
   }, [dispatch]);
+
+  const getLatestReferenceTagForJob = (jobNumber, skipDispatchId = dispatch?.id) => {
+    const normalizedJob = String(jobNumber || '').trim().toLowerCase();
+    if (!normalizedJob) return '';
+
+    const sortedDispatches = [...(dispatches || [])].sort((a, b) => {
+      const dateCompare = String(b.date || '').localeCompare(String(a.date || ''));
+      if (dateCompare !== 0) return dateCompare;
+      return String(b.created_date || '').localeCompare(String(a.created_date || ''));
+    });
+
+    for (const candidate of sortedDispatches) {
+      if (!candidate || (skipDispatchId && candidate.id === skipDispatchId)) continue;
+
+      if (String(candidate.job_number || '').trim().toLowerCase() === normalizedJob) {
+        const tag = String(candidate.reference_tag || '').trim();
+        if (tag) return tag;
+      }
+
+      const additionalAssignments = Array.isArray(candidate.additional_assignments) ? candidate.additional_assignments : [];
+      for (const assignment of additionalAssignments) {
+        if (String(assignment?.job_number || '').trim().toLowerCase() !== normalizedJob) continue;
+        const tag = String(assignment?.reference_tag || '').trim();
+        if (tag) return tag;
+      }
+    }
+
+    return '';
+  };
 
   const selectedCompany = companies.find((c) => c.id === form.company_id);
   const availableTrucks = selectedCompany?.trucks || [];
@@ -90,7 +120,8 @@ export default function DispatchForm({ dispatch, dispatches = [], companies, acc
       start_location: assignment?.start_location || '',
       instructions: assignment?.instructions || '',
       notes: assignment?.notes || '',
-      toll_status: assignment?.toll_status || ''
+      toll_status: assignment?.toll_status || '',
+      reference_tag: assignment?.reference_tag || ''
     }));
   };
 
@@ -111,12 +142,12 @@ export default function DispatchForm({ dispatch, dispatches = [], companies, acc
     return String(b.created_date || '').localeCompare(String(a.created_date || ''));
   })
   .filter((candidate, index, arr) => {
-    const dedupeKey = [candidate.job_number, candidate.start_location, candidate.instructions]
+    const dedupeKey = [candidate.job_number, candidate.reference_tag, candidate.start_location, candidate.instructions]
     .map((field) => String(field || '').trim().toLowerCase())
     .join('||');
 
     return index === arr.findIndex((other) => {
-      const otherKey = [other.job_number, other.start_location, other.instructions]
+      const otherKey = [other.job_number, other.reference_tag, other.start_location, other.instructions]
       .map((field) => String(field || '').trim().toLowerCase())
       .join('||');
       return dedupeKey === otherKey;
@@ -130,6 +161,7 @@ export default function DispatchForm({ dispatch, dispatches = [], companies, acc
     companyMap[candidate.company_id],
     candidate.client_name,
     candidate.job_number,
+    candidate.reference_tag,
     candidate.start_location,
     candidate.instructions,
     candidate.status]
@@ -149,6 +181,7 @@ export default function DispatchForm({ dispatch, dispatches = [], companies, acc
         assignments[copyTargetAssignmentIndex] = {
           ...current,
           job_number: sourceDispatch.job_number || '',
+          reference_tag: sourceDispatch.reference_tag || '',
           start_time: sourceDispatch.start_time || '',
           start_location: sourceDispatch.start_location || '',
           instructions: sourceDispatch.instructions || 'Deliver material to / from',
@@ -169,6 +202,7 @@ export default function DispatchForm({ dispatch, dispatches = [], companies, acc
       ...prev,
       client_name: sourceDispatch.client_name || '',
       job_number: sourceDispatch.job_number || '',
+      reference_tag: sourceDispatch.reference_tag || '',
       start_time: sourceDispatch.start_time || '',
       start_location: sourceDispatch.start_location || '',
       instructions: sourceDispatch.instructions || 'Deliver material to / from',
@@ -198,13 +232,35 @@ export default function DispatchForm({ dispatch, dispatches = [], companies, acc
   const addAssignment = () => {
     setForm((prev) => ({
       ...prev,
-      additional_assignments: [...prev.additional_assignments, { job_number: '', start_time: '', start_location: '', instructions: '', notes: '', toll_status: '' }]
+      additional_assignments: [...prev.additional_assignments, { job_number: '', reference_tag: '', start_time: '', start_location: '', instructions: '', notes: '', toll_status: '' }]
     }));
+  };
+
+  const handlePrimaryJobNumberChange = (value) => {
+    const suggestedReference = getLatestReferenceTagForJob(value);
+    setForm((prev) => ({
+      ...prev,
+      job_number: value,
+      reference_tag: suggestedReference
+    }));
+  };
+
+  const handlePrimaryReferenceTagChange = (value) => {
+    setForm((prev) => ({ ...prev, reference_tag: value }));
   };
 
   const updateAssignment = (idx, field, val) => {
     const arr = [...form.additional_assignments];
-    arr[idx] = { ...arr[idx], [field]: val };
+
+    if (field === 'job_number') {
+      const suggestedReference = getLatestReferenceTagForJob(val);
+      arr[idx] = { ...arr[idx], job_number: val, reference_tag: suggestedReference };
+    } else if (field === 'reference_tag') {
+      arr[idx] = { ...arr[idx], reference_tag: val };
+    } else {
+      arr[idx] = { ...arr[idx], [field]: val };
+    }
+
     setForm({ ...form, additional_assignments: arr });
   };
 
@@ -401,7 +457,11 @@ export default function DispatchForm({ dispatch, dispatches = [], companies, acc
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs">Job Number</Label>
-                <Input placeholder="Job #" value={form.job_number || ''} onChange={(e) => setForm({ ...form, job_number: e.target.value })} />
+                <Input placeholder="Job #" value={form.job_number || ''} onChange={(e) => handlePrimaryJobNumberChange(e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs">Reference Tag</Label>
+                <Input placeholder="Spoken name" value={form.reference_tag || ''} onChange={(e) => handlePrimaryReferenceTagChange(e.target.value)} maxLength={40} />
               </div>
               <div>
                 <Label className="text-xs">Start Time</Label>
@@ -513,6 +573,12 @@ export default function DispatchForm({ dispatch, dispatches = [], companies, acc
                   <Label className="text-xs">Job Number</Label>
                   <Input placeholder="Job #" value={a.job_number || ''} onChange={(e) => updateAssignment(i, 'job_number', e.target.value)} />
                 </div>
+                <div>
+                  <Label className="text-xs">Reference Tag</Label>
+                  <Input placeholder="Spoken name" value={a.reference_tag || ''} onChange={(e) => updateAssignment(i, 'reference_tag', e.target.value)} maxLength={40} />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs">Start Time</Label>
                   <Input type="time" value={a.start_time} onChange={(e) => updateAssignment(i, 'start_time', e.target.value)} />
@@ -631,7 +697,7 @@ export default function DispatchForm({ dispatch, dispatches = [], companies, acc
           </DialogHeader>
           <div className="space-y-3 overflow-hidden flex flex-col">
             <Input
-              placeholder="Search date, client, job #, start, instructions, or status"
+              placeholder="Search date, client, job #, reference tag, start, instructions, or status"
               value={copySearch}
               onChange={(e) => setCopySearch(e.target.value)}
             />
@@ -650,6 +716,7 @@ export default function DispatchForm({ dispatch, dispatches = [], companies, acc
                     <p className="text-sm font-semibold text-slate-800 leading-tight truncate">
                       {formatPickerDate(candidate.date)} • {candidate.client_name || '—'} • Job #{candidate.job_number || '—'}
                     </p>
+                    {candidate.reference_tag && <p className="text-xs text-slate-500 leading-tight mt-0.5 truncate">Reference: {candidate.reference_tag}</p>}
                     <p className="text-xs text-slate-600 leading-tight mt-1 truncate">Start: {candidate.start_location || '—'}</p>
                     <p className="text-xs text-slate-600 leading-tight mt-0.5 truncate">Instructions: {candidate.instructions || '—'}</p>
                   </button>);

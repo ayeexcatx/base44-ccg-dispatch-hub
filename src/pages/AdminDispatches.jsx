@@ -255,7 +255,7 @@ export default function AdminDispatches() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteCode, setDeleteCode] = useState('');
   const [deleteError, setDeleteError] = useState('');
-  const [filters, setFilters] = useState({ status: 'all', company_id: 'all', truck: '', dateFrom: '', dateTo: '' });
+  const [filters, setFilters] = useState({ status: 'all', company_id: 'all', truck: '', dateFrom: '', dateTo: '', query: '' });
   const [showFilters, setShowFilters] = useState(false);
   const [tab, setTab] = useState('today');
   const dispatchRefs = useRef({});
@@ -504,6 +504,19 @@ export default function AdminDispatches() {
       if (filters.truck && !(d.trucks_assigned || []).some((t) => t.includes(filters.truck))) return false;
       if (filters.dateFrom && d.date < filters.dateFrom) return false;
       if (filters.dateTo && d.date > filters.dateTo) return false;
+      if (filters.query.trim()) {
+        const term = filters.query.trim().toLowerCase();
+        const assignmentTags = (Array.isArray(d.additional_assignments) ? d.additional_assignments : [])
+          .flatMap((a) => [a?.job_number, a?.reference_tag])
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        const searchable = [d.client_name, d.job_number, d.reference_tag, assignmentTags]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        if (!searchable.includes(term)) return false;
+      }
       return true;
     });
   }, [dispatches, filters]);
@@ -678,7 +691,7 @@ export default function AdminDispatches() {
       {showFilters &&
       <Card>
           <CardContent className="p-4">
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
               <Select value={filters.status} onValueChange={(v) => setFilters({ ...filters, status: v })}>
                 <SelectTrigger className="text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
                 <SelectContent>
@@ -698,6 +711,7 @@ export default function AdminDispatches() {
                 </SelectContent>
               </Select>
               <Input placeholder="Truck #" value={filters.truck} onChange={(e) => setFilters({ ...filters, truck: e.target.value })} className="text-xs" />
+              <Input placeholder="Search job / reference" value={filters.query} onChange={(e) => setFilters({ ...filters, query: e.target.value })} className="text-xs" />
               <Input type="date" value={filters.dateFrom} onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })} className="text-xs" />
               <Input type="date" value={filters.dateTo} onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })} className="text-xs" />
             </div>
@@ -766,6 +780,9 @@ export default function AdminDispatches() {
                         <span className="flex items-center gap-1"><FileText className="h-3 w-3" />#{d.job_number}</span>
                         }
                     </div>
+                    {d.reference_tag && (
+                      <p className="text-xs text-slate-400 mt-0.5">Reference Tag: {d.reference_tag}</p>
+                    )}
                     <div className="mt-2">
                       <div className="text-slate-400 text-xs mb-1">{companyMap[d.company_id] || '—'}</div>
                       <div className="flex items-center gap-1 flex-wrap">
