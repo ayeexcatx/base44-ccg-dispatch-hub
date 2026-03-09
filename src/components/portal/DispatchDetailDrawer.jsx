@@ -6,13 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   CheckCircle2, Clock, Truck, Sun, Moon,
-  FileText, AlertTriangle, Save, History, ArrowLeft, Pencil
+  FileText, AlertTriangle, Save, History, ArrowLeft, Pencil, Camera
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { statusBadgeColors } from './statusConfig';
 import { NOTE_TYPES, normalizeTemplateNote, renderSimpleMarkupToHtml } from '@/lib/templateNotes';
 import { calculateWorkedHours, formatTime24h, formatWorkedHours } from '@/lib/timeLogs';
 import { toast } from 'sonner';
+import html2canvas from 'html2canvas';
 
 const tollColors = {
   Authorized: 'bg-green-50 text-green-700',
@@ -220,6 +221,8 @@ export default function DispatchDetailDrawer({
   const [draftTrucks, setDraftTrucks] = useState([]);
   const [isSavingTrucks, setIsSavingTrucks] = useState(false);
   const [truckEditMessage, setTruckEditMessage] = useState(null);
+  const [isCreatingScreenshot, setIsCreatingScreenshot] = useState(false);
+  const screenshotSectionRef = React.useRef(null);
 
   useEffect(() => {
     setDraftTimeEntries({});
@@ -430,8 +433,102 @@ export default function DispatchDetailDrawer({
     try {
       await navigator.clipboard.writeText(copyText);
       toast.success('Dispatch copied to clipboard.');
-    } catch (error) {
+    } catch {
       toast.error('Unable to copy dispatch details.');
+    }
+  };
+
+  const handleScreenshotDispatch = async () => {
+    if (isEditingTrucks) {
+      toast.error('Finish editing trucks before creating a screenshot.');
+      return;
+    }
+
+    const target = screenshotSectionRef.current;
+    if (!target) {
+      toast.error('Dispatch details are not ready to capture yet.');
+      return;
+    }
+
+    setIsCreatingScreenshot(true);
+    let screenshotRoot;
+    try {
+      screenshotRoot = document.createElement('div');
+      screenshotRoot.style.position = 'fixed';
+      screenshotRoot.style.left = '-10000px';
+      screenshotRoot.style.top = '0';
+      screenshotRoot.style.width = `${Math.max(360, Math.min(target.scrollWidth || 420, 720))}px`;
+      screenshotRoot.style.padding = '20px';
+      screenshotRoot.style.background = '#ffffff';
+      screenshotRoot.style.boxSizing = 'border-box';
+      screenshotRoot.style.zIndex = '-1';
+
+      const summary = document.createElement('div');
+      summary.style.display = 'grid';
+      summary.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
+      summary.style.gap = '8px';
+      summary.style.padding = '12px';
+      summary.style.border = '1px solid #e2e8f0';
+      summary.style.borderRadius = '10px';
+      summary.style.background = '#f8fafc';
+      summary.style.marginBottom = '16px';
+      summary.style.fontSize = '12px';
+      summary.innerHTML = `
+        <div><p style="margin:0;color:#64748b;font-weight:600;">Date</p><p style="margin:2px 0 0;color:#334155;">${displayDate || '—'}</p></div>
+        <div><p style="margin:0;color:#64748b;font-weight:600;">Shift</p><p style="margin:2px 0 0;color:#334155;">${dispatch.shift_time || '—'}</p></div>
+        <div><p style="margin:0;color:#64748b;font-weight:600;">Status</p><p style="margin:2px 0 0;color:#334155;">${dispatch.status || '—'}</p></div>
+      `;
+
+      const clone = target.cloneNode(true);
+      clone.querySelectorAll('[data-screenshot-exclude="true"]').forEach((node) => node.remove());
+
+      screenshotRoot.appendChild(summary);
+      screenshotRoot.appendChild(clone);
+      document.body.appendChild(screenshotRoot);
+
+      const canvas = await html2canvas(screenshotRoot, {
+        backgroundColor: '#ffffff',
+        scale: Math.min(window.devicePixelRatio || 1, 2),
+        useCORS: true,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: screenshotRoot.scrollWidth,
+        windowHeight: screenshotRoot.scrollHeight,
+      });
+
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) throw new Error('Failed to generate screenshot image.');
+
+      const fileNameDate = dispatch?.date || format(new Date(), 'yyyy-MM-dd');
+      const fileName = `dispatch-${fileNameDate}.png`;
+      const file = new File([blob], fileName, { type: 'image/png' });
+
+      const canShareFile = typeof navigator !== 'undefined'
+        && typeof navigator.share === 'function'
+        && typeof navigator.canShare === 'function'
+        && navigator.canShare({ files: [file] });
+
+      if (canShareFile) {
+        await navigator.share({ files: [file], title: 'Dispatch Screenshot' });
+      } else {
+        const objectUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(objectUrl);
+      }
+
+      toast.success('Dispatch screenshot created.');
+    } catch (error) {
+      toast.error(error?.message || 'Unable to create dispatch screenshot on this device/browser.');
+    } finally {
+      if (screenshotRoot?.parentNode) {
+        screenshotRoot.parentNode.removeChild(screenshotRoot);
+      }
+      setIsCreatingScreenshot(false);
     }
   };
 
@@ -469,7 +566,7 @@ export default function DispatchDetailDrawer({
         <div className="px-5 py-5 space-y-6">
 
           {isOwner && (
-            <div>
+            <div className="flex items-center gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -479,17 +576,29 @@ export default function DispatchDetailDrawer({
               >
                 Copy Dispatch
               </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs"
+                disabled={isCreatingScreenshot || isEditingTrucks}
+                onClick={handleScreenshotDispatch}
+              >
+                <Camera className="h-3.5 w-3.5 mr-1" />
+                {isCreatingScreenshot ? 'Creating…' : 'Screenshot Dispatch'}
+              </Button>
             </div>
           )}
 
-          {/* Main info */}
-          {dispatch.status === 'Scheduled' ? (
-            <div>
-              <h2 className="text-sm font-semibold text-slate-700">Scheduled Dispatch</h2>
-              <p className="text-sm text-blue-600 mt-1 italic">Your truck has been scheduled — details will follow</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
+          <div ref={screenshotSectionRef} className="space-y-6 bg-white">
+            {/* Main info */}
+            {dispatch.status === 'Scheduled' ? (
+              <div>
+                <h2 className="text-sm font-semibold text-slate-700">Scheduled Dispatch</h2>
+                <p className="text-sm text-blue-600 mt-1 italic">Your truck has been scheduled — details will follow</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
               {dispatch.client_name && (
                 <h2 className="text-sm font-semibold text-slate-700">{dispatch.client_name}</h2>
               )}
@@ -524,6 +633,7 @@ export default function DispatchDetailDrawer({
                   {isOwner && (
                     <Button
                       type="button"
+                      data-screenshot-exclude="true"
                       variant="outline"
                       size="sm"
                       className="h-7 text-xs border-red-300 text-red-700 hover:bg-red-50 hover:text-red-800"
@@ -543,7 +653,7 @@ export default function DispatchDetailDrawer({
                 </div>
 
                 {isOwner && isEditingTrucks && (
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3">
+                  <div data-screenshot-exclude="true" className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3">
                     <p className="text-xs text-slate-500">
                       Select assigned trucks. You must keep exactly {requiredTruckCount} truck{requiredTruckCount === 1 ? '' : 's'}.
                     </p>
@@ -727,17 +837,18 @@ export default function DispatchDetailDrawer({
                 </div>
               )}
 
-              {dispatch.canceled_reason && (
-                <div className="flex items-start gap-2 bg-red-50 rounded-lg p-4">
-                  <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-xs font-semibold text-red-700 mb-0.5">Cancellation Reason</p>
-                    <p className="text-sm text-red-600">{dispatch.canceled_reason}</p>
+                {dispatch.canceled_reason && (
+                  <div className="flex items-start gap-2 bg-red-50 rounded-lg p-4">
+                    <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-xs font-semibold text-red-700 mb-0.5">Cancellation Reason</p>
+                      <p className="text-sm text-red-600">{dispatch.canceled_reason}</p>
+                    </div>
                   </div>
-                </div>
-              )}
-            </>
-          )}
+                )}
+              </>
+            )}
+          </div>
 
           {/* Actions */}
           {(isOwner || isAdmin) && (
