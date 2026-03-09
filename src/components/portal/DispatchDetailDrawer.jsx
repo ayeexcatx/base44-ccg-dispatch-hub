@@ -65,9 +65,19 @@ function TruckTimeRow({
   const end = draft?.end ?? existing?.end_time ?? '';
   const [saved, setSaved] = useState(false);
 
-  const handleSave = () => {
-    onSaveAll();
+  const handleSave = (e) => {
+    e.preventDefault();
+
+    const didSave = onSaveAll();
+    if (!didSave) return;
+
     setSaved(true);
+    setTimeout(() => {
+      document.getElementById('time-log-section')?.scrollIntoView({
+        behavior: 'auto',
+        block: 'start',
+      });
+    }, 0);
     setTimeout(() => setSaved(false), 2000);
   };
 
@@ -117,6 +127,7 @@ function TruckTimeRow({
         </div>
         {isFirstRow && (
           <Button
+            type="button"
             size="sm"
             variant="outline"
             className="h-8 text-xs mb-0"
@@ -132,6 +143,7 @@ function TruckTimeRow({
         </div>
         <div className="pt-5">
           <Button
+            type="button"
             size="sm"
             onClick={handleSave}
             disabled={!start && !end}
@@ -228,8 +240,9 @@ export default function DispatchDetailDrawer({
       })
       .filter(Boolean);
 
-    if (entriesToSave.length === 0) return;
+    if (entriesToSave.length === 0) return false;
     onTimeEntry(dispatch, entriesToSave);
+    return true;
   };
 
   const handleConfirmTruck = (truck) => {
@@ -527,7 +540,7 @@ export default function DispatchDetailDrawer({
 
               {/* Time Log — CompanyOwner (editable) — only for non-canceled */}
               {isOwner && myTrucks.length > 0 && dispatch.status !== 'Cancelled' && (
-                <div>
+                <div id="time-log-section">
                   <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Time Log</p>
                   <div className="space-y-2">
                     {myTrucks.map(truck => (
