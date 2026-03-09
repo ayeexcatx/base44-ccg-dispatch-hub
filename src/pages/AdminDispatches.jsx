@@ -25,6 +25,82 @@ import { toast } from 'sonner';
 
 const STATUS_ORDER = ['Scheduled', 'Dispatch', 'Amended', 'Cancelled'];
 
+const getAdminDisplayName = (session) => {
+  if (!session) return 'Admin';
+  return session.label || session.name || session.code || `Admin ${session.id || ''}`.trim();
+};
+
+const getAdminSessionId = (session) => session?.id || session?.code || 'unknown-session';
+
+const createAdminActivityEntry = (session, action, message) => ({
+  timestamp: new Date().toISOString(),
+  admin_session_id: getAdminSessionId(session),
+  admin_name: getAdminDisplayName(session),
+  action,
+  message
+});
+
+const appendAdminActivityLog = (existingLog, entries) => {
+  const current = Array.isArray(existingLog) ? existingLog : [];
+  const nextEntries = Array.isArray(entries) ? entries : [entries];
+  return [...nextEntries, ...current];
+};
+
+const normalizeTrucks = (trucks) => (Array.isArray(trucks) ? [...trucks].sort() : []);
+
+const buildDispatchUpdateActivityEntries = (previousDispatch, nextDispatch, session) => {
+  const adminName = getAdminDisplayName(session);
+  const specificEntries = [];
+
+  if (previousDispatch.status !== nextDispatch.status) {
+    specificEntries.push(createAdminActivityEntry(
+      session,
+      'changed_status',
+      `${adminName} changed status from ${previousDispatch.status} to ${nextDispatch.status}`
+    ));
+
+    if (nextDispatch.status === 'Amended') {
+      specificEntries.push(createAdminActivityEntry(session, 'amended_dispatch', `${adminName} amended this dispatch`));
+    }
+    if (nextDispatch.status === 'Cancelled') {
+      specificEntries.push(createAdminActivityEntry(session, 'cancelled_dispatch', `${adminName} cancelled this dispatch`));
+    }
+  }
+
+  if (previousDispatch.date !== nextDispatch.date) {
+    specificEntries.push(createAdminActivityEntry(
+      session,
+      'updated_dispatch_date',
+      `${adminName} changed dispatch date from ${previousDispatch.date || '—'} to ${nextDispatch.date || '—'}`
+    ));
+  }
+
+  if (JSON.stringify(normalizeTrucks(previousDispatch.trucks_assigned)) !== JSON.stringify(normalizeTrucks(nextDispatch.trucks_assigned))) {
+    specificEntries.push(createAdminActivityEntry(session, 'updated_trucks', `${adminName} updated truck assignments`));
+  }
+
+  if (previousDispatch.instructions !== nextDispatch.instructions) {
+    specificEntries.push(createAdminActivityEntry(session, 'updated_instructions', `${adminName} updated instructions`));
+  }
+
+  const detailFieldsChanged = [
+  'shift_time',
+  'client_name',
+  'job_number',
+  'start_time',
+  'start_location',
+  'canceled_reason']
+  .some((field) => previousDispatch[field] !== nextDispatch[field]);
+
+  if (detailFieldsChanged) {
+    specificEntries.push(createAdminActivityEntry(session, 'updated_dispatch_details', `${adminName} updated dispatch details`));
+  }
+
+  const cappedSpecificEntries = specificEntries.slice(0, 2);
+  const generalEntry = createAdminActivityEntry(session, 'updated_dispatch', `${adminName} updated this dispatch`);
+  return [...cappedSpecificEntries, generalEntry];
+};
+
 const formatDispatchTime = (startTime) => {
   if (!startTime) return '';
 
@@ -309,8 +385,11 @@ export default function AdminDispatches() {
   const saveMutation = useMutation({
     mutationFn: async (data) => {
       if (editing && !editing._isCopy) {
+        const nextEntries = buildDispatchUpdateActivityEntries(editing, data, session);
+
         await base44.entities.Dispatch.update(editing.id, {
           ...data,
+          admin_activity_log: appendAdminActivityLog(editing.admin_activity_log, nextEntries),
           edit_locked: false,
           edit_locked_by_session_id: null,
           edit_locked_by_name: null,
@@ -324,8 +403,10 @@ export default function AdminDispatches() {
 
         return savedDispatch;
       } else {
+        const adminName = getAdminDisplayName(session);
         return base44.entities.Dispatch.create({
           ...data,
+          admin_activity_log: appendAdminActivityLog(data.admin_activity_log, createAdminActivityEntry(session, 'created_dispatch', `${adminName} created this dispatch`)),
           edit_locked: false,
           edit_locked_by_session_id: null,
           edit_locked_by_name: null,
@@ -372,10 +453,21 @@ export default function AdminDispatches() {
   });
 
   const archiveMutation = useMutation({
-    mutationFn: ({ id, archive }) => base44.entities.Dispatch.update(id, archive ?
-    { archived_flag: true, archived_at: new Date().toISOString(), archived_reason: 'Admin archived' } :
-    { archived_flag: false, archived_at: null, archived_reason: null }
-    ),
+    mutationFn: ({ dispatch, archive }) => {
+      const payload = archive ?
+      { archived_flag: true, archived_at: new Date().toISOString(), archived_reason: 'Admin archived' } :
+      { archived_flag: false, archived_at: null, archived_reason: null };
+
+      const nextLog = archive ? appendAdminActivityLog(
+        dispatch.admin_activity_log,
+        createAdminActivityEntry(session, 'archived_dispatch', `${getAdminDisplayName(session)} archived this dispatch`)
+      ) : dispatch.admin_activity_log;
+
+      return base44.entities.Dispatch.update(dispatch.id, {
+        ...payload,
+        admin_activity_log: nextLog
+      });
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dispatches-admin'] })
   });
 
@@ -656,6 +748,9 @@ export default function AdminDispatches() {
                           <Badge key={t} variant="outline" className="text-xs font-mono">{t}</Badge>
                           )}
                       </div>
+                      <div className="text-[11px] text-slate-500 mt-1.5 truncate">
+                        {d.admin_activity_log?.[0]?.message || 'No activity yet.'}
+                      </div>
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -674,7 +769,7 @@ export default function AdminDispatches() {
                     </Button>
                     <Button
                         variant="ghost" size="icon"
-                        onClick={() => archiveMutation.mutate({ id: d.id, archive: !d.archived_flag })}
+                        onClick={() => archiveMutation.mutate({ dispatch: d, archive: !d.archived_flag })}
                         className="h-8 w-8 text-slate-500 hover:text-amber-600"
                         title={d.archived_flag ? 'Unarchive' : 'Archive'}>
 

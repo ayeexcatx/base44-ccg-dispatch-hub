@@ -17,6 +17,13 @@ const tollColors = {
   'Included in Rate': 'bg-purple-50 text-purple-700',
 };
 
+
+function formatActivityTimestamp(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return format(date, 'MMM d, yyyy h:mm a');
+}
 function formatTimeToAmPm(value) {
   if (!value) return '';
   const v = String(value).trim();
@@ -464,6 +471,28 @@ export default function DispatchDetailDrawer({
                       />
                     ))}
                   </div>
+                </div>
+              )}
+
+
+              {/* Activity — Admin */}
+              {isAdmin && (
+                <div>
+                  <p className="text-xs text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                    <History className="h-3.5 w-3.5" />Activity
+                  </p>
+                  {Array.isArray(dispatch.admin_activity_log) && dispatch.admin_activity_log.length > 0 ? (
+                    <div className="space-y-1.5">
+                      {dispatch.admin_activity_log.map((entry, idx) => (
+                        <div key={`${entry.timestamp || 'activity'}-${idx}`} className="bg-slate-50 border border-slate-200 rounded-md px-3 py-2">
+                          <div className="text-[11px] text-slate-400">{formatActivityTimestamp(entry.timestamp)}</div>
+                          <div className="text-xs text-slate-700">{entry.message || entry.action || 'Activity update'}</div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-400 italic">No activity yet.</p>
+                  )}
                 </div>
               )}
 

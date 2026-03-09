@@ -10,8 +10,9 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Pencil, Megaphone, Users, Building2, KeyRound } from 'lucide-react';
+import { Plus, Pencil, Users, Building2, KeyRound } from 'lucide-react';
 import { format } from 'date-fns';
+import { useSession } from '../components/session/SessionContext';
 
 const priorityColors = {
   1: 'bg-red-50 text-red-700 border-red-200',
@@ -31,8 +32,74 @@ const defaultForm = {
   target_access_code_ids: [],
 };
 
+const getAdminDisplayName = (session) => {
+  if (!session) return 'Admin';
+  return session.label || session.name || session.code || `Admin ${session.id || ''}`.trim();
+};
+
+const getAdminSessionId = (session) => session?.id || session?.code || 'unknown-session';
+
+const createAdminActivityEntry = (session, action, message) => ({
+  timestamp: new Date().toISOString(),
+  admin_session_id: getAdminSessionId(session),
+  admin_name: getAdminDisplayName(session),
+  action,
+  message
+});
+
+const appendAdminActivityLog = (existingLog, entries) => {
+  const current = Array.isArray(existingLog) ? existingLog : [];
+  const nextEntries = Array.isArray(entries) ? entries : [entries];
+  return [...nextEntries, ...current];
+};
+
+const normalizeIds = (values) => (Array.isArray(values) ? [...values].sort() : []);
+
+const buildAnnouncementUpdateEntries = (previousAnnouncement, nextAnnouncement, session) => {
+  const adminName = getAdminDisplayName(session);
+  const specificEntries = [];
+
+  if (previousAnnouncement.active_flag !== nextAnnouncement.active_flag) {
+    specificEntries.push(createAdminActivityEntry(
+      session,
+      nextAnnouncement.active_flag ? 'activated_announcement' : 'deactivated_announcement',
+      `${adminName} ${nextAnnouncement.active_flag ? 'activated' : 'deactivated'} this announcement`
+    ));
+  }
+
+  if (previousAnnouncement.target_type !== nextAnnouncement.target_type) {
+    specificEntries.push(createAdminActivityEntry(session, 'updated_visibility', `${adminName} updated announcement visibility`));
+  }
+
+  if (
+    JSON.stringify(normalizeIds(previousAnnouncement.target_company_ids)) !== JSON.stringify(normalizeIds(nextAnnouncement.target_company_ids)) ||
+    JSON.stringify(normalizeIds(previousAnnouncement.target_access_code_ids)) !== JSON.stringify(normalizeIds(nextAnnouncement.target_access_code_ids))
+  ) {
+    specificEntries.push(createAdminActivityEntry(session, 'updated_targets', `${adminName} updated announcement targets`));
+  }
+
+  if (
+    previousAnnouncement.title !== nextAnnouncement.title ||
+    previousAnnouncement.message !== nextAnnouncement.message ||
+    previousAnnouncement.priority !== nextAnnouncement.priority
+  ) {
+    specificEntries.push(createAdminActivityEntry(session, 'updated_content', `${adminName} updated announcement content`));
+  }
+
+  const generalEntry = createAdminActivityEntry(session, 'updated_announcement', `${adminName} updated this announcement`);
+  return [...specificEntries.slice(0, 2), generalEntry];
+};
+
+const formatActivityTimestamp = (value) => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return format(date, 'MMM d, yyyy h:mm a');
+};
+
 export default function AdminAnnouncements() {
   const queryClient = useQueryClient();
+  const { session } = useSession();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(defaultForm);
@@ -53,9 +120,24 @@ export default function AdminAnnouncements() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: (data) => editing
-      ? base44.entities.Announcement.update(editing.id, data)
-      : base44.entities.Announcement.create({ ...data, created_at: new Date().toISOString() }),
+    mutationFn: (data) => {
+      if (editing) {
+        const entries = buildAnnouncementUpdateEntries(editing, data, session);
+        return base44.entities.Announcement.update(editing.id, {
+          ...data,
+          admin_activity_log: appendAdminActivityLog(editing.admin_activity_log, entries)
+        });
+      }
+
+      return base44.entities.Announcement.create({
+        ...data,
+        created_at: new Date().toISOString(),
+        admin_activity_log: appendAdminActivityLog(
+          data.admin_activity_log,
+          createAdminActivityEntry(session, 'created_announcement', `${getAdminDisplayName(session)} created this announcement`)
+        )
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['announcements'] });
       setOpen(false);
@@ -64,7 +146,17 @@ export default function AdminAnnouncements() {
   });
 
   const toggleMutation = useMutation({
-    mutationFn: ({ id, active }) => base44.entities.Announcement.update(id, { active_flag: active }),
+    mutationFn: ({ announcement, active }) => base44.entities.Announcement.update(announcement.id, {
+      active_flag: active,
+      admin_activity_log: appendAdminActivityLog(
+        announcement.admin_activity_log,
+        createAdminActivityEntry(
+          session,
+          active ? 'activated_announcement' : 'deactivated_announcement',
+          `${getAdminDisplayName(session)} ${active ? 'activated' : 'deactivated'} this announcement`
+        )
+      )
+    }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['announcements'] }),
   });
 
@@ -165,11 +257,27 @@ export default function AdminAnnouncements() {
                     </div>
                     <p className="text-sm text-slate-900">{a.title}</p>
                     <p className="text-xs text-slate-500 mt-1 line-clamp-2 whitespace-pre-wrap">{a.message}</p>
+                    <div className="mt-2">
+                      <p className="text-[11px] text-slate-400 uppercase tracking-wide mb-1">Activity</p>
+                      {Array.isArray(a.admin_activity_log) && a.admin_activity_log.length > 0 ? (
+                        <div className="space-y-1">
+                          {a.admin_activity_log.slice(0, 3).map((entry, idx) => (
+                            <div key={`${entry.timestamp || 'activity'}-${idx}`} className="text-[11px] text-slate-500">
+                              <span className="text-slate-400">{formatActivityTimestamp(entry.timestamp)}</span>
+                              <span className="mx-1">•</span>
+                              <span>{entry.message || entry.action || 'Activity update'}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-400 italic">No activity yet.</p>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <Switch
                       checked={a.active_flag !== false}
-                      onCheckedChange={(v) => toggleMutation.mutate({ id: a.id, active: v })}
+                      onCheckedChange={(v) => toggleMutation.mutate({ announcement: a, active: v })}
                     />
                     <Button variant="ghost" size="icon" onClick={() => openEdit(a)} className="h-8 w-8">
                       <Pencil className="h-3.5 w-3.5" />
