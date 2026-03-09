@@ -10,6 +10,7 @@ import {
 import { format, parseISO } from 'date-fns';
 import { statusBadgeColors } from './statusConfig';
 import { NOTE_TYPES, normalizeTemplateNote, renderSimpleMarkupToHtml } from '@/lib/templateNotes';
+import { calculateWorkedHours, formatTime24h, formatWorkedHours } from '@/lib/timeLogs';
 
 const tollColors = {
   Authorized: 'bg-green-50 text-green-700',
@@ -46,26 +47,30 @@ function formatTimeToAmPm(value) {
   return `${hh}:${mm} ${suffix}`;
 }
 
-function TruckTimeRow({ truck, dispatch, timeEntries, onTimeEntry, readOnly }) {
-  const existing = timeEntries.find(te =>
+function TruckTimeRow({
+  truck,
+  dispatch,
+  timeEntries,
+  readOnly,
+  draft,
+  onChangeDraft,
+  onSaveAll,
+  onCopyToAll,
+}) {
+  const existing = timeEntries.find((te) =>
     te.dispatch_id === dispatch.id && te.truck_number === truck
   );
-  const [start, setStart] = useState(existing?.start_time || '');
-  const [end, setEnd] = useState(existing?.end_time || '');
+  const start = draft?.start ?? existing?.start_time ?? '';
+  const end = draft?.end ?? existing?.end_time ?? '';
   const [saved, setSaved] = useState(false);
 
-  React.useEffect(() => {
-    if (existing) {
-      setStart(existing.start_time || '');
-      setEnd(existing.end_time || '');
-    }
-  }, [existing?.start_time, existing?.end_time]);
-
   const handleSave = () => {
-    onTimeEntry(dispatch, truck, start, end);
+    onSaveAll();
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
+
+  const workedHours = calculateWorkedHours(existing?.start_time, existing?.end_time);
 
   if (readOnly) {
     return (
@@ -74,9 +79,14 @@ function TruckTimeRow({ truck, dispatch, timeEntries, onTimeEntry, readOnly }) {
           <Truck className="h-3 w-3 text-slate-400" />
           <span className="font-mono font-medium">{truck}</span>
         </div>
-        <span>
+        <span className="text-right">
           {existing ? (
-            <span className="text-slate-500">{existing.start_time || '—'} → {existing.end_time || '—'}</span>
+            <span className="text-slate-500">
+              {formatTime24h(existing.start_time) || '—'} → {formatTime24h(existing.end_time) || '—'}
+              {workedHours != null && (
+                <span className="block text-[11px] text-slate-400">Total: {formatWorkedHours(workedHours)} hrs</span>
+              )}
+            </span>
           ) : (
             <span className="text-slate-400 italic">No time logged</span>
           )}
@@ -91,19 +101,32 @@ function TruckTimeRow({ truck, dispatch, timeEntries, onTimeEntry, readOnly }) {
         <Truck className="h-3.5 w-3.5 text-slate-400" />
         <span className="text-sm font-mono font-medium">{truck}</span>
         {existing && (
-          <span className="text-xs text-slate-400 ml-auto">
-            Saved: {existing.start_time || '—'} → {existing.end_time || '—'}
-          </span>
+          <div className="text-xs text-slate-400 ml-auto text-right">
+            <span>Saved: {formatTime24h(existing.start_time) || '—'} → {formatTime24h(existing.end_time) || '—'}</span>
+            {workedHours != null && (
+              <span className="block text-[11px]">Total: {formatWorkedHours(workedHours)} hrs</span>
+            )}
+          </div>
         )}
       </div>
       <div className="flex gap-2 items-center">
         <div className="flex-1">
           <p className="text-xs text-slate-500 mb-1">Check-in</p>
-          <Input type="time" value={start} onChange={e => setStart(e.target.value)} className="text-sm h-8" />
+          <div className="flex gap-2">
+            <Input type="time" value={start} onChange={e => onChangeDraft(truck, 'start', e.target.value)} className="text-sm h-8" />
+            <Button size="sm" variant="outline" className="h-8 text-xs" disabled={!start} onClick={() => onCopyToAll('start', start)}>
+              Copy to all
+            </Button>
+          </div>
         </div>
         <div className="flex-1">
           <p className="text-xs text-slate-500 mb-1">Check-out</p>
-          <Input type="time" value={end} onChange={e => setEnd(e.target.value)} className="text-sm h-8" />
+          <div className="flex gap-2">
+            <Input type="time" value={end} onChange={e => onChangeDraft(truck, 'end', e.target.value)} className="text-sm h-8" />
+            <Button size="sm" variant="outline" className="h-8 text-xs" disabled={!end} onClick={() => onCopyToAll('end', end)}>
+              Copy to all
+            </Button>
+          </div>
         </div>
         <div className="pt-5">
           <Button
@@ -125,10 +148,16 @@ export default function DispatchDetailDrawer({
   dispatch, session, confirmations, timeEntries, templateNotes,
   onConfirm, onTimeEntry, companyName, open, onClose
 }) {
+  const [draftTimeEntries, setDraftTimeEntries] = useState({});
+
+  React.useEffect(() => {
+    setDraftTimeEntries({});
+  }, [dispatch?.id]);
+
   if (!dispatch) return null;
 
-  const myTrucks = (session.allowed_trucks || []).filter(t =>
-    (dispatch.trucks_assigned || []).includes(t)
+  const myTrucks = (session?.allowed_trucks || []).filter(t =>
+    (dispatch?.trucks_assigned || []).includes(t)
   );
   const isOwner = session.code_type === 'CompanyOwner';
   const isAdmin = session.code_type === 'Admin';
@@ -161,6 +190,44 @@ export default function DispatchDetailDrawer({
         c.confirmation_type !== currentConfType
       )
       .sort((a, b) => new Date(b.confirmed_at || 0) - new Date(a.confirmed_at || 0));
+
+  const handleChangeDraft = (truck, field, value) => {
+    setDraftTimeEntries((prev) => ({
+      ...prev,
+      [truck]: {
+        ...(prev[truck] || {}),
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleCopyToAll = (field, value) => {
+    setDraftTimeEntries((prev) => {
+      const next = { ...prev };
+      myTrucks.forEach((truck) => {
+        next[truck] = {
+          ...(next[truck] || {}),
+          [field]: value,
+        };
+      });
+      return next;
+    });
+  };
+
+  const handleSaveAll = () => {
+    const entriesToSave = myTrucks
+      .map((truck) => {
+        const existing = timeEntries.find((te) => te.dispatch_id === dispatch.id && te.truck_number === truck);
+        const start = draftTimeEntries[truck]?.start ?? existing?.start_time ?? '';
+        const end = draftTimeEntries[truck]?.end ?? existing?.end_time ?? '';
+        if (!start && !end) return null;
+        return { truck, start, end };
+      })
+      .filter(Boolean);
+
+    if (entriesToSave.length === 0) return;
+    onTimeEntry(dispatch, entriesToSave);
+  };
 
   const handleConfirmTruck = (truck) => {
     onConfirm(dispatch, truck, currentConfType);
@@ -466,8 +533,11 @@ export default function DispatchDetailDrawer({
                         truck={truck}
                         dispatch={dispatch}
                         timeEntries={timeEntries}
-                        onTimeEntry={onTimeEntry}
                         readOnly={false}
+                        draft={draftTimeEntries[truck]}
+                        onChangeDraft={handleChangeDraft}
+                        onSaveAll={handleSaveAll}
+                        onCopyToAll={handleCopyToAll}
                       />
                     ))}
                   </div>
@@ -548,7 +618,6 @@ export default function DispatchDetailDrawer({
                         truck={truck}
                         dispatch={dispatch}
                         timeEntries={timeEntries}
-                        onTimeEntry={() => {}}
                         readOnly={true}
                       />
                     ))}
