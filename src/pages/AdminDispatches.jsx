@@ -46,8 +46,26 @@ const appendAdminActivityLog = (existingLog, entries) => {
   return [...nextEntries, ...current];
 };
 
+const normalizeTextField = (value) => String(value ?? '').trim();
+
+const normalizeTruckAssignments = (value) => {
+  if (!Array.isArray(value)) return [];
+  return value
+  .map((truck) => normalizeTextField(truck))
+  .filter(Boolean)
+  .sort();
+};
+
+const areTruckAssignmentsEqual = (previous, next) => {
+  const left = normalizeTruckAssignments(previous);
+  const right = normalizeTruckAssignments(next);
+  if (left.length !== right.length) return false;
+  return left.every((truck, index) => truck === right[index]);
+};
+
 const buildDispatchUpdateActivityEntries = (previousDispatch, nextDispatch, session) => {
   const adminName = getAdminDisplayName(session);
+
   if (previousDispatch.status !== nextDispatch.status) {
     if (nextDispatch.status === 'Cancelled') {
       return [createAdminActivityEntry(session, 'cancelled_dispatch', `${adminName} cancelled this dispatch`)];
@@ -58,6 +76,42 @@ const buildDispatchUpdateActivityEntries = (previousDispatch, nextDispatch, sess
       'changed_status',
       `${adminName} changed status from ${previousDispatch.status} to ${nextDispatch.status}`
     )];
+  }
+
+  if (normalizeTextField(previousDispatch.date) !== normalizeTextField(nextDispatch.date)) {
+    return [createAdminActivityEntry(session, 'changed_dispatch_date', `${adminName} changed dispatch date`)];
+  }
+
+  if (normalizeTextField(previousDispatch.start_time) !== normalizeTextField(nextDispatch.start_time)) {
+    return [createAdminActivityEntry(session, 'changed_start_time', `${adminName} changed start time`)];
+  }
+
+  if (!areTruckAssignmentsEqual(previousDispatch.trucks_assigned, nextDispatch.trucks_assigned)) {
+    return [createAdminActivityEntry(session, 'updated_truck_assignments', `${adminName} updated truck assignments`)];
+  }
+
+  if (normalizeTextField(previousDispatch.instructions) !== normalizeTextField(nextDispatch.instructions)) {
+    return [createAdminActivityEntry(session, 'updated_instructions', `${adminName} updated instructions`)];
+  }
+
+  if (normalizeTextField(previousDispatch.notes) !== normalizeTextField(nextDispatch.notes)) {
+    return [createAdminActivityEntry(session, 'updated_notes', `${adminName} updated notes`)];
+  }
+
+  if (normalizeTextField(previousDispatch.start_location) !== normalizeTextField(nextDispatch.start_location)) {
+    return [createAdminActivityEntry(session, 'changed_start_location', `${adminName} changed start location`)];
+  }
+
+  if (normalizeTextField(previousDispatch.client_name) !== normalizeTextField(nextDispatch.client_name)) {
+    return [createAdminActivityEntry(session, 'changed_client_name', `${adminName} changed client name`)];
+  }
+
+  if (normalizeTextField(previousDispatch.job_number) !== normalizeTextField(nextDispatch.job_number)) {
+    return [createAdminActivityEntry(session, 'changed_job_number', `${adminName} changed job number`)];
+  }
+
+  if (normalizeTextField(previousDispatch.shift_time) !== normalizeTextField(nextDispatch.shift_time)) {
+    return [createAdminActivityEntry(session, 'changed_shift', `${adminName} changed shift`)];
   }
 
   return [createAdminActivityEntry(session, 'updated_dispatch', `${adminName} updated this dispatch`)];
@@ -752,14 +806,14 @@ export default function AdminDispatches() {
                     </Button>
                     </div>
 
-                    <div className="text-right max-w-[220px]">
+                    <div className="text-right max-w-[210px]">
                       {latestActivity?.message ? (
                         <>
-                          <p className="text-[11px] text-slate-500 leading-tight line-clamp-2">{latestActivity.message}</p>
-                          {latestActivityTimestamp && <p className="text-[10px] text-slate-400 mt-0.5">{latestActivityTimestamp}</p>}
+                          <p className="text-[10px] text-slate-500 leading-tight line-clamp-1">{latestActivity.message}</p>
+                          {latestActivityTimestamp && <p className="text-[10px] text-slate-400">{latestActivityTimestamp}</p>}
                         </>
                       ) : (
-                        <p className="text-[11px] text-slate-400 italic">No activity yet.</p>
+                        <p className="text-[10px] text-slate-400 italic">No activity yet.</p>
                       )}
                     </div>
                   </div>
