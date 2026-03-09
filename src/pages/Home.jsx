@@ -14,6 +14,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useOwnerNotifications } from '../components/notifications/useOwnerNotifications';
 import NotificationStatusBadge from '../components/notifications/NotificationStatusBadge';
 import { formatNotificationDetailsMessage } from '../components/notifications/formatNotificationDetailsMessage';
+import { useConfirmationsQuery } from '../components/notifications/useConfirmationsQuery';
 
 const dateOnly = (v) => (typeof v === 'string' ? v.slice(0, 10) : v);
 
@@ -119,12 +120,7 @@ export default function Home() {
   // Shared notifications hook — same query key as bell + notifications page
   const { notifications, unreadCount, markReadAsync } = useOwnerNotifications(session);
 
-  const { data: confirmations = [] } = useQuery({
-    queryKey: ['confirmations-home'],
-    queryFn: () => base44.entities.Confirmation.list('-confirmed_at', 500),
-    enabled: session?.code_type === 'CompanyOwner',
-    refetchInterval: 30000,
-  });
+  const { data: confirmations = [] } = useConfirmationsQuery(session?.code_type === 'CompanyOwner');
 
   const { data: dispatches = [] } = useQuery({
     queryKey: ['portal-dispatches', session?.company_id],

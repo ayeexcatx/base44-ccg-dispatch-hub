@@ -12,18 +12,14 @@ import { useNavigate } from 'react-router-dom';
 import NotificationStatusBadge from '@/components/notifications/NotificationStatusBadge';
 import { useOwnerNotifications } from '@/components/notifications/useOwnerNotifications';
 import { formatNotificationDetailsMessage } from '@/components/notifications/formatNotificationDetailsMessage';
+import { useConfirmationsQuery } from '@/components/notifications/useConfirmationsQuery';
 
 export default function Notifications() {
   const { session } = useSession();
   const navigate = useNavigate();
   const { notifications, unreadCount, isLoading, markReadAsync, markAllRead, markAllReadPending } = useOwnerNotifications(session);
 
-  const { data: confirmations = [] } = useQuery({
-    queryKey: ['confirmations-notif-page'],
-    queryFn: () => base44.entities.Confirmation.list('-confirmed_at', 500),
-    enabled: session?.code_type === 'CompanyOwner',
-    refetchInterval: 30000,
-  });
+  const { data: confirmations = [] } = useConfirmationsQuery(session?.code_type === 'CompanyOwner');
 
 
   const { data: dispatches = [] } = useQuery({

@@ -11,7 +11,14 @@ import { startOfDay, parseISO } from 'date-fns';
 import { areAllAssignedTrucksTimeComplete } from '@/lib/timeLogs';
 import { getDispatchBucket } from '../components/portal/dispatchBuckets';
 import { sortTemplateNotesForDispatch } from '@/lib/templateNotes';
-import { notifyTruckConfirmation, resolveOwnerNotificationIfComplete, notifyOwnerTruckReassignment } from '../components/notifications/createNotifications';
+import {
+  notifyTruckConfirmation,
+  resolveOwnerNotificationIfComplete,
+  notifyOwnerTruckReassignment,
+  reconcileOwnerNotificationsForDispatch,
+  expandCurrentStatusRequiredTrucks,
+} from '../components/notifications/createNotifications';
+import { useConfirmationsQuery, confirmationsQueryKey } from '../components/notifications/useConfirmationsQuery';
 
 
 function formatConflictDispatchSummary(dispatch) {
@@ -57,10 +64,7 @@ export default function Portal() {
     queryFn: () => base44.entities.Company.list(),
   });
 
-  const { data: confirmations = [] } = useQuery({
-    queryKey: ['confirmations'],
-    queryFn: () => base44.entities.Confirmation.list('-confirmed_at', 500),
-  });
+  const { data: confirmations = [] } = useConfirmationsQuery(true);
 
   const { data: timeEntries = [] } = useQuery({
     queryKey: ['time-entries'],
@@ -74,7 +78,7 @@ export default function Portal() {
 
   const confirmMutation = useMutation({
     mutationFn: (data) => base44.entities.Confirmation.create(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['confirmations'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: confirmationsQueryKey }),
   });
 
   const today = startOfDay(new Date());
@@ -218,7 +222,7 @@ Would you like to swap ${outgoingTruck} with ${incomingTruck}?`;
           throw new Error('Swap would create duplicate trucks on the conflicting dispatch.');
         }
 
-        await base44.entities.Dispatch.update(dispatch.id, {
+        const updatedDispatch = await base44.entities.Dispatch.update(dispatch.id, {
           trucks_assigned: normalizedNext,
           admin_activity_log: [
             {
@@ -233,7 +237,7 @@ Would you like to swap ${outgoingTruck} with ${incomingTruck}?`;
           ],
         });
 
-        await base44.entities.Dispatch.update(conflictingDispatch.id, {
+        const updatedConflictingDispatch = await base44.entities.Dispatch.update(conflictingDispatch.id, {
           trucks_assigned: dedupConflicting,
           admin_activity_log: [
             {
@@ -272,8 +276,13 @@ Would you like to swap ${outgoingTruck} with ${incomingTruck}?`;
           })
         ));
 
+        await expandCurrentStatusRequiredTrucks(updatedDispatch, addedTrucks);
+        await expandCurrentStatusRequiredTrucks(updatedConflictingDispatch, [outgoingTruck]);
+        await reconcileOwnerNotificationsForDispatch(updatedDispatch);
+        await reconcileOwnerNotificationsForDispatch(updatedConflictingDispatch);
+
         await notifyOwnerTruckReassignment({
-          dispatch,
+          dispatch: updatedDispatch,
           actorName,
           swapDetails: {
             fromTruck: outgoingTruck,
@@ -285,7 +294,7 @@ Would you like to swap ${outgoingTruck} with ${incomingTruck}?`;
         return { updated: true };
       }
 
-      await base44.entities.Dispatch.update(dispatch.id, {
+      const updatedDispatch = await base44.entities.Dispatch.update(dispatch.id, {
         trucks_assigned: normalizedNext,
         admin_activity_log: [
           {
@@ -324,14 +333,17 @@ Would you like to swap ${outgoingTruck} with ${incomingTruck}?`;
         })
       ));
 
-      await notifyOwnerTruckReassignment({ dispatch, actorName });
+      await expandCurrentStatusRequiredTrucks(updatedDispatch, addedTrucks);
+      await reconcileOwnerNotificationsForDispatch(updatedDispatch);
+
+      await notifyOwnerTruckReassignment({ dispatch: updatedDispatch, actorName });
 
       return { updated: true };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['portal-dispatches', session?.company_id] });
       queryClient.invalidateQueries({ queryKey: ['dispatches-admin'] });
-      queryClient.invalidateQueries({ queryKey: ['confirmations'] });
+      queryClient.invalidateQueries({ queryKey: confirmationsQueryKey });
       queryClient.invalidateQueries({ queryKey: ['confirmations-admin'] });
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },

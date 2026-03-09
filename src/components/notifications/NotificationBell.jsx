@@ -11,6 +11,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import NotificationStatusBadge from './NotificationStatusBadge';
 import { useOwnerNotifications } from './useOwnerNotifications';
 import { formatNotificationDetailsMessage } from './formatNotificationDetailsMessage';
+import { useConfirmationsQuery } from './useConfirmationsQuery';
 
 export default function NotificationBell({ session }) {
   const navigate = useNavigate();
@@ -31,12 +32,7 @@ export default function NotificationBell({ session }) {
     return dispatchIds.has(notification.related_dispatch_id);
   });
 
-  const { data: confirmations = [] } = useQuery({
-    queryKey: ['confirmations-bell'],
-    queryFn: () => base44.entities.Confirmation.list('-confirmed_at', 500),
-    enabled: session?.code_type === 'CompanyOwner',
-    refetchInterval: 30000,
-  });
+  const { data: confirmations = [] } = useConfirmationsQuery(session?.code_type === 'CompanyOwner');
 
   const isInformationalUpdateNotification = (notification) =>
     notification?.notification_category === 'dispatch_update_info';
