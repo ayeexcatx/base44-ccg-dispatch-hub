@@ -135,6 +135,8 @@ export default function DispatchDetailDrawer({
 }) {
   const [draftTimeEntries, setDraftTimeEntries] = useState({});
   const [isSavingAll, setIsSavingAll] = useState(false);
+  const drawerScrollRef = React.useRef(null);
+  const timeLogSectionRef = React.useRef(null);
   const [isEditingTrucks, setIsEditingTrucks] = useState(false);
   const [draftTrucks, setDraftTrucks] = useState([]);
   const [isSavingTrucks, setIsSavingTrucks] = useState(false);
@@ -234,13 +236,18 @@ export default function DispatchDetailDrawer({
   const handleSaveAll = async () => {
     if (entriesToSave.length === 0 || !hasUnsavedChanges) return;
     setIsSavingAll(true);
-    const sectionNode = document.getElementById('time-log-section');
+    const previousScrollTop = drawerScrollRef.current?.scrollTop;
 
     try {
       await onTimeEntry(dispatch, entriesToSave);
       setDraftTimeEntries({});
-      toast({ description: 'Time logs saved' });
-      sectionNode?.scrollIntoView({ behavior: 'auto', block: 'start' });
+      requestAnimationFrame(() => {
+        if (typeof previousScrollTop === 'number' && drawerScrollRef.current) {
+          drawerScrollRef.current.scrollTop = previousScrollTop;
+          return;
+        }
+        timeLogSectionRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' });
+      });
     } finally {
       setIsSavingAll(false);
     }
@@ -304,7 +311,7 @@ export default function DispatchDetailDrawer({
 
   return (
     <Sheet open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto p-0">
+      <SheetContent ref={drawerScrollRef} side="right" className="w-full sm:max-w-lg overflow-y-auto p-0">
         {/* Top bar */}
         <div className="sticky top-0 bg-white border-b border-slate-200 px-5 py-4 z-10">
           <Button
@@ -633,7 +640,7 @@ export default function DispatchDetailDrawer({
 
               {/* Time Log — CompanyOwner (editable) — only for non-canceled */}
               {isOwner && myTrucks.length > 0 && dispatch.status !== 'Cancelled' && (
-                <div id="time-log-section">
+                <div id="time-log-section" ref={timeLogSectionRef}>
                   <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Time Log</p>
                   <div className="space-y-2">
                     {myTrucks.map(truck => (
