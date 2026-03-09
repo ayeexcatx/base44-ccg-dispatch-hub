@@ -451,11 +451,49 @@ export default function DispatchDetailDrawer({
     }
 
     setIsCreatingScreenshot(true);
+    let screenshotRoot;
     try {
-      const canvas = await html2canvas(target, {
+      screenshotRoot = document.createElement('div');
+      screenshotRoot.style.position = 'fixed';
+      screenshotRoot.style.left = '-10000px';
+      screenshotRoot.style.top = '0';
+      screenshotRoot.style.width = `${Math.max(360, Math.min(target.scrollWidth || 420, 720))}px`;
+      screenshotRoot.style.padding = '20px';
+      screenshotRoot.style.background = '#ffffff';
+      screenshotRoot.style.boxSizing = 'border-box';
+      screenshotRoot.style.zIndex = '-1';
+
+      const summary = document.createElement('div');
+      summary.style.display = 'grid';
+      summary.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
+      summary.style.gap = '8px';
+      summary.style.padding = '12px';
+      summary.style.border = '1px solid #e2e8f0';
+      summary.style.borderRadius = '10px';
+      summary.style.background = '#f8fafc';
+      summary.style.marginBottom = '16px';
+      summary.style.fontSize = '12px';
+      summary.innerHTML = `
+        <div><p style="margin:0;color:#64748b;font-weight:600;">Date</p><p style="margin:2px 0 0;color:#334155;">${displayDate || '—'}</p></div>
+        <div><p style="margin:0;color:#64748b;font-weight:600;">Shift</p><p style="margin:2px 0 0;color:#334155;">${dispatch.shift_time || '—'}</p></div>
+        <div><p style="margin:0;color:#64748b;font-weight:600;">Status</p><p style="margin:2px 0 0;color:#334155;">${dispatch.status || '—'}</p></div>
+      `;
+
+      const clone = target.cloneNode(true);
+      clone.querySelectorAll('[data-screenshot-exclude="true"]').forEach((node) => node.remove());
+
+      screenshotRoot.appendChild(summary);
+      screenshotRoot.appendChild(clone);
+      document.body.appendChild(screenshotRoot);
+
+      const canvas = await html2canvas(screenshotRoot, {
         backgroundColor: '#ffffff',
         scale: Math.min(window.devicePixelRatio || 1, 2),
         useCORS: true,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: screenshotRoot.scrollWidth,
+        windowHeight: screenshotRoot.scrollHeight,
       });
 
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
@@ -487,6 +525,9 @@ export default function DispatchDetailDrawer({
     } catch (error) {
       toast.error(error?.message || 'Unable to create dispatch screenshot on this device/browser.');
     } finally {
+      if (screenshotRoot?.parentNode) {
+        screenshotRoot.parentNode.removeChild(screenshotRoot);
+      }
       setIsCreatingScreenshot(false);
     }
   };
@@ -550,21 +591,6 @@ export default function DispatchDetailDrawer({
           )}
 
           <div ref={screenshotSectionRef} className="space-y-6 bg-white">
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 grid grid-cols-3 gap-2 text-xs">
-              <div>
-                <p className="font-semibold text-slate-500">Date</p>
-                <p className="text-slate-700">{displayDate || '—'}</p>
-              </div>
-              <div>
-                <p className="font-semibold text-slate-500">Shift</p>
-                <p className="text-slate-700">{dispatch.shift_time || '—'}</p>
-              </div>
-              <div>
-                <p className="font-semibold text-slate-500">Status</p>
-                <p className="text-slate-700">{dispatch.status || '—'}</p>
-              </div>
-            </div>
-
             {/* Main info */}
             {dispatch.status === 'Scheduled' ? (
               <div>
@@ -607,6 +633,7 @@ export default function DispatchDetailDrawer({
                   {isOwner && (
                     <Button
                       type="button"
+                      data-screenshot-exclude="true"
                       variant="outline"
                       size="sm"
                       className="h-7 text-xs border-red-300 text-red-700 hover:bg-red-50 hover:text-red-800"
@@ -626,7 +653,7 @@ export default function DispatchDetailDrawer({
                 </div>
 
                 {isOwner && isEditingTrucks && (
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3">
+                  <div data-screenshot-exclude="true" className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3">
                     <p className="text-xs text-slate-500">
                       Select assigned trucks. You must keep exactly {requiredTruckCount} truck{requiredTruckCount === 1 ? '' : 's'}.
                     </p>
