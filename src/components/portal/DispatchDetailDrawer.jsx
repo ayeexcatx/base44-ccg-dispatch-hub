@@ -50,85 +50,6 @@ function formatTimeToAmPm(value) {
   return `${hh}:${mm} ${suffix}`;
 }
 
-function buildDispatchCopyText({ dispatch, trucks, boxNotes, generalTemplateNotes }) {
-  const lines = ['CCG DISPATCH'];
-  const dateValue = dispatch?.date ? format(parseISO(dispatch.date), 'MM-dd-yyyy') : '';
-
-  const appendLine = (label, value) => {
-    if (!value) return;
-    lines.push(`${label}: ${value}`);
-  };
-
-  lines.push('');
-  appendLine('Date', dateValue);
-  appendLine('Shift', dispatch?.shift_time);
-  appendLine('Status', dispatch?.status);
-
-  lines.push('');
-  appendLine('Client', dispatch?.client_name);
-  appendLine('Job Number', dispatch?.job_number);
-  if (Array.isArray(trucks) && trucks.length > 0) appendLine('Trucks Assigned', trucks.join(', '));
-
-  lines.push('');
-  appendLine('Start Time', formatTimeToAmPm(dispatch?.start_time));
-  appendLine('Start Location', dispatch?.start_location);
-
-  if (dispatch?.instructions) {
-    lines.push('');
-    lines.push('Instructions:');
-    lines.push(dispatch.instructions);
-  }
-
-  const templateLines = [];
-  boxNotes.forEach((note) => {
-    if (note?.title) templateLines.push(note.title);
-    if (note?.box_content) templateLines.push(note.box_content);
-    else if (note?.note_text) templateLines.push(note.note_text);
-  });
-  generalTemplateNotes.forEach((note) => {
-    if (note?.title) templateLines.push(note.title);
-    if (Array.isArray(note?.bullet_lines) && note.bullet_lines.length > 0) {
-      note.bullet_lines.forEach((line) => templateLines.push(line));
-      return;
-    }
-    if (note?.note_text) templateLines.push(note.note_text);
-  });
-
-  if (templateLines.length > 0) {
-    lines.push('');
-    lines.push('Dispatch Template Notes:');
-    lines.push(templateLines.join('\n'));
-  }
-
-  if (dispatch?.notes) {
-    lines.push('');
-    lines.push('General Notes:');
-    lines.push(dispatch.notes);
-  }
-
-  if (dispatch?.toll_status) {
-    lines.push('');
-    appendLine('Toll Status', dispatch.toll_status);
-  }
-
-  const additionalAssignments = (dispatch?.additional_assignments || []).filter((assignment) => (
-    assignment?.job_number || assignment?.start_time || assignment?.start_location || assignment?.instructions || assignment?.notes
-  ));
-
-  if (additionalAssignments.length > 0) {
-    lines.push('');
-    lines.push('Additional Assignments:');
-    additionalAssignments.forEach((assignment, index) => {
-      const summaryParts = [assignment.job_number, formatTimeToAmPm(assignment.start_time), assignment.start_location].filter(Boolean);
-      lines.push(`${index + 1}. ${summaryParts.join(' | ')}`);
-      if (assignment.instructions) lines.push(`   Instructions: ${assignment.instructions}`);
-      if (assignment.notes) lines.push(`   Notes: ${assignment.notes}`);
-    });
-  }
-
-  return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
-}
-
 function TruckTimeRow({
   truck,
   dispatch,
@@ -422,22 +343,6 @@ export default function DispatchDetailDrawer({
     ? format(parseISO(dispatch.date), 'EEE, MMM d, yyyy')
     : '';
 
-  const handleCopyDispatch = async () => {
-    const copyText = buildDispatchCopyText({
-      dispatch,
-      trucks: myTrucks,
-      boxNotes,
-      generalTemplateNotes: generalNotes,
-    });
-
-    try {
-      await navigator.clipboard.writeText(copyText);
-      toast.success('Dispatch copied to clipboard.');
-    } catch {
-      toast.error('Unable to copy dispatch details.');
-    }
-  };
-
   const handleScreenshotDispatch = async () => {
     if (isEditingTrucks) {
       toast.error('Finish editing trucks before creating a screenshot.');
@@ -567,15 +472,6 @@ export default function DispatchDetailDrawer({
 
           {isOwner && (
             <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-8 text-xs"
-                onClick={handleCopyDispatch}
-              >
-                Copy Dispatch
-              </Button>
               <Button
                 type="button"
                 variant="ghost"
