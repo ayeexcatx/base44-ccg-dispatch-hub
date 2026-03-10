@@ -45,13 +45,13 @@ function LayoutInner({ children, currentPageName }) {
   return (
     <div className="bg-zinc-50 min-h-screen">
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div className="bg-yellow-300 mx-auto px-4 max-w-7xl sm:px-6 h-16 flex items-center justify-between">
+        <div className="bg-slate-50 mx-auto px-4 max-w-7xl sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img
               src="/transitlogo.png"
               alt="CCG Transit logo"
-              className="h-9 w-9 object-contain"
-            />
+              className="h-9 w-9 object-contain" />
+
             <div>
               <h1 className="text-sm font-semibold text-slate-900 tracking-tight">CCG Transit</h1>
               <p className="text-xs text-slate-500 flex items-center gap-1">
