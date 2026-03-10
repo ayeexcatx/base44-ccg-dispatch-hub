@@ -15,24 +15,6 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 
-const handleTestAppConfigEntity = async () => {
-  try {
-    await base44.entities.AppConfig.filter({ key: 'app_runtime_version' }, '-updated_date', 1);
-    toast.success('AppConfig entity already exists.');
-  } catch (error) {
-    console.error('AppConfig test failed:', error);
-    toast.error('AppConfig entity is missing. Check Base44 for the entity-creation prompt.');
-  }
-};
-
-<Button
-  size="sm"
-  variant="outline"
-  onClick={handleTestAppConfigEntity}
->
-  Test AppConfig
-</Button>
-
 export default function AdminDashboard() {
   const queryClient = useQueryClient();
   const { data: codes = [] } = useQuery({
@@ -87,6 +69,16 @@ export default function AdminDashboard() {
       toast.error('Unable to trigger app refresh. Please try again.');
     },
   });
+
+  const handleTestAppConfigEntity = async () => {
+  try {
+    await base44.entities.AppConfig.filter({ key: 'app_runtime_version' }, '-updated_date', 1);
+    toast.success('AppConfig entity already exists.');
+  } catch (error) {
+    console.error('AppConfig test failed:', error);
+    toast.error('AppConfig entity is missing. Check Base44 for the entity-creation prompt.');
+  }
+};
 
   const activeDispatches = dispatches.filter(d => d.status !== 'Completed' && d.status !== 'Cancelled');
   const todayStr = new Date().toISOString().split('T')[0];
@@ -181,6 +173,13 @@ export default function AdminDashboard() {
         <p className="text-sm text-slate-500 mt-1">Overview of your dispatch operations</p>
         <div className="mt-4 inline-flex w-full max-w-md flex-col rounded-lg border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
           <p className="text-xs text-slate-600">Need everyone to reload now?</p>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleTestAppConfigEntity}
+          >
+          Test AppConfig
+          </Button>
           <Button
             size="sm"
             onClick={() => refreshTriggerMutation.mutate()}
