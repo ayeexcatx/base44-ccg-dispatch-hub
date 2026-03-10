@@ -193,6 +193,7 @@ function LayoutInner({ children, currentPageName }) {
             </Link>
             <Link to={createPageUrl('Incidents')}>
               <Button variant={isActive('Incidents') ? 'secondary' : 'ghost'} size="sm" className="text-xs whitespace-nowrap">Incidents</Button>
+            </Link>
             <Link to={createPageUrl('AdminAvailability')}>
               <Button variant={isActive('AdminAvailability') ? 'secondary' : 'ghost'} size="sm" className="text-xs whitespace-nowrap">Availability</Button>
             </Link>
