@@ -8,6 +8,7 @@ import NotificationBell from '@/components/notifications/NotificationBell';
 
 function LayoutInner({ children, currentPageName }) {
   const { session, loading, logout } = useSession();
+  const location = useLocation();
 
   useEffect(() => {
     if (loading) return;
@@ -39,7 +40,8 @@ function LayoutInner({ children, currentPageName }) {
 
   const isAdmin = session.code_type === 'Admin';
   const isOwner = session.code_type === 'CompanyOwner';
-  const location = useLocation();
+  const isTruck = session.code_type === 'Truck';
+  const canUsePortalTabs = isOwner || isTruck;
   const isActive = (pageName) => location.pathname === createPageUrl(pageName);
 
   return (
@@ -91,7 +93,7 @@ function LayoutInner({ children, currentPageName }) {
                 </Link>
               </nav>
             }
-            {isOwner &&
+            {canUsePortalTabs &&
             <nav className="hidden md:flex items-center gap-1 mr-4">
                 <Link to={createPageUrl('Home')}>
                   <Button variant={isActive('Home') ? 'secondary' : 'ghost'} size="sm" className="text-xs">Home</Button>
@@ -99,9 +101,9 @@ function LayoutInner({ children, currentPageName }) {
                 <Link to={createPageUrl('Portal')}>
                   <Button variant={isActive('Portal') ? 'secondary' : 'ghost'} size="sm" className="text-xs">Dispatches</Button>
                 </Link>
-                <Link to={createPageUrl('Notifications')}>
+                {isOwner && <Link to={createPageUrl('Notifications')}>
                   <Button variant={isActive('Notifications') ? 'secondary' : 'ghost'} size="sm" className="text-xs">Notifications</Button>
-                </Link>
+                </Link>}
               </nav>
             }
             {(isAdmin || session.code_type === 'CompanyOwner') &&
@@ -123,7 +125,7 @@ function LayoutInner({ children, currentPageName }) {
         </div>
 
         {/* Mobile nav for company owner */}
-        {isOwner &&
+        {canUsePortalTabs &&
         <div className="md:hidden border-t border-slate-100 px-4 py-2 flex gap-1 overflow-x-auto">
             <Link to={createPageUrl('Home')}>
               <Button variant={isActive('Home') ? 'secondary' : 'ghost'} size="sm" className="text-xs whitespace-nowrap">Home</Button>
@@ -131,9 +133,9 @@ function LayoutInner({ children, currentPageName }) {
             <Link to={createPageUrl('Portal')}>
               <Button variant={isActive('Portal') ? 'secondary' : 'ghost'} size="sm" className="text-xs whitespace-nowrap">Dispatches</Button>
             </Link>
-            <Link to={createPageUrl('Notifications')}>
+            {isOwner && <Link to={createPageUrl('Notifications')}>
               <Button variant={isActive('Notifications') ? 'secondary' : 'ghost'} size="sm" className="text-xs whitespace-nowrap">Notifications</Button>
-            </Link>
+            </Link>}
           </div>
         }
 
