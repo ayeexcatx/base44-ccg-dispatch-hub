@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { format, addDays, addWeeks, addMonths, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import { format, addDays, addWeeks, addMonths, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -149,31 +149,40 @@ export default function AvailabilityManager({ companyId, canSelectCompany = fals
   const dateRangeLabel = useMemo(() => {
     if (viewMode === 'day') return format(activeDate, 'EEE, MMM d, yyyy');
     if (viewMode === 'week') {
-      const start = startOfWeek(activeDate, { weekStartsOn: 1 });
-      const end = endOfWeek(activeDate, { weekStartsOn: 1 });
+      const start = startOfWeek(activeDate, { weekStartsOn: 0 });
+      const end = endOfWeek(activeDate, { weekStartsOn: 0 });
       return `${format(start, 'MMM d')} - ${format(end, 'MMM d, yyyy')}`;
     }
     return format(activeDate, 'MMMM yyyy');
   }, [activeDate, viewMode]);
 
   const visibleDates = useMemo(() => {
-    if (viewMode === 'day') return [activeDate];
+    if (viewMode === 'day') {
+      return eachDayOfInterval({ start: addDays(activeDate, -1), end: addDays(activeDate, 1) });
+    }
+
     if (viewMode === 'week') {
-      const start = startOfWeek(activeDate, { weekStartsOn: 1 });
-      const end = endOfWeek(activeDate, { weekStartsOn: 1 });
+      const start = startOfWeek(activeDate, { weekStartsOn: 0 });
+      const end = endOfWeek(activeDate, { weekStartsOn: 0 });
       return eachDayOfInterval({ start, end });
     }
 
-    return eachDayOfInterval({ start: startOfMonth(activeDate), end: endOfMonth(activeDate) });
+    const monthStart = startOfMonth(activeDate);
+    const monthEnd = endOfMonth(activeDate);
+    const gridStart = startOfWeek(monthStart, { weekStartsOn: 0 });
+    const gridEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
+    return eachDayOfInterval({ start: gridStart, end: gridEnd });
   }, [activeDate, viewMode]);
 
   const renderDayCell = (date) => {
     const shifts = getOperationalShifts(date.getDay());
+    const isOutsideActiveMonth = viewMode === 'month' && !isSameMonth(date, activeDate);
+
     if (!shifts.length) {
       return (
-        <Card key={toDateKey(date)}>
+        <Card key={toDateKey(date)} className={isOutsideActiveMonth ? 'bg-slate-50/60' : ''}>
           <CardContent className="p-3">
-            <p className="font-medium text-sm">{format(date, 'EEE, MMM d')}</p>
+            <p className={`font-medium text-sm ${isOutsideActiveMonth ? 'text-slate-400' : ''}`}>{format(date, 'EEE, MMM d')}</p>
             <p className="text-xs text-slate-400 mt-2">Non-operational day</p>
           </CardContent>
         </Card>
@@ -181,9 +190,9 @@ export default function AvailabilityManager({ companyId, canSelectCompany = fals
     }
 
     return (
-      <Card key={toDateKey(date)}>
+      <Card key={toDateKey(date)} className={isOutsideActiveMonth ? 'bg-slate-50/60' : ''}>
         <CardContent className="p-3 space-y-2">
-          <p className="font-medium text-sm">{format(date, 'EEE, MMM d')}</p>
+          <p className={`font-medium text-sm ${isOutsideActiveMonth ? 'text-slate-400' : ''}`}>{format(date, 'EEE, MMM d')}</p>
           {shifts.map((shift) => {
             const availability = resolveAvailability(date, shift);
             return (
@@ -222,18 +231,6 @@ export default function AvailabilityManager({ companyId, canSelectCompany = fals
           ))}
         </div>
       </div>
-
-      <Card>
-        <CardContent className="p-3 flex items-center justify-between gap-2">
-          <div className="text-sm font-medium text-slate-700">{dateRangeLabel}</div>
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={() => shiftActiveDate(-1)}>Prev</Button>
-            <Button size="sm" variant="outline" onClick={() => setActiveDate(new Date())}>Today</Button>
-            <Button size="sm" variant="outline" onClick={() => shiftActiveDate(1)}>Next</Button>
-          </div>
-        </CardContent>
-      </Card>
-
       {canSelectCompany && (
         <Card>
           <CardContent className="p-4 space-y-3">
@@ -267,8 +264,40 @@ export default function AvailabilityManager({ companyId, canSelectCompany = fals
       ) : (
         <>
           <Card>
+            <CardContent className="p-3 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="text-sm font-medium text-slate-700">{dateRangeLabel}</div>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" onClick={() => shiftActiveDate(-1)}>Prev</Button>
+                  <Button size="sm" variant="outline" onClick={() => setActiveDate(new Date())}>Today</Button>
+                  <Button size="sm" variant="outline" onClick={() => shiftActiveDate(1)}>Next</Button>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                {(viewMode === 'week' || viewMode === 'month') && (
+                  <div className="grid grid-cols-7 gap-3 min-w-[980px] mb-2">
+                    {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((weekday) => (
+                      <p key={weekday} className="text-xs font-semibold uppercase tracking-wide text-slate-500">{weekday}</p>
+                    ))}
+                  </div>
+                )}
+
+                <div className={`grid gap-3 ${viewMode === 'day' ? 'grid-cols-3 min-w-[760px]' : 'grid-cols-7 min-w-[980px]'}`}>
+                  {visibleDates.map(renderDayCell)}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="text-xs text-slate-500">
+            <Badge variant="outline" className="mr-2 text-green-700 border-green-300">Available</Badge>
+            <Badge variant="outline" className="text-red-700 border-red-300">Unavailable</Badge>
+          </div>
+
+          <Card>
             <CardContent className="p-4 space-y-3">
-              <h3 className="text-sm font-semibold text-slate-800">Weekly Defaults</h3>
+              <h3 className="text-sm font-semibold text-slate-800">Recurring Weekly Defaults</h3>
               <p className="text-xs text-slate-500">Defaults apply when no date-specific override exists.</p>
               <div className="grid gap-2 md:grid-cols-2">
                 {[1, 2, 3, 4, 5, 0].map((weekday) => (
@@ -291,15 +320,6 @@ export default function AvailabilityManager({ companyId, canSelectCompany = fals
               </div>
             </CardContent>
           </Card>
-
-          <div className={`grid gap-3 ${viewMode === 'day' ? 'grid-cols-1' : viewMode === 'week' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
-            {visibleDates.map(renderDayCell)}
-          </div>
-
-          <div className="text-xs text-slate-500">
-            <Badge variant="outline" className="mr-2 text-green-700 border-green-300">Available</Badge>
-            <Badge variant="outline" className="text-red-700 border-red-300">Unavailable</Badge>
-          </div>
         </>
       )}
 
