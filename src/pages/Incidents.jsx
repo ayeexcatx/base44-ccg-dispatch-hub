@@ -72,6 +72,8 @@ const formatDispatchDate = (value) => {
   }
 };
 
+const getIncidentCreatedDateTime = (incident) => incident?.incident_datetime || incident?.created_date || null;
+
 export default function Incidents() {
   const { session } = useSession();
   const queryClient = useQueryClient();
@@ -528,7 +530,7 @@ export default function Incidents() {
                       </Badge>
                     </div>
                     <p className="text-sm text-slate-900 font-medium mt-2">{incident.summary || 'No summary'}</p>
-                    <p className="text-xs text-slate-500 mt-1">{formatDateTime(incident.incident_datetime)}</p>
+                    <p className="text-xs text-slate-500 mt-1">{formatDateTime(getIncidentCreatedDateTime(incident))}</p>
                     {dispatch && (
                       <div className="text-xs text-slate-600 mt-2 space-y-0.5">
                         <p>
@@ -692,8 +694,8 @@ export default function Incidents() {
                       <p className="text-slate-900 font-medium">{incident.summary || '—'}</p>
                     </div>
                     <div>
-                      <p className="text-slate-500">Created</p>
-                      <p className="text-slate-900">{formatDateTime(incident.created_date || incident.incident_datetime)}</p>
+                      <p className="text-slate-500">Created On</p>
+                      <p className="text-slate-900">{formatDateTime(getIncidentCreatedDateTime(incident))}</p>
                     </div>
                     <div>
                       <p className="text-slate-500">Time Stopped From</p>
@@ -779,7 +781,7 @@ export default function Incidents() {
                       <p className="font-medium">Original Incident Report</p>
                       <p className="whitespace-pre-wrap">{incident.details || incident.summary || '—'}</p>
                       <p className="text-xs text-slate-500 mt-1">
-                        {formatDateTime(incident.created_date || incident.incident_datetime)}
+                        {formatDateTime(getIncidentCreatedDateTime(incident))}
                         {getIncidentReporterName(incident) ? ` • ${getIncidentReporterName(incident)}` : ''}
                       </p>
                     </div>
