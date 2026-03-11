@@ -4,12 +4,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   CheckCircle2, Clock, Truck, Sun, Moon,
   FileText, AlertTriangle, Save, History, ArrowLeft, Pencil, Camera
 } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
 import { createPageUrl } from '@/utils';
+import { base44 } from '@/api/base44Client';
 import { statusBadgeColors } from './statusConfig';
 import { NOTE_TYPES, normalizeTemplateNote, renderSimpleMarkupToHtml } from '@/lib/templateNotes';
 import { calculateWorkedHours, formatTime24h, formatWorkedHours } from '@/lib/timeLogs';
@@ -21,6 +24,8 @@ const tollColors = {
   Unauthorized: 'bg-red-50 text-red-700',
   'Included in Rate': 'bg-purple-50 text-purple-700',
 };
+
+const UNASSIGNED_DRIVER_VALUE = '__unassigned__';
 
 
 function formatActivityTimestamp(value) {
@@ -144,7 +149,9 @@ export default function DispatchDetailDrawer({
   const [isSavingTrucks, setIsSavingTrucks] = useState(false);
   const [truckEditMessage, setTruckEditMessage] = useState(null);
   const [isCreatingScreenshot, setIsCreatingScreenshot] = useState(false);
+  const [selectedDriverByTruck, setSelectedDriverByTruck] = useState({});
   const screenshotSectionRef = React.useRef(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     setDraftTimeEntries({});
@@ -167,8 +174,6 @@ export default function DispatchDetailDrawer({
     return () => window.clearTimeout(timeoutId);
   }, [truckEditMessage]);
 
-  if (!dispatch) return null;
-
   const myTrucks = (session?.allowed_trucks || []).filter(t =>
     (dispatch?.trucks_assigned || []).includes(t)
   );
@@ -178,6 +183,74 @@ export default function DispatchDetailDrawer({
   const primaryReferenceTag = String(dispatch.reference_tag || '').trim();
   const currentConfType = dispatch.status;
   const hasAdditional = Array.isArray(dispatch.additional_assignments) && dispatch.additional_assignments.length > 0;
+
+  const { data: companyDrivers = [] } = useQuery({
+    queryKey: ['drivers', dispatch?.company_id],
+    queryFn: () => base44.entities.Driver.filter({ company_id: dispatch.company_id, active_flag: true }, '-driver_name', 500),
+    enabled: open && isOwner && !!dispatch?.company_id,
+  });
+
+  const { data: driverAssignments = [], refetch: refetchDriverAssignments } = useQuery({
+    queryKey: ['driver-dispatch-assignments', dispatch?.id],
+    queryFn: () => base44.entities.DriverDispatchAssignment.filter({ dispatch_id: dispatch.id, active_flag: true }, '-assigned_datetime', 500),
+    enabled: open && isOwner && !!dispatch?.id,
+  });
+
+  useEffect(() => {
+    if (!isOwner || !dispatch?.id) return;
+
+    const next = {};
+    (dispatch.trucks_assigned || []).forEach((truckNumber) => {
+      const assignment = driverAssignments.find((entry) => entry.truck_number === truckNumber && entry.active_flag !== false);
+      next[truckNumber] = assignment?.driver_id || UNASSIGNED_DRIVER_VALUE;
+    });
+    setSelectedDriverByTruck(next);
+  }, [isOwner, dispatch?.id, dispatch?.trucks_assigned, driverAssignments]);
+
+  const assignDriverMutation = useMutation({
+    mutationFn: async ({ truckNumber, driverId }) => {
+      const driver = companyDrivers.find((entry) => entry.id === driverId);
+      if (!driver) throw new Error('Selected driver was not found.');
+
+      const existing = driverAssignments.find((entry) => entry.truck_number === truckNumber);
+      const payload = {
+        dispatch_id: dispatch.id,
+        company_id: dispatch.company_id,
+        truck_number: truckNumber,
+        driver_id: driver.id,
+        driver_name: driver.driver_name,
+        assigned_by_access_code_id: session?.id,
+        assigned_by_code_type: session?.code_type,
+        assigned_datetime: new Date().toISOString(),
+        active_flag: true,
+      };
+
+      if (existing?.id) {
+        return base44.entities.DriverDispatchAssignment.update(existing.id, payload);
+      }
+
+      return base44.entities.DriverDispatchAssignment.create(payload);
+    },
+    onSuccess: async () => {
+      await refetchDriverAssignments();
+      queryClient.invalidateQueries({ queryKey: ['driver-dispatch-assignments', dispatch?.id] });
+      toast.success('Driver assignment saved.');
+    },
+    onError: (error) => {
+      toast.error(error?.message || 'Unable to save driver assignment.');
+    },
+  });
+
+  const handleDriverSelection = async (truckNumber, driverId) => {
+    setSelectedDriverByTruck((prev) => ({ ...prev, [truckNumber]: driverId }));
+
+    if (driverId === UNASSIGNED_DRIVER_VALUE) return;
+
+    await assignDriverMutation.mutateAsync({ truckNumber, driverId });
+  };
+
+  if (!dispatch) return null;
+
 
   const normalizedTemplateNotes = (templateNotes || []).map(normalizeTemplateNote);
   const boxNotes = normalizedTemplateNotes.filter(n => n.note_type === NOTE_TYPES.BOX);
@@ -613,6 +686,32 @@ export default function DispatchDetailDrawer({
                     >
                       {isSavingTrucks ? 'Saving…' : 'Save Truck Assignments'}
                     </Button>
+                  </div>
+                )}
+
+                {isOwner && (dispatch.trucks_assigned || []).length > 0 && (
+                  <div data-screenshot-exclude="true" className="rounded-lg border border-slate-200 bg-white p-3 space-y-2">
+                    <p className="text-xs text-slate-500 uppercase tracking-wide">Driver Assignments</p>
+                    {(dispatch.trucks_assigned || []).map((truckNumber) => (
+                      <div key={`driver-${truckNumber}`} className="grid grid-cols-[70px,1fr] items-center gap-2">
+                        <span className="text-xs font-mono text-slate-600">{truckNumber}</span>
+                        <Select
+                          value={selectedDriverByTruck[truckNumber] || UNASSIGNED_DRIVER_VALUE}
+                          onValueChange={(value) => handleDriverSelection(truckNumber, value)}
+                          disabled={assignDriverMutation.isPending || companyDrivers.length === 0}
+                        >
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue placeholder="Assign driver" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={UNASSIGNED_DRIVER_VALUE}>No driver assigned</SelectItem>
+                            {companyDrivers.map((driver) => (
+                              <SelectItem key={driver.id} value={driver.id}>{driver.driver_name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
