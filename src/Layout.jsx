@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { SessionProvider, useSession } from './components/session/SessionContext';
 import { createPageUrl } from './utils';
 import { Link, useLocation } from 'react-router-dom';
-import { LogOut, Truck, Shield, Building2, Megaphone, TriangleAlert, CalendarDays } from 'lucide-react';
+import { LogOut, Truck, Shield, Building2, Megaphone, TriangleAlert, CalendarDays, Home, CheckCircle2, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import NotificationBell from '@/components/notifications/NotificationBell';
 
@@ -75,37 +75,37 @@ function LayoutInner({ children, currentPageName }) {
             {isAdmin &&
             <nav className="hidden md:flex items-center gap-1 mr-4">
                 <Link to={createPageUrl('AdminDashboard')}>
-                  <Button variant="ghost" size="sm" className="text-xs">Dashboard</Button>
+                  <Button variant="ghost" size="sm" className="text-xs flex items-center gap-1"><Home className="h-3 w-3" />Dashboard</Button>
                 </Link>
                 <Link to={createPageUrl('AdminDispatches')}>
-                  <Button variant="ghost" size="sm" className="text-xs">Dispatches</Button>
+                  <Button variant="ghost" size="sm" className="text-xs flex items-center gap-1"><Truck className="h-3 w-3" />Dispatches</Button>
+                </Link>
+                <Link to={createPageUrl('AdminAvailability')}>
+                  <Button variant={isActive('AdminAvailability') ? 'secondary' : 'ghost'} size="sm" className="text-xs flex items-center gap-1">
+                    <CalendarDays className="h-3 w-3" />Availability
+                  </Button>
                 </Link>
                 <Link to={createPageUrl('AdminConfirmations')}>
-                  <Button variant="ghost" size="sm" className="text-xs">Confirmations</Button>
-                </Link>
-                <Link to={createPageUrl('AdminCompanies')}>
-                  <Button variant="ghost" size="sm" className="text-xs">Companies</Button>
-                </Link>
-                <Link to={createPageUrl('AdminAccessCodes')}>
-                  <Button variant="ghost" size="sm" className="text-xs">Access Codes</Button>
-                </Link>
-                <Link to={createPageUrl('AdminTemplateNotes')}>
-                  <Button variant="ghost" size="sm" className="text-xs">Notes</Button>
-                </Link>
-                <Link to={createPageUrl('AdminAnnouncements')}>
-                  <Button variant="ghost" size="sm" className="text-xs flex items-center gap-1">
-                    <Megaphone className="h-3 w-3" />Announcements
-                  </Button>
+                  <Button variant="ghost" size="sm" className="text-xs flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />Confirmations</Button>
                 </Link>
                 <Link to={createPageUrl('Incidents')}>
                    <Button variant={isActive('Incidents') ? 'secondary' : 'ghost'} size="sm" className="text-xs flex items-center gap-1">
                      <TriangleAlert className="h-3 w-3" />Incidents
                    </Button>
                  </Link>
-                 <Link to={createPageUrl('AdminAvailability')}>
-                  <Button variant={isActive('AdminAvailability') ? 'secondary' : 'ghost'} size="sm" className="text-xs flex items-center gap-1">
-                    <CalendarDays className="h-3 w-3" />Availability
+                <Link to={createPageUrl('AdminAnnouncements')}>
+                  <Button variant="ghost" size="sm" className="text-xs flex items-center gap-1">
+                    <Megaphone className="h-3 w-3" />Announcements
                   </Button>
+                </Link>
+                <Link to={createPageUrl('AdminCompanies')}>
+                  <Button variant="ghost" size="sm" className="text-xs flex items-center gap-1"><Building2 className="h-3 w-3" />Companies</Button>
+                </Link>
+                <Link to={createPageUrl('AdminAccessCodes')}>
+                  <Button variant="ghost" size="sm" className="text-xs flex items-center gap-1"><Shield className="h-3 w-3" />Access Codes</Button>
+                </Link>
+                <Link to={createPageUrl('AdminTemplateNotes')}>
+                  <Button variant="ghost" size="sm" className="text-xs flex items-center gap-1"><FileText className="h-3 w-3" />Notes</Button>
                 </Link>
               </nav>
             }
@@ -171,31 +171,31 @@ function LayoutInner({ children, currentPageName }) {
         {isAdmin &&
         <div className="md:hidden border-t border-slate-100 px-4 py-2 flex gap-1 overflow-x-auto">
             <Link to={createPageUrl('AdminDashboard')}>
-              <Button variant="ghost" size="sm" className="text-xs whitespace-nowrap">Dashboard</Button>
+              <Button variant="ghost" size="sm" className="text-xs whitespace-nowrap flex items-center gap-1"><Home className="h-3 w-3" />Dashboard</Button>
             </Link>
             <Link to={createPageUrl('AdminDispatches')}>
-              <Button variant="ghost" size="sm" className="text-xs whitespace-nowrap">Dispatches</Button>
-            </Link>
-            <Link to={createPageUrl('AdminConfirmations')}>
-              <Button variant="ghost" size="sm" className="text-xs whitespace-nowrap">Confirmations</Button>
-            </Link>
-            <Link to={createPageUrl('AdminCompanies')}>
-              <Button variant="ghost" size="sm" className="text-xs whitespace-nowrap">Companies</Button>
-            </Link>
-            <Link to={createPageUrl('AdminAccessCodes')}>
-              <Button variant="ghost" size="sm" className="text-xs whitespace-nowrap">Access Codes</Button>
-            </Link>
-            <Link to={createPageUrl('AdminTemplateNotes')}>
-              <Button variant="ghost" size="sm" className="text-xs whitespace-nowrap">Notes</Button>
-            </Link>
-            <Link to={createPageUrl('AdminAnnouncements')}>
-              <Button variant="ghost" size="sm" className="text-xs whitespace-nowrap">Announcements</Button>
-            </Link>
-            <Link to={createPageUrl('Incidents')}>
-              <Button variant={isActive('Incidents') ? 'secondary' : 'ghost'} size="sm" className="text-xs whitespace-nowrap">Incidents</Button>
+              <Button variant="ghost" size="sm" className="text-xs whitespace-nowrap flex items-center gap-1"><Truck className="h-3 w-3" />Dispatches</Button>
             </Link>
             <Link to={createPageUrl('AdminAvailability')}>
-              <Button variant={isActive('AdminAvailability') ? 'secondary' : 'ghost'} size="sm" className="text-xs whitespace-nowrap">Availability</Button>
+              <Button variant={isActive('AdminAvailability') ? 'secondary' : 'ghost'} size="sm" className="text-xs whitespace-nowrap flex items-center gap-1"><CalendarDays className="h-3 w-3" />Availability</Button>
+            </Link>
+            <Link to={createPageUrl('AdminConfirmations')}>
+              <Button variant="ghost" size="sm" className="text-xs whitespace-nowrap flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />Confirmations</Button>
+            </Link>
+            <Link to={createPageUrl('Incidents')}>
+              <Button variant={isActive('Incidents') ? 'secondary' : 'ghost'} size="sm" className="text-xs whitespace-nowrap flex items-center gap-1"><TriangleAlert className="h-3 w-3" />Incidents</Button>
+            </Link>
+            <Link to={createPageUrl('AdminAnnouncements')}>
+              <Button variant="ghost" size="sm" className="text-xs whitespace-nowrap flex items-center gap-1"><Megaphone className="h-3 w-3" />Announcements</Button>
+            </Link>
+            <Link to={createPageUrl('AdminCompanies')}>
+              <Button variant="ghost" size="sm" className="text-xs whitespace-nowrap flex items-center gap-1"><Building2 className="h-3 w-3" />Companies</Button>
+            </Link>
+            <Link to={createPageUrl('AdminAccessCodes')}>
+              <Button variant="ghost" size="sm" className="text-xs whitespace-nowrap flex items-center gap-1"><Shield className="h-3 w-3" />Access Codes</Button>
+            </Link>
+            <Link to={createPageUrl('AdminTemplateNotes')}>
+              <Button variant="ghost" size="sm" className="text-xs whitespace-nowrap flex items-center gap-1"><FileText className="h-3 w-3" />Notes</Button>
             </Link>
           </div>
         }
