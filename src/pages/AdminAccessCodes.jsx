@@ -73,36 +73,12 @@ export default function AdminAccessCodes() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['access-codes'] });
       queryClient.invalidateQueries({ queryKey: ['drivers-all'] });
+      queryClient.invalidateQueries({ queryKey: ['drivers-all-nav'] });
       setOpen(false);
       setEditing(null);
     },
   });
 
-  const createPendingDriverCodeMutation = useMutation({
-    mutationFn: async (driver) => {
-      const created = await base44.entities.AccessCode.create({
-        code: generateCode(),
-        label: driver.driver_name || '',
-        active_flag: true,
-        code_type: 'Driver',
-        company_id: driver.company_id,
-        driver_id: driver.id,
-        allowed_trucks: [],
-      });
-
-      await base44.entities.Driver.update(driver.id, {
-        access_code_id: created.id,
-        access_code_status: 'Created',
-      });
-
-      return created;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['access-codes'] });
-      queryClient.invalidateQueries({ queryKey: ['drivers-all'] });
-      toast.success('Driver access code created');
-    },
-  });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.AccessCode.delete(id),
@@ -131,6 +107,20 @@ export default function AdminAccessCodes() {
       company_id: '',
       allowed_trucks: [],
       driver_id: '',
+    });
+    setOpen(true);
+  };
+
+  const openPendingDriverCodeDialog = (driver) => {
+    setEditing(null);
+    setForm({
+      code: generateCode(),
+      label: driver.driver_name || '',
+      active_flag: true,
+      code_type: 'Driver',
+      company_id: driver.company_id || '',
+      allowed_trucks: [],
+      driver_id: driver.id || '',
     });
     setOpen(true);
   };
@@ -247,8 +237,8 @@ export default function AdminAccessCodes() {
                     <Button
                       size="sm"
                       className="text-xs"
-                      disabled={createPendingDriverCodeMutation.isPending}
-                      onClick={() => createPendingDriverCodeMutation.mutate(driver)}
+                      disabled={saveMutation.isPending}
+                      onClick={() => openPendingDriverCodeDialog(driver)}
                     >
                       <Plus className="h-3.5 w-3.5 mr-1" />Create Code
                     </Button>

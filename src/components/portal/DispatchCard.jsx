@@ -39,7 +39,7 @@ const formatDispatchTime = (startTime) => {
 
 const DispatchCard = React.forwardRef(function DispatchCard({
   dispatch, session, confirmations, timeEntries, templateNotes,
-  onConfirm, onTimeEntry, onOwnerTruckUpdate, companyName, forceOpen, onDrawerClose
+  onConfirm, onTimeEntry, onOwnerTruckUpdate, companyName, forceOpen, onDrawerClose, visibleTrucksOverride
 }, ref) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -55,9 +55,11 @@ const DispatchCard = React.forwardRef(function DispatchCard({
   const myTrucks = (session.allowed_trucks || []).filter(t =>
     (dispatch.trucks_assigned || []).includes(t)
   );
-  const visibleTrucks = session.code_type === 'Driver'
-    ? (dispatch.trucks_assigned || [])
-    : myTrucks;
+  const visibleTrucks = Array.isArray(visibleTrucksOverride)
+    ? visibleTrucksOverride
+    : session.code_type === 'Driver'
+      ? (dispatch.trucks_assigned || [])
+      : myTrucks;
 
   return (
     <div ref={ref}>

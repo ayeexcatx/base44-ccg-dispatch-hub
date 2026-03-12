@@ -55,8 +55,7 @@ const formatDispatchTime = (startTime) => {
   return `${hour12}:${minute} ${period}`;
 };
 
-function MiniDispatchCard({ dispatch, companyName }) {
-  const truckNumbers = dispatch.trucks_assigned || [];
+function MiniDispatchCard({ dispatch, companyName, truckNumbers = [] }) {
 
   return (
     <Link to={createPageUrl(`Portal?dispatchId=${dispatch.id}`)}>
@@ -153,12 +152,29 @@ export default function Home() {
     }).sort((a, b) => (a.priority || 3) - (b.priority || 3));
   }, [allAnnouncements, session]);
 
-  const driverDispatchIds = useMemo(() => new Set(
+  const driverAssignedTrucksByDispatch = useMemo(() => {
+    const map = new Map();
     driverAssignments
       .filter((assignment) => assignment?.active_flag !== false)
-      .map((assignment) => assignment.dispatch_id)
-      .filter(Boolean)
-  ), [driverAssignments]);
+      .forEach((assignment) => {
+        if (!assignment?.dispatch_id || !assignment?.truck_number) return;
+        if (!map.has(assignment.dispatch_id)) map.set(assignment.dispatch_id, []);
+        const trucks = map.get(assignment.dispatch_id);
+        if (!trucks.includes(assignment.truck_number)) trucks.push(assignment.truck_number);
+      });
+    return map;
+  }, [driverAssignments]);
+
+  const driverDispatchIds = useMemo(
+    () => new Set(driverAssignedTrucksByDispatch.keys()),
+    [driverAssignedTrucksByDispatch]
+  );
+
+  const getVisibleTrucksForDispatch = (dispatch) => {
+    if (!dispatch?.id) return [];
+    if (isDriver) return driverAssignedTrucksByDispatch.get(dispatch.id) || [];
+    return (dispatch.trucks_assigned || []).filter((truck) => allowedTrucks.includes(truck));
+  };
 
   const filteredDispatches = useMemo(() => {
     if (isDriver) {
@@ -294,9 +310,7 @@ export default function Home() {
                         {d && (
                           <div className="mt-1 flex items-center gap-1 flex-wrap">
                             <Truck className="h-3 w-3 text-slate-500" />
-                            {(d.trucks_assigned || [])
-                              .filter((truck) => allowedTrucks.includes(truck))
-                              .map((truck) => (
+                            {getVisibleTrucksForDispatch(d).map((truck) => (
                                 <Badge key={`${n.id}-${truck}`} variant="outline" className="text-[10px] font-mono px-1.5 py-0 h-5">
                                   {truck}
                                 </Badge>
@@ -338,7 +352,7 @@ export default function Home() {
             {todayDispatches.length === 0 ? (
               <p className="text-sm text-slate-400 text-center py-4">No dispatches today</p>
             ) : (
-              todayDispatches.map(d => <MiniDispatchCard key={d.id} dispatch={d} companyName={d.company_name} />)
+              todayDispatches.map(d => <MiniDispatchCard key={d.id} dispatch={d} companyName={d.company_name} truckNumbers={getVisibleTrucksForDispatch(d)} />)
             )}
           </CardContent>
         </Card>
@@ -360,7 +374,7 @@ export default function Home() {
             {upcomingDispatches.length === 0 ? (
               <p className="text-sm text-slate-400 text-center py-4">No upcoming dispatches</p>
             ) : (
-              upcomingDispatches.map(d => <MiniDispatchCard key={d.id} dispatch={d} companyName={d.company_name} />)
+              upcomingDispatches.map(d => <MiniDispatchCard key={d.id} dispatch={d} companyName={d.company_name} truckNumbers={getVisibleTrucksForDispatch(d)} />)
             )}
           </CardContent>
         </Card>

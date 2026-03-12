@@ -388,12 +388,23 @@ Would you like to swap ${outgoingTruck} with ${incomingTruck}?`;
   const handleOwnerTruckUpdate = (dispatch, nextTrucks) => updateOwnerTrucksMutation.mutateAsync({ dispatch, nextTrucks });
 
   const allowedTrucks = session?.allowed_trucks || [];
-  const driverDispatchIds = useMemo(() => new Set(
+  const driverAssignedTrucksByDispatch = useMemo(() => {
+    const map = new Map();
     driverAssignments
       .filter((assignment) => assignment?.active_flag !== false)
-      .map((assignment) => assignment.dispatch_id)
-      .filter(Boolean)
-  ), [driverAssignments]);
+      .forEach((assignment) => {
+        if (!assignment?.dispatch_id || !assignment?.truck_number) return;
+        if (!map.has(assignment.dispatch_id)) map.set(assignment.dispatch_id, []);
+        const trucks = map.get(assignment.dispatch_id);
+        if (!trucks.includes(assignment.truck_number)) trucks.push(assignment.truck_number);
+      });
+    return map;
+  }, [driverAssignments]);
+
+  const driverDispatchIds = useMemo(
+    () => new Set(driverAssignedTrucksByDispatch.keys()),
+    [driverAssignedTrucksByDispatch]
+  );
 
   const isDriverUser = session?.code_type === 'Driver';
 
@@ -602,6 +613,7 @@ Would you like to swap ${outgoingTruck} with ${incomingTruck}?`;
                 companyName={companyMap[d.company_id]}
                 forceOpen={drawerDispatchId === d.id}
                 onDrawerClose={handleDrawerClose}
+                visibleTrucksOverride={isDriverUser ? (driverAssignedTrucksByDispatch.get(d.id) || []) : undefined}
               />
             </div>
           ))}

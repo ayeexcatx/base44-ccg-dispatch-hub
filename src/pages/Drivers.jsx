@@ -58,7 +58,10 @@ export default function Drivers() {
       access_code_status: 'Pending',
       requested_by_access_code_id: session?.id,
     }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['drivers', session?.company_id] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['drivers', session?.company_id] });
+      queryClient.invalidateQueries({ queryKey: ['drivers-all'] });
+    },
   });
 
   const openCreate = () => {
@@ -115,6 +118,13 @@ export default function Drivers() {
         <div className="grid gap-3">
           {sortedDrivers.map((driver) => {
             const status = driver.status || (driver.active_flag === false ? 'Inactive' : 'Active');
+            const accessCodeStatus = driver.access_code_status || 'Not Requested';
+            const canRequestCode = accessCodeStatus === 'Not Requested';
+            const requestLabel = accessCodeStatus === 'Pending'
+              ? 'Pending'
+              : accessCodeStatus === 'Created'
+                ? 'Created'
+                : 'Request Code';
             return (
               <Card key={driver.id}>
                 <CardContent className="p-4">
@@ -137,11 +147,11 @@ export default function Drivers() {
                         variant="outline"
                         size="sm"
                         onClick={() => requestCodeMutation.mutate(driver)}
-                        disabled={requestCodeMutation.isPending || driver.access_code_status === 'Created'}
+                        disabled={requestCodeMutation.isPending || !canRequestCode}
                         className="text-xs"
                       >
                         <KeyRound className="h-3.5 w-3.5 mr-1" />
-                        Request Code
+                        {requestLabel}
                       </Button>
                     </div>
                   </div>
@@ -197,4 +207,3 @@ export default function Drivers() {
     </div>
   );
 }
-
