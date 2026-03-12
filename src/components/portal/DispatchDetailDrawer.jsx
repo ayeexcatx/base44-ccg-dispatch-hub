@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -184,9 +184,17 @@ export default function DispatchDetailDrawer({
 
   const { data: companyDrivers = [] } = useQuery({
     queryKey: ['drivers', dispatch?.company_id],
-    queryFn: () => base44.entities.Driver.filter({ company_id: dispatch.company_id, active_flag: true }, '-driver_name', 500),
+    queryFn: () => base44.entities.Driver.filter({ company_id: dispatch.company_id }, '-driver_name', 500),
     enabled: open && isOwner && !!dispatch?.company_id,
   });
+
+  const eligibleDrivers = useMemo(
+    () => companyDrivers.filter((driver) => {
+      const isActive = driver.active_flag !== false && (driver.status || 'Active') === 'Active';
+      return isActive && driver.access_code_status === 'Created';
+    }),
+    [companyDrivers],
+  );
 
   const { data: driverAssignments = [], refetch: refetchDriverAssignments } = useQuery({
     queryKey: ['driver-dispatch-assignments', dispatch?.id],
@@ -214,7 +222,7 @@ export default function DispatchDetailDrawer({
 
   const assignDriverMutation = useMutation({
     mutationFn: async ({ truckNumber, driverId }) => {
-      const driver = companyDrivers.find((entry) => entry.id === driverId);
+      const driver = eligibleDrivers.find((entry) => entry.id === driverId);
       if (!driver) throw new Error('Selected driver was not found.');
 
       const existing = driverAssignments.find((entry) => entry.truck_number === truckNumber);
@@ -707,24 +715,33 @@ export default function DispatchDetailDrawer({
                 {isOwner && (dispatch.trucks_assigned || []).length > 0 && (
                   <div data-screenshot-exclude="true" className="rounded-lg border border-slate-200 bg-white p-3 space-y-2">
                     <p className="text-xs text-slate-500 uppercase tracking-wide">Driver Assignments</p>
+                    {eligibleDrivers.length === 0 && (
+                      <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-2">
+                        Create and activate a driver access code first.
+                      </p>
+                    )}
                     {(dispatch.trucks_assigned || []).map((truckNumber) => (
                       <div key={`driver-${truckNumber}`} className="grid grid-cols-[70px,1fr] items-center gap-2">
                         <span className="text-xs font-mono text-slate-600">{truckNumber}</span>
-                        <Select
-                          value={selectedDriverByTruck[truckNumber] || UNASSIGNED_DRIVER_VALUE}
-                          onValueChange={(value) => handleDriverSelection(truckNumber, value)}
-                          disabled={assignDriverMutation.isPending || companyDrivers.length === 0}
-                        >
-                          <SelectTrigger className="h-8 text-xs">
-                            <SelectValue placeholder="Assign driver" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value={UNASSIGNED_DRIVER_VALUE}>No driver assigned</SelectItem>
-                            {companyDrivers.map((driver) => (
-                              <SelectItem key={driver.id} value={driver.id}>{driver.driver_name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        {eligibleDrivers.length > 0 ? (
+                          <Select
+                            value={selectedDriverByTruck[truckNumber] || UNASSIGNED_DRIVER_VALUE}
+                            onValueChange={(value) => handleDriverSelection(truckNumber, value)}
+                            disabled={assignDriverMutation.isPending}
+                          >
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue placeholder="Assign driver" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value={UNASSIGNED_DRIVER_VALUE}>No driver assigned</SelectItem>
+                              {eligibleDrivers.map((driver) => (
+                                <SelectItem key={driver.id} value={driver.id}>{driver.driver_name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <p className="text-xs text-slate-500 italic">No eligible drivers available</p>
+                        )}
                       </div>
                     ))}
                   </div>

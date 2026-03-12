@@ -5,10 +5,21 @@ import { Link, useLocation } from 'react-router-dom';
 import { LogOut, Truck, Shield, Building2, Megaphone, TriangleAlert, CalendarDays, Home, CheckCircle2, FileText, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import NotificationBell from '@/components/notifications/NotificationBell';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 
 function LayoutInner({ children, currentPageName }) {
   const { session, loading, logout } = useSession();
   const location = useLocation();
+  const isAdminSession = session?.code_type === 'Admin';
+
+  const { data: allDrivers = [] } = useQuery({
+    queryKey: ['drivers-all-nav'],
+    queryFn: () => base44.entities.Driver.list('-created_date', 500),
+    enabled: isAdminSession,
+  });
+
+  const pendingDriverRequestsCount = allDrivers.filter((driver) => driver.access_code_status === 'Pending').length;
 
   useEffect(() => {
     if (loading) return;
@@ -126,7 +137,15 @@ function LayoutInner({ children, currentPageName }) {
                   <Button variant="ghost" size="sm" className="text-xs flex items-center gap-1"><Building2 className="h-3 w-3" />Companies</Button>
                 </Link>
                 <Link to={createPageUrl('AdminAccessCodes')}>
-                  <Button variant="ghost" size="sm" className="text-xs flex items-center gap-1"><Shield className="h-3 w-3" />Access Codes</Button>
+                  <Button variant="ghost" size="sm" className="text-xs flex items-center gap-1">
+                    <Shield className="h-3 w-3" />
+                    <span>Access Codes</span>
+                    {pendingDriverRequestsCount > 0 && (
+                      <span className="ml-1 inline-flex min-w-4 h-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold leading-none text-white">
+                        {pendingDriverRequestsCount}
+                      </span>
+                    )}
+                  </Button>
                 </Link>
                 <Link to={createPageUrl('AdminTemplateNotes')}>
                   <Button variant="ghost" size="sm" className="text-xs flex items-center gap-1"><FileText className="h-3 w-3" />Notes</Button>
@@ -209,7 +228,15 @@ function LayoutInner({ children, currentPageName }) {
               <Button variant="ghost" size="sm" className="text-xs whitespace-nowrap flex items-center gap-1"><Building2 className="h-3 w-3" />Companies</Button>
             </Link>
             <Link to={createPageUrl('AdminAccessCodes')}>
-              <Button variant="ghost" size="sm" className="text-xs whitespace-nowrap flex items-center gap-1"><Shield className="h-3 w-3" />Access Codes</Button>
+              <Button variant="ghost" size="sm" className="text-xs whitespace-nowrap flex items-center gap-1">
+                <Shield className="h-3 w-3" />
+                <span>Access Codes</span>
+                {pendingDriverRequestsCount > 0 && (
+                  <span className="ml-1 inline-flex min-w-4 h-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold leading-none text-white">
+                    {pendingDriverRequestsCount}
+                  </span>
+                )}
+              </Button>
             </Link>
             <Link to={createPageUrl('AdminTemplateNotes')}>
               <Button variant="ghost" size="sm" className="text-xs whitespace-nowrap flex items-center gap-1"><FileText className="h-3 w-3" />Notes</Button>
