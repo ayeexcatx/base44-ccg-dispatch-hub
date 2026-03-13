@@ -180,6 +180,8 @@ async function getPayload(req: Request): Promise<SyncPayload> {
 }
 
 Deno.serve(async (req: Request) => {
+console.log('syncDispatchHtmlToDrive invoked');
+  
   try {
     const payload = await getPayload(req);
     const {
@@ -190,7 +192,12 @@ Deno.serve(async (req: Request) => {
       updatedAt = new Date().toISOString(),
       status = 'synced',
     } = payload;
-
+    
+console.log('syncDispatchHtmlToDrive payload received', {
+  dispatchId: payload.dispatchId,
+  desiredFilesCount: payload.desiredFiles?.length ?? 0,
+  previousFilesCount: payload.previousFiles?.length ?? 0,
+});
     if (!dispatchId) throw new Error('dispatchId is required.');
     if (!rootFolderId) throw new Error('rootFolderId is required.');
 
