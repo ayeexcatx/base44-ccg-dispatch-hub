@@ -54,6 +54,7 @@ export default function AvailabilitySummaryBoxes({ companyId = null, includeAllC
           ...target,
           dateKey,
           total: 0,
+          dispatched: 0,
           remaining: 0,
           rows: [],
         };
@@ -74,13 +75,14 @@ export default function AvailabilitySummaryBoxes({ companyId = null, includeAllC
           const total = normalizeCount(resolved.available_truck_count);
           if (!total) return null;
 
-          const used = countUsedTrucksForCompanyShift(dispatches, company.id, dateKey, target.shift);
-          const remaining = Math.max(total - used, 0);
+          const dispatched = countUsedTrucksForCompanyShift(dispatches, company.id, dateKey, target.shift);
+          const remaining = Math.max(total - dispatched, 0);
 
           return {
             companyId: company.id,
             companyName: company.name || company.id,
             total,
+            dispatched,
             remaining,
           };
         })
@@ -91,6 +93,7 @@ export default function AvailabilitySummaryBoxes({ companyId = null, includeAllC
         ...target,
         dateKey,
         total: rows.reduce((sum, row) => sum + row.total, 0),
+        dispatched: rows.reduce((sum, row) => sum + row.dispatched, 0),
         remaining: rows.reduce((sum, row) => sum + row.remaining, 0),
         rows,
       };
@@ -107,10 +110,14 @@ export default function AvailabilitySummaryBoxes({ companyId = null, includeAllC
               <p className="text-[11px] text-slate-500">{format(box.date, 'EEE, MMM d')}</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 rounded-md bg-slate-50/70 px-3 py-2.5">
+            <div className="grid grid-cols-3 gap-3 rounded-md bg-slate-50/70 px-3 py-2.5">
               <div>
                 <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">Total</p>
                 <p className="text-3xl leading-none font-semibold text-emerald-600 mt-1">{box.total}</p>
+              </div>
+              <div>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">Dispatched</p>
+                <p className="text-3xl leading-none font-semibold text-sky-700 mt-1">{box.dispatched}</p>
               </div>
               <div>
                 <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">Remaining</p>
@@ -125,7 +132,7 @@ export default function AvailabilitySummaryBoxes({ companyId = null, includeAllC
                 {box.rows.map((row) => (
                   <li key={`${box.label}-${row.companyId}`} className="text-[11px] text-slate-600 leading-snug">
                     <span className="font-medium text-slate-700">{row.companyName}</span>
-                    <span> — {row.total} total, {row.remaining} remaining</span>
+                    <span> — {row.total} total, {row.dispatched} dispatched, {row.remaining} remaining</span>
                   </li>
                 ))}
               </ul>
