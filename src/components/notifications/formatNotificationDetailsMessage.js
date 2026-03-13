@@ -60,7 +60,7 @@ export function formatOwnerDispatchMessage(message) {
 export function getNotificationDisplay(notification, dispatch = null) {
   if (notification?.notification_category === 'dispatch_update_info') {
     const dateTimeLine = formatDispatchDateTimeLine(dispatch, 'AT');
-    const messageParts = [notification?.message, dateTimeLine].filter(Boolean);
+    const messageParts = [dateTimeLine, notification?.message].filter(Boolean);
 
     return {
       title: 'Your dispatch has been updated',
