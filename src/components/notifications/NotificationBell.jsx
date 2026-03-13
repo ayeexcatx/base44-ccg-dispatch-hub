@@ -10,7 +10,7 @@ import { createPageUrl } from '@/utils';
 import { Link, useNavigate } from 'react-router-dom';
 import NotificationStatusBadge from './NotificationStatusBadge';
 import { useOwnerNotifications } from './useOwnerNotifications';
-import { formatNotificationDetailsMessage } from './formatNotificationDetailsMessage';
+import { getNotificationDisplay } from './formatNotificationDetailsMessage';
 import { useConfirmationsQuery } from './useConfirmationsQuery';
 
 const normalizeId = (value) => String(value ?? '');
@@ -100,31 +100,35 @@ export default function NotificationBell({ session }) {
           {filteredNotifications.length === 0 ? (
             <div className="p-4 text-center text-sm text-slate-500">No notifications</div>
           ) : (
-            filteredNotifications.slice(0, 5).map(n => (
-              <div
-                key={n.id}
-                className={`p-3 border-b hover:bg-slate-50 cursor-pointer ${!n.read_flag ? 'bg-blue-50/30' : ''}`}
-                onClick={() => handleNotificationClick(n)}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-slate-900">{n.title}</p>
-                    <p className="text-xs text-slate-600 mt-0.5 whitespace-pre-line">{formatNotificationDetailsMessage(n.message)}</p>
-                    {n.required_trucks?.length > 0 && (
-                      <div className="mt-1">
-                        <NotificationStatusBadge notification={n} confirmations={confirmations} />
-                      </div>
+            filteredNotifications.slice(0, 5).map((n) => {
+              const display = getNotificationDisplay(n);
+
+              return (
+                <div
+                  key={n.id}
+                  className={`p-3 border-b hover:bg-slate-50 cursor-pointer ${!n.read_flag ? 'bg-blue-50/30' : ''}`}
+                  onClick={() => handleNotificationClick(n)}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm text-slate-900 ${display.isOwnerDispatchStatus ? 'font-semibold' : ''}`}>{display.title}</p>
+                      <p className="text-xs text-slate-600 mt-0.5 whitespace-pre-line">{display.message}</p>
+                      {n.required_trucks?.length > 0 && (
+                        <div className="mt-1">
+                          <NotificationStatusBadge notification={n} confirmations={confirmations} />
+                        </div>
+                      )}
+                      <p className="text-xs text-slate-400 mt-1">
+                        {format(new Date(n.created_date), 'MMM d, h:mm a')}
+                      </p>
+                    </div>
+                    {!n.read_flag && (
+                      <div className="h-2 w-2 rounded-full bg-blue-500 shrink-0 mt-1" />
                     )}
-                    <p className="text-xs text-slate-400 mt-1">
-                      {format(new Date(n.created_date), 'MMM d, h:mm a')}
-                    </p>
                   </div>
-                  {!n.read_flag && (
-                    <div className="h-2 w-2 rounded-full bg-blue-500 shrink-0 mt-1" />
-                  )}
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </PopoverContent>
