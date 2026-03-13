@@ -37,10 +37,10 @@ type DriveFile = {
   mimeType?: string;
 };
 
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+
 const DRIVE_API = 'https://www.googleapis.com/drive/v3';
 const DRIVE_UPLOAD_API = 'https://www.googleapis.com/upload/drive/v3';
-const TOKEN_AUDIENCE = 'https://oauth2.googleapis.com/token';
-const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive';
 
 function getEnv(name: string): string | undefined {
   const fromDeno = typeof Deno !== 'undefined' ? Deno.env.get(name) : undefined;
@@ -48,100 +48,14 @@ function getEnv(name: string): string | undefined {
   return fromDeno ?? fromNode;
 }
 
-function normalizePrivateKey(raw: string | undefined): string {
-  if (!raw) throw new Error('Missing GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY secret.');
-
-  if (raw.includes('BEGIN PRIVATE KEY')) return raw.replace(/\\n/g, '\n').trim();
-
-  const maybeBase64 = getEnv('GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY_BASE64');
-  if (maybeBase64) {
-    return atob(maybeBase64).replace(/\\n/g, '\n').trim();
-  }
-
-  return raw.replace(/\\n/g, '\n').trim();
-}
-
-function pemToArrayBuffer(pem: string): ArrayBuffer {
-  const cleaned = pem
-    .replace('-----BEGIN PRIVATE KEY-----', '')
-    .replace('-----END PRIVATE KEY-----', '')
-    .replace(/\s+/g, '');
-
-  const binary = atob(cleaned);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-  return bytes.buffer;
-}
-
 function escapeDriveQueryValue(value: string): string {
   return value.replace(/'/g, "\\'");
 }
 
-async function createGoogleAccessToken(): Promise<string> {
-  const clientEmail = getEnv('GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL');
-  if (!clientEmail) throw new Error('Missing GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL secret.');
-
-  const privateKey = normalizePrivateKey(getEnv('GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY'));
-  const now = Math.floor(Date.now() / 1000);
-  const impersonatedUser = getEnv('GOOGLE_IMPERSONATED_USER');
-
-  const header = { alg: 'RS256', typ: 'JWT' };
-  const claimSet: Record<string, string | number> = {
-    iss: clientEmail,
-    scope: DRIVE_SCOPE,
-    aud: TOKEN_AUDIENCE,
-    exp: now + 3600,
-    iat: now,
-  };
-
-  if (impersonatedUser) claimSet.sub = impersonatedUser;
-
-  const base64Url = (value: string) =>
-    btoa(value)
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/g, '');
-
-  const encodedHeader = base64Url(JSON.stringify(header));
-  const encodedClaims = base64Url(JSON.stringify(claimSet));
-  const signingInput = `${encodedHeader}.${encodedClaims}`;
-
-  const key = await crypto.subtle.importKey(
-    'pkcs8',
-    pemToArrayBuffer(privateKey),
-    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-    false,
-    ['sign']
-  );
-
-  const signature = await crypto.subtle.sign(
-    'RSASSA-PKCS1-v1_5',
-    key,
-    new TextEncoder().encode(signingInput)
-  );
-
-  const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/g, '');
-
-  const assertion = `${signingInput}.${encodedSignature}`;
-
-  const tokenResponse = await fetch(TOKEN_AUDIENCE, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion,
-    }),
-  });
-
-  const tokenData = await tokenResponse.json();
-  if (!tokenResponse.ok || !tokenData.access_token) {
-    throw new Error(`Failed to get Google access token: ${JSON.stringify(tokenData)}`);
-  }
-
-  return tokenData.access_token;
+async function getGoogleDriveAccessToken(req: Request): Promise<string> {
+  const base44 = createClientFromRequest(req);
+  const { accessToken } = await base44.asServiceRole.connectors.getConnection('googledrive');
+  return accessToken;
 }
 
 async function driveRequest<T>(
@@ -254,15 +168,12 @@ async function deleteFile(token: string, fileId: string): Promise<void> {
   });
 }
 
-function getPayload(arg1: unknown, arg2: unknown): SyncPayload {
-  const candidates = [arg1, (arg1 as any)?.body, (arg2 as any)?.body, arg2];
-  for (const candidate of candidates) {
-    if (candidate && typeof candidate === 'object' && 'dispatchId' in (candidate as object)) {
-      return candidate as SyncPayload;
-    }
+async function getPayload(req: Request): Promise<SyncPayload> {
+  const body = await req.json();
+  if (!body || typeof body !== 'object' || !('dispatchId' in body)) {
+    throw new Error('Invalid payload for syncDispatchHtmlToDrive.');
   }
-
-  throw new Error('Invalid payload for syncDispatchHtmlToDrive.');
+  return body as SyncPayload;
 }
 
 async function updateDispatchMetadata(dispatchId: string, records: ExistingDriveRecord[], updatedAt: string) {
@@ -298,22 +209,22 @@ async function updateDispatchMetadata(dispatchId: string, records: ExistingDrive
   }
 }
 
-export default async function syncDispatchHtmlToDrive(arg1: unknown, arg2?: unknown) {
-  const payload = getPayload(arg1, arg2);
-  const {
-    dispatchId,
-    rootFolderId,
-    desiredFiles = [],
-    previousFiles = [],
-    updatedAt = new Date().toISOString(),
-    status = 'synced',
-  } = payload;
-
-  if (!dispatchId) throw new Error('dispatchId is required.');
-  if (!rootFolderId) throw new Error('rootFolderId is required.');
-
+Deno.serve(async (req: Request) => {
   try {
-    const token = await createGoogleAccessToken();
+    const payload = await getPayload(req);
+    const {
+      dispatchId,
+      rootFolderId,
+      desiredFiles = [],
+      previousFiles = [],
+      updatedAt = new Date().toISOString(),
+      status = 'synced',
+    } = payload;
+
+    if (!dispatchId) throw new Error('dispatchId is required.');
+    if (!rootFolderId) throw new Error('rootFolderId is required.');
+
+    const token = await getGoogleDriveAccessToken(req);
     const syncedFiles: ExistingDriveRecord[] = [];
 
     const desiredPathKeys = new Set(desiredFiles.map((file) => file.pathKey));
@@ -351,17 +262,12 @@ export default async function syncDispatchHtmlToDrive(arg1: unknown, arg2?: unkn
 
     await updateDispatchMetadata(dispatchId, syncedFiles, updatedAt);
 
-    return {
+    return Response.json({
       files: syncedFiles,
       removedFiles,
-    };
-  } catch (error) {
-    console.error('syncDispatchHtmlToDrive failed.', {
-      dispatchId,
-      rootFolderId,
-      error,
     });
-
-    throw error;
+  } catch (error) {
+    console.error('syncDispatchHtmlToDrive failed.', { error });
+    return Response.json({ error: error.message }, { status: 500 });
   }
-}
+});
