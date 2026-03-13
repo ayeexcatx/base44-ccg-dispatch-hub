@@ -33,6 +33,10 @@ export default function NotificationBell({ session }) {
     enabled: !!session?.company_id && session?.code_type !== 'Admin',
   });
 
+  const dispatchMap = Object.fromEntries(
+    dispatches.map((dispatch) => [normalizeId(dispatch.id), dispatch])
+  );
+
   const dispatchIds = new Set(dispatches.map((dispatch) => normalizeId(dispatch.id)));
 
   const driverDispatchIds = new Set(
@@ -101,7 +105,10 @@ export default function NotificationBell({ session }) {
             <div className="p-4 text-center text-sm text-slate-500">No notifications</div>
           ) : (
             filteredNotifications.slice(0, 5).map((n) => {
-              const display = getNotificationDisplay(n);
+              const dispatch = n.related_dispatch_id
+                ? dispatchMap[normalizeId(n.related_dispatch_id)] || null
+                : null;
+              const display = getNotificationDisplay(n, dispatch);
 
               return (
                 <div
