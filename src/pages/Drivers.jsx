@@ -181,12 +181,12 @@ export default function Drivers() {
                 dispatch.
               </li>
               <li>
-                When you select a driver on a dispatch, a copy of the dispatch and a notification will be sent to the
-                driver. Display the message{' '}
-                <span className="font-medium text-emerald-600">&ldquo;You have received a new dispatch&rdquo;</span> in green text.
+                When you  <span className="font-medium">select a driver</span> on a dispatch, a copy of the dispatch and a notification will be sent to the
+                driver. {' '}
+                <span className="font-medium text-emerald-600">&ldquo;You have received a new dispatch&rdquo;</span>
               </li>
               <li>
-                Any changes made by the dispatcher after they are assigned will also be received by the driver as long
+                Any changes made  <span className="font-medium">by the dispatcher</span> after they are assigned will also be received by the driver as long
                 as they remain assigned. ( <span className="text-amber-600">Amendments</span>,{' '}
                 <span className="text-red-600">Cancellations</span> )
               </li>
@@ -215,13 +215,13 @@ export default function Drivers() {
             <ul className="list-disc pl-5 space-y-2 text-sm leading-6 text-slate-700">
               <li>
                 If you <span className="font-medium">switch trucks</span> that currently has a driver assigned, the
-                driver assignment will reset and the driver will receive a cancellation.
+                driver assignment will <span className="font-medium">RESET</span> and the driver will receive a <span className="text-red-600">cancellation.</span>
               </li>
             </ul>
             <p className="pl-5 text-sm text-slate-500 italic leading-6">
-              Example: Truck 1 that has Driver 1 assigned is switched to Truck 2 that has Driver 2 assigned.<br />
-              Both trucks will have their drivers reset (drivers removed), so both drivers will receive a cancellation
-              notification.
+              Example: Truck 1 has Driver 1 assigned AND is switched to Truck 2 that has Driver 2 assigned:<br />
+              Both trucks will have their drivers RESET (drivers removed), so both drivers will receive a cancellation
+              notification. Reassign them to send new dispatch.
             </p>
             <ul className="list-disc pl-5 space-y-2 text-sm leading-6 text-slate-700">
               <li>
