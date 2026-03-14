@@ -781,6 +781,7 @@ export default function DispatchDetailDrawer({
                 {isOwner && (dispatch.trucks_assigned || []).length > 0 && (
                   <div data-screenshot-exclude="true" className="rounded-lg border border-slate-200 bg-white p-3 space-y-2">
                     <p className="text-xs text-slate-500 uppercase tracking-wide">Driver Assignments</p>
+                    <p className="text-xs text-slate-500">Please read instructions on Drivers page before assigning drivers.</p>
                     {eligibleDrivers.length === 0 && (
                       <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-2">
                         Create and activate a driver access code first.
