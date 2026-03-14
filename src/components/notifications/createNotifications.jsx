@@ -1,7 +1,6 @@
 import { base44 } from '@/api/base44Client'; 
 import { format, parseISO } from 'date-fns';
 import { formatDispatchDateTimeLine } from '@/components/notifications/dispatchDateTimeFormat';
-import { sendNotificationSmsIfEligible } from '@/components/notifications/notificationSmsDelivery';
 
 const statusLabels = {
   Scheduled: 'Scheduled (details to follow)',
@@ -49,7 +48,7 @@ async function createDriverDispatchNotification({
 }) {
   if (!dispatch?.id || !driverAccessCodeId || !title || !message) return;
 
-  const notification = await base44.entities.Notification.create({
+  await base44.entities.Notification.create({
     recipient_type: 'AccessCode',
     recipient_access_code_id: driverAccessCodeId,
     recipient_id: driverAccessCodeId,
@@ -60,8 +59,6 @@ async function createDriverDispatchNotification({
     read_flag: false,
     notification_category: DRIVER_NOTIFICATION_CATEGORY,
   });
-
-  await sendNotificationSmsIfEligible(notification);
 }
 
 export async function notifyDriverAssignmentChanges(dispatch, previousAssignments = [], nextAssignments = []) {
@@ -271,7 +268,7 @@ export async function notifyDispatchChange(dispatch, oldStatus, newStatus, compa
       const relevantTrucks = getRelevantTrucks(dispatch, ac);
       const message = buildOwnerDispatchMessage(dispatch, statusText, relevantTrucks);
 
-      const notification = await base44.entities.Notification.create({
+      await base44.entities.Notification.create({
         recipient_type: 'AccessCode',
         recipient_access_code_id: ac.id,
         recipient_id: ac.id,
@@ -283,8 +280,6 @@ export async function notifyDispatchChange(dispatch, oldStatus, newStatus, compa
         dispatch_status_key: dedupKey,
         required_trucks: relevantTrucks,
       });
-
-      await sendNotificationSmsIfEligible(notification);
     }
   } catch (err) {
     console.error('Error creating dispatch notifications:', err);
@@ -331,8 +326,8 @@ export async function notifyDispatchInformationalUpdate(dispatch, customMessage,
 
     if (!affectedOwnerCodes?.length) return;
 
-    await Promise.all(affectedOwnerCodes.map(async (ac) => {
-      const notification = await base44.entities.Notification.create({
+    await Promise.all(affectedOwnerCodes.map(ac =>
+      base44.entities.Notification.create({
         recipient_type: 'AccessCode',
         recipient_access_code_id: ac.id,
         recipient_id: ac.id,
@@ -343,10 +338,8 @@ export async function notifyDispatchInformationalUpdate(dispatch, customMessage,
         read_flag: false,
         notification_category: 'dispatch_update_info',
         notification_type: 'informational',
-      });
-
-      await sendNotificationSmsIfEligible(notification);
-    }));
+      })
+    ));
   } catch (err) {
     console.error('Error creating informational dispatch update notifications:', err);
   }
@@ -412,7 +405,7 @@ export async function expandCurrentStatusRequiredTrucks(dispatch, addedTrucks = 
           read_flag: allConfirmed,
         });
       } else {
-        const notification = await base44.entities.Notification.create({
+        await base44.entities.Notification.create({
           recipient_type: 'AccessCode',
           recipient_access_code_id: ownerCode.id,
           recipient_id: ownerCode.id,
@@ -424,8 +417,6 @@ export async function expandCurrentStatusRequiredTrucks(dispatch, addedTrucks = 
           dispatch_status_key: dedupKey,
           required_trucks: nextRequired,
         });
-
-        await sendNotificationSmsIfEligible(notification);
       }
     }
   } catch (error) {
