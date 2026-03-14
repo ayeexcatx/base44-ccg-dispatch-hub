@@ -65,8 +65,28 @@ export function useOwnerNotifications(session) {
     mutationFn: (id) => {
       return base44.entities.Notification.update(id, { read_flag: true });
     },
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey });
+
+      const previousNotifications = queryClient.getQueryData(queryKey);
+      queryClient.setQueryData(queryKey, (current = []) =>
+        current.map((notification) =>
+          notification.id === id ? { ...notification, read_flag: true } : notification
+        )
+      );
+
+      return { previousNotifications };
+    },
+    onError: (_error, _id, context) => {
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(queryKey, context.previousNotifications);
+      }
+    },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['portal-dispatches', session?.company_id] });
+      queryClient.invalidateQueries({ queryKey: ['driver-dispatch-assignments', session?.driver_id] });
     },
   });
 

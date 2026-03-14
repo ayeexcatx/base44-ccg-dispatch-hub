@@ -62,10 +62,16 @@ export default function NotificationBell({ session }) {
   const isInformationalUpdateNotification = (notification) =>
     notification?.notification_category === 'dispatch_update_info';
 
+  const shouldMarkReadOnClick = (notification) => {
+    if (notification.read_flag) return false;
+    if (isDriver) return true;
+    return notification.related_dispatch_id && isInformationalUpdateNotification(notification);
+  };
+
   const handleNotificationClick = async (n) => {
     if (!session) return;
 
-    if (n.related_dispatch_id && isInformationalUpdateNotification(n) && !n.read_flag) {
+    if (shouldMarkReadOnClick(n)) {
       try {
         await markReadAsync(n.id);
       } catch {
