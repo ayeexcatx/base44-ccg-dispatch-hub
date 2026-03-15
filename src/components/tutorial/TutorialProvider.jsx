@@ -54,6 +54,7 @@ export default function TutorialProvider({ session, children }) {
     steps: tutorialConfig.steps,
     active: isRunning,
     getCurrentTarget: (step) => step?.target,
+    getScrollContainer: (step) => step?.scrollContainer || '[data-tutorial-scroll="main"]',
   });
 
   const stopTutorial = useCallback(() => {

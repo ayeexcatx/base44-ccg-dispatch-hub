@@ -25,6 +25,7 @@ export default function DispatchDrawerTutorial({ isOwner, drawerOpen }) {
     steps: tutorialConfig.steps,
     active: isRunning,
     getCurrentTarget: (step) => step?.target,
+    getScrollContainer: (step) => step?.scrollContainer || '[data-tutorial-scroll="drawer"]',
   });
 
   const stopTutorial = useCallback(() => {

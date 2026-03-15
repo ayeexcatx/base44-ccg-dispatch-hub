@@ -35,6 +35,19 @@ function LayoutInner({ children, currentPageName }) {
   });
 
   useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+
+    const rootScroller = document.documentElement;
+    rootScroller.setAttribute('data-tutorial-scroll', 'main');
+
+    return () => {
+      if (rootScroller.getAttribute('data-tutorial-scroll') === 'main') {
+        rootScroller.removeAttribute('data-tutorial-scroll');
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (loading) return;
     if (currentPageName === 'AccessCodeLogin') return;
     if (!session) {

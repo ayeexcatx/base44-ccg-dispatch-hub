@@ -620,7 +620,12 @@ export default function DispatchDetailDrawer({
 
   return (
     <Sheet open={open} onOpenChange={(v) => { if (!v) handleDrawerClose(); }}>
-      <SheetContent ref={drawerScrollRef} side="right" className="w-full sm:max-w-lg overflow-y-auto p-0">
+      <SheetContent
+        ref={drawerScrollRef}
+        side="right"
+        className="w-full sm:max-w-lg overflow-y-auto p-0"
+        data-tutorial-scroll="drawer"
+      >
         {/* Top bar */}
         <div className="sticky top-0 bg-white border-b border-slate-200 px-5 py-4 z-10">
           <div className="flex items-center justify-between gap-2">

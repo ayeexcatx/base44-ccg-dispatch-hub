@@ -113,6 +113,25 @@ const resolveScrollContainer = (element, rect) => {
   return best.container;
 };
 
+const resolveExplicitScrollContainer = (selector) => {
+  if (!selector) return null;
+
+  const container = document.querySelector(selector);
+  if (!container) {
+    logTutorialScroll('explicit scroll container not found', { selector });
+    return null;
+  }
+
+  logTutorialScroll('explicit scroll container resolved', {
+    selector,
+    container: getNodeDescriptor(container),
+    clientHeight: container.clientHeight,
+    scrollHeight: container.scrollHeight,
+  });
+
+  return container;
+};
+
 const getIsNearViewportCenter = (rect) => {
   if (!rect) return false;
 
@@ -223,13 +242,14 @@ const centerInViewport = (rect) => {
   });
 };
 
-const scrollTargetIntoView = async (element, rect, selector) => {
+const scrollTargetIntoView = async (element, rect, selector, explicitScrollContainerSelector) => {
   if (!element || !rect) {
     return rect;
   }
 
   logTutorialScroll('resolving step target', {
     selector,
+    explicitScrollContainerSelector,
     target: getNodeDescriptor(element),
     rect: {
       top: rect.top,
@@ -238,9 +258,14 @@ const scrollTargetIntoView = async (element, rect, selector) => {
     },
   });
 
-  const scrollParent = resolveScrollContainer(element, rect);
+  const explicitScrollParent = resolveExplicitScrollContainer(explicitScrollContainerSelector);
+  const scrollParent = explicitScrollParent || resolveScrollContainer(element, rect);
 
-  logTutorialScroll('chosen scroll container', scrollParent ? getNodeDescriptor(scrollParent) : 'window');
+  logTutorialScroll('chosen scroll container', {
+    explicitScrollContainerSelector,
+    resolved: scrollParent ? getNodeDescriptor(scrollParent) : 'window',
+    source: explicitScrollParent ? 'explicit' : 'auto',
+  });
 
   if (scrollParent) {
     const alreadyCentered = getIsNearContainerCenter(element, scrollParent);
@@ -252,12 +277,21 @@ const scrollTargetIntoView = async (element, rect, selector) => {
     }
 
     const beforeScrollTop = scrollParent.scrollTop;
+    const beforeRect = element.getBoundingClientRect();
     centerInContainer(element, scrollParent);
     const settledRect = await waitForCenteredTarget(element, scrollParent);
     const afterScrollTop = scrollParent.scrollTop;
     logTutorialScroll('container settled', {
+      activeStepSelector: selector,
+      explicitScrollContainerSelector,
+      container: getNodeDescriptor(scrollParent),
       beforeScrollTop,
       afterScrollTop,
+      targetRectBefore: {
+        top: beforeRect.top,
+        bottom: beforeRect.bottom,
+        height: beforeRect.height,
+      },
       rect: settledRect ? {
         top: settledRect.top,
         bottom: settledRect.bottom,
@@ -277,12 +311,21 @@ const scrollTargetIntoView = async (element, rect, selector) => {
   }
 
   const beforeScrollTop = window.scrollY;
+  const beforeRect = element.getBoundingClientRect();
   centerInViewport(rect);
   const settledRect = await waitForCenteredTarget(element, null);
   const afterScrollTop = window.scrollY;
   logTutorialScroll('viewport settled', {
+    activeStepSelector: selector,
+    explicitScrollContainerSelector,
+    container: 'window',
     beforeScrollTop,
     afterScrollTop,
+    targetRectBefore: {
+      top: beforeRect.top,
+      bottom: beforeRect.bottom,
+      height: beforeRect.height,
+    },
     rect: settledRect ? {
       top: settledRect.top,
       bottom: settledRect.bottom,
@@ -294,7 +337,12 @@ const scrollTargetIntoView = async (element, rect, selector) => {
 };
 
 // Shared runner for tutorial overlays to keep sequencing/target resolution behavior consistent.
-export default function useTutorialRunner({ steps, active, getCurrentTarget }) {
+export default function useTutorialRunner({
+  steps,
+  active,
+  getCurrentTarget,
+  getScrollContainer,
+}) {
   const [stepIndex, setStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState(null);
 
@@ -317,9 +365,17 @@ export default function useTutorialRunner({ steps, active, getCurrentTarget }) {
       if (cancelled) return;
 
       const targetSelector = getCurrentTarget(currentStep);
+      const explicitScrollContainerSelector = getScrollContainer
+        ? getScrollContainer(currentStep)
+        : currentStep?.scrollContainer || null;
       const resolvedTarget = resolveVisibleTarget(targetSelector);
       if (resolvedTarget) {
-        const centeredRect = await scrollTargetIntoView(resolvedTarget.element, resolvedTarget.rect, targetSelector);
+        const centeredRect = await scrollTargetIntoView(
+          resolvedTarget.element,
+          resolvedTarget.rect,
+          targetSelector,
+          explicitScrollContainerSelector,
+        );
         if (cancelled) return;
 
         if (centeredRect) {
@@ -357,7 +413,7 @@ export default function useTutorialRunner({ steps, active, getCurrentTarget }) {
     return () => {
       cancelled = true;
     };
-  }, [active, currentStep, getCurrentTarget, handleStepChange, isCompletion, stepIndex]);
+  }, [active, currentStep, getCurrentTarget, getScrollContainer, handleStepChange, isCompletion, stepIndex]);
 
   useEffect(() => {
     if (!active || isCompletion) return;
