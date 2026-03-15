@@ -858,7 +858,7 @@ export default function AdminDispatches() {
                 onClick={() => openDrawer(d)}>
 
               <CardContent className="p-4 sm:p-5">
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-2">
                       <Badge className={`${statusBadgeColors[d.status]} border text-xs`}>{d.status}</Badge>
@@ -867,11 +867,11 @@ export default function AdminDispatches() {
                           <Archive className="h-2.5 w-2.5" />Archived
                         </Badge>
                         }
-                      <span className="text-slate-400 text-sm text-left normal-case flex items-center gap-1">
+                      <span className="text-slate-400 text-sm text-left normal-case flex items-center gap-1 shrink-0">
                         {d.shift_time === 'Day Shift' ? <Sun className="h-3 w-3 text-amber-400" /> : <Moon className="h-3 w-3 text-slate-400" />}
                         {d.shift_time}
                       </span>
-                      <span className="text-slate-500 text-sm font-semibold">
+                      <span className="text-slate-500 text-sm font-semibold w-full sm:w-auto">
                         {d.date && format(parseISO(d.date), 'EEEE, MMM d, yyyy')}
                         {firstLineTimeText ? ` • ${firstLineTimeText}` : ''}
                       </span>
@@ -900,7 +900,7 @@ export default function AdminDispatches() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end justify-between gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <div className="hidden sm:flex flex-col items-end justify-between gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                     {d.edit_locked && d.edit_locked_by_session_id && d.edit_locked_by_session_id !== session?.id &&
                     <div className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
                         <Lock className="h-3 w-3" />
@@ -940,6 +940,48 @@ export default function AdminDispatches() {
                         <p className="text-[10px] text-slate-400 italic">No activity yet.</p>
                       )}
                     </div>
+                  </div>
+                </div>
+
+                <div className="sm:hidden mt-3 pt-3 border-t border-slate-200/80" onClick={(e) => e.stopPropagation()}>
+                  {d.edit_locked && d.edit_locked_by_session_id && d.edit_locked_by_session_id !== session?.id &&
+                  <div className="mb-2 inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+                      <Lock className="h-3 w-3" />
+                      <span>{d.edit_locked_by_name ? `Locked by ${d.edit_locked_by_name}` : 'Editing in progress'}</span>
+                    </div>
+                  }
+
+                  <div className="mb-2">
+                    {latestActivity?.message ? (
+                      <>
+                        <p className="text-[10px] text-slate-500 leading-tight">{latestActivity.message}</p>
+                        {latestActivityTimestamp && <p className="text-[10px] text-slate-400">{latestActivityTimestamp}</p>}
+                      </>
+                    ) : (
+                      <p className="text-[10px] text-slate-400 italic">No activity yet.</p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => openDrawer(d)} className="h-9 w-9" title="Preview">
+                      <Eye className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => copyShift(d)} className="h-9 w-9" title="Copy Shift">
+                      <Copy className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost" size="icon"
+                      onClick={() => archiveMutation.mutate({ dispatch: d, archive: !d.archived_flag })}
+                      className="h-9 w-9 text-slate-500 hover:text-amber-600"
+                      title={d.archived_flag ? 'Unarchive' : 'Archive'}>
+                      {d.archived_flag ? <ArchiveX className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(d)} className="h-9 w-9">
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => openDelete(d)} className="h-9 w-9 text-red-500 hover:text-red-600">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </div>
               </CardContent>
