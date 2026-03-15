@@ -358,6 +358,24 @@ export default function DispatchDetailDrawer({
       return map;
     }, {});
 
+  const eligibleDriverNameById = eligibleDrivers.reduce((map, driver) => {
+    if (!driver?.id || !driver?.driver_name) return map;
+    map[driver.id] = driver.driver_name;
+    return map;
+  }, {});
+
+  const getTruckDriverSummaryLabel = (truckNumber) => {
+    if (!isOwner) return assignedDriverNameByTruck[truckNumber] || 'Unassigned';
+
+    const selectedDriverId = selectedDriverByTruck[truckNumber];
+    if (selectedDriverId === UNASSIGNED_DRIVER_VALUE) return 'No driver assigned';
+    if (selectedDriverId && eligibleDriverNameById[selectedDriverId]) {
+      return eligibleDriverNameById[selectedDriverId];
+    }
+
+    return assignedDriverNameByTruck[truckNumber] || 'No driver assigned';
+  };
+
   const currentConfType = dispatch.status;
   const hasAdditional = Array.isArray(dispatch.additional_assignments) && dispatch.additional_assignments.length > 0;
 
@@ -745,7 +763,7 @@ export default function DispatchDetailDrawer({
               <div className="space-y-2">
                 <div className="flex items-start gap-1.5">
                   <Truck className="h-3.5 w-3.5 text-slate-400 mt-1 shrink-0" />
-                  {isAdmin ? (
+                  {(isAdmin || isOwner) ? (
                     <div className="min-w-0 flex-1 space-y-1.5">
                       {visibleTrucks.map((t) => (
                         <div key={t} className="flex items-start gap-2">
@@ -753,7 +771,7 @@ export default function DispatchDetailDrawer({
                             {t}
                           </Badge>
                           <span className="text-xs text-slate-500 min-w-0 break-words leading-5">
-                            {assignedDriverNameByTruck[t] || 'Unassigned'}
+                            {getTruckDriverSummaryLabel(t)}
                           </span>
                         </div>
                       ))}
