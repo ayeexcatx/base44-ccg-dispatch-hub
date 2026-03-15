@@ -743,18 +743,30 @@ export default function DispatchDetailDrawer({
 
               {/* Trucks */}
               <div className="space-y-2">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <Truck className="h-3.5 w-3.5 text-slate-400" />
-                  {visibleTrucks.map((t) => (
-                    <div key={t} className="flex flex-col">
-                      <Badge variant="outline" className="text-xs border-slate-900 text-slate-900 font-medium w-fit">
-                        {t}
-                      </Badge>
-                      {isAdmin && assignedDriverNameByTruck[t] && (
-                        <span className="text-[11px] text-slate-500 mt-0.5">{assignedDriverNameByTruck[t]}</span>
-                      )}
+                <div className="flex items-start gap-1.5">
+                  <Truck className="h-3.5 w-3.5 text-slate-400 mt-1 shrink-0" />
+                  {isAdmin ? (
+                    <div className="min-w-0 flex-1 space-y-1.5">
+                      {visibleTrucks.map((t) => (
+                        <div key={t} className="flex items-start gap-2">
+                          <Badge variant="outline" className="text-xs border-slate-900 text-slate-900 font-medium shrink-0">
+                            {t}
+                          </Badge>
+                          <span className="text-xs text-slate-500 min-w-0 break-words leading-5">
+                            {assignedDriverNameByTruck[t] || 'Unassigned'}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  ) : (
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {visibleTrucks.map((t) => (
+                        <Badge key={t} variant="outline" className="text-xs border-slate-900 text-slate-900 font-medium w-fit">
+                          {t}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                   {isOwner && (
                     <Button
                       type="button"
