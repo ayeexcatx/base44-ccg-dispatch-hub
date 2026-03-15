@@ -13,11 +13,27 @@ import { Key, Plus, Pencil, Trash2, Truck, Building2, Shield, Copy, UserRound } 
 import { toast } from 'sonner';
 
 function formatPhoneNumber(value) {
-  const digits = String(value || '').replace(/\D/g, '').slice(0, 10);
+  const rawDigits = String(value || '').replace(/\D/g, '');
+  const digits = rawDigits.length === 11 && rawDigits.startsWith('1')
+    ? rawDigits.slice(1)
+    : rawDigits.slice(0, 10);
   if (!digits) return '';
   if (digits.length < 4) return `(${digits}`;
   if (digits.length < 7) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
   return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
+function normalizeSmsPhone(value) {
+  const rawDigits = String(value || '').replace(/\D/g, '');
+  const tenDigitNumber = rawDigits.length === 11 && rawDigits.startsWith('1')
+    ? rawDigits.slice(1)
+    : rawDigits;
+
+  if (tenDigitNumber.length !== 10) {
+    return String(value || '').trim();
+  }
+
+  return `+1${tenDigitNumber}`;
 }
 
 function generateCode(len = 8) {
@@ -173,6 +189,8 @@ export default function AdminAccessCodes() {
   const handleSave = () => {
     if (!form.code.trim()) return;
 
+    const smsPhone = normalizeSmsPhone(form.sms_phone);
+
     if (form.code_type === 'Driver') {
       if (!form.company_id || !form.driver_id) return;
       saveMutation.mutate({
@@ -184,12 +202,15 @@ export default function AdminAccessCodes() {
         driver_id: form.driver_id,
         allowed_trucks: [],
         sms_enabled: form.sms_enabled,
-        sms_phone: form.sms_phone,
+        sms_phone: smsPhone,
       });
       return;
     }
 
-    saveMutation.mutate(form);
+    saveMutation.mutate({
+      ...form,
+      sms_phone: smsPhone,
+    });
   };
 
   const copyCode = (code) => {

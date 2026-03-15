@@ -1,4 +1,5 @@
 import { base44 } from '@/api/base44Client';
+import { formatDispatchDateTimeLine } from '@/components/notifications/dispatchDateTimeFormat';
 
 const SMS_PROVIDER = 'signalwire';
 
@@ -12,6 +13,42 @@ function maskPhone(value) {
 
   const lastFour = normalized.slice(-4);
   return `***${lastFour}`;
+}
+
+function normalizeHeadline(value) {
+  const headline = normalizeText(value);
+  if (!headline) return '';
+  return /[.!?]$/.test(headline) ? headline : `${headline}.`;
+}
+
+async function resolveDispatchDateTimeLine(notification) {
+  const dispatchId = notification?.related_dispatch_id;
+  if (!dispatchId) return '';
+
+  try {
+    const records = await base44.entities.Dispatch.filter({ id: dispatchId }, '-created_date', 1);
+    const dispatch = records?.[0] || null;
+    return formatDispatchDateTimeLine(dispatch);
+  } catch (error) {
+    console.error('SMS debug: failed resolving dispatch for SMS format', {
+      notificationId: notification?.id || null,
+      dispatchId,
+      error,
+    });
+    return '';
+  }
+}
+
+async function buildSmsMessage(notification) {
+  if (!notification?.related_dispatch_id) {
+    return notification?.message || '';
+  }
+
+  const headline = normalizeHeadline(notification?.title || 'Dispatch update');
+  const dispatchDateTimeLine = await resolveDispatchDateTimeLine(notification);
+  const dispatchLine = dispatchDateTimeLine || 'Dispatch details are available in the app.';
+
+  return `CCG Transit: ${headline}\n${dispatchLine}\n\nPlease open the app to view and confirm.`;
 }
 
 async function createSmsLog({
@@ -161,9 +198,11 @@ export async function sendNotificationSmsIfEligible(notification) {
       relatedDispatchId: notification.related_dispatch_id || null,
     });
 
+    const smsMessage = await buildSmsMessage(notification);
+
     const response = await base44.functions.invoke('sendNotificationSms/entry', {
       phone: smsPhone,
-      message: notification.message || '',
+      message: smsMessage,
       notificationId: notification.id,
       dispatchId: notification.related_dispatch_id || null,
       recipientAccessCodeId: recipient.id,
@@ -182,7 +221,7 @@ export async function sendNotificationSmsIfEligible(notification) {
         notification,
         recipient,
         phone: smsPhone,
-        message: notification.message || null,
+        message: smsMessage || null,
         status: 'sent',
         provider: responseData.provider || SMS_PROVIDER,
         providerMessageId: responseData.providerMessageId || null,
@@ -199,7 +238,7 @@ export async function sendNotificationSmsIfEligible(notification) {
       notification,
       recipient,
       phone: smsPhone,
-      message: notification.message || null,
+      message: smsMessage || null,
       status: isProviderNotConfigured ? 'skipped' : 'failed',
       skipReason: isProviderNotConfigured ? 'provider_not_configured' : null,
       errorMessage,
