@@ -19,6 +19,7 @@ import { calculateWorkedHours, formatTime24h, formatWorkedHours } from '@/lib/ti
 import { toast } from 'sonner';
 import { notifyDriverAssignmentChanges } from '@/components/notifications/createNotifications';
 import html2canvas from 'html2canvas';
+import DispatchDrawerTutorial from '@/components/tutorial/DispatchDrawerTutorial';
 
 const tollColors = {
   Authorized: 'bg-green-50 text-green-700',
@@ -622,7 +623,8 @@ export default function DispatchDetailDrawer({
       <SheetContent ref={drawerScrollRef} side="right" className="w-full sm:max-w-lg overflow-y-auto p-0">
         {/* Top bar */}
         <div className="sticky top-0 bg-white border-b border-slate-200 px-5 py-4 z-10">
-          <Button
+          <div className="flex items-center justify-between gap-2">
+            <Button
             type="button"
             variant="ghost"
             size="sm"
@@ -631,7 +633,9 @@ export default function DispatchDetailDrawer({
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back
-          </Button>
+            </Button>
+            <DispatchDrawerTutorial isOwner={isOwner} drawerOpen={open} />
+          </div>
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2 flex-wrap text-base">
               <Badge className={`${statusBadgeColors[dispatch.status]} border text-xs font-medium`}>
@@ -659,6 +663,7 @@ export default function DispatchDetailDrawer({
                 className="h-8 text-xs"
                 data-screenshot-exclude="true"
                 onClick={handleReportIncident}
+                data-tour="dispatch-report-incident"
               >
                 <AlertTriangle className="h-3.5 w-3.5 mr-1" />
                 Report Incident
@@ -671,6 +676,7 @@ export default function DispatchDetailDrawer({
                   className="h-8 text-xs"
                   disabled={isCreatingScreenshot || isEditingTrucks}
                   onClick={handleScreenshotDispatch}
+                  data-tour="dispatch-screenshot"
                 >
                   <Camera className="h-3.5 w-3.5 mr-1" />
                   {isCreatingScreenshot ? 'Creating…' : 'Screenshot Dispatch'}
@@ -729,6 +735,7 @@ export default function DispatchDetailDrawer({
                       variant="outline"
                       size="sm"
                       className="h-7 text-xs border-red-300 text-red-700 hover:bg-red-50 hover:text-red-800"
+                      data-tour="dispatch-edit-trucks"
                       onClick={() => {
                         if (isEditingTrucks) {
                           resetTruckEditing();
@@ -779,7 +786,7 @@ export default function DispatchDetailDrawer({
                 )}
 
                 {isOwner && (dispatch.trucks_assigned || []).length > 0 && (
-                  <div data-screenshot-exclude="true" className="rounded-lg border border-slate-200 bg-white p-3 space-y-2">
+                  <div data-screenshot-exclude="true" data-tour="dispatch-driver-assignments" className="rounded-lg border border-slate-200 bg-white p-3 space-y-2">
                     <p className="text-xs text-slate-500 uppercase tracking-wide">Driver Assignments</p>
                     <p className="text-xs text-slate-500">Please read instructions on Drivers page before assigning drivers.</p>
                     {eligibleDrivers.length === 0 && (
@@ -840,7 +847,7 @@ export default function DispatchDetailDrawer({
               })()}
 
               {(hasAdditional || dispatch.instructions || dispatch.notes || dispatch.toll_status || dispatch.start_time || dispatch.start_location) && (
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3">
+                <div data-tour="dispatch-assignment-details" className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3">
                   <p className="text-xs text-slate-500 uppercase tracking-wide">Assignment 1</p>
                   {hasAdditional && (
                     <div className="space-y-0.5">
@@ -935,7 +942,7 @@ export default function DispatchDetailDrawer({
               )}
 
               {boxNotes.length > 0 && (
-                <div>
+                <div data-tour="dispatch-notes">
                   <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Box Notes</p>
                   <div className="space-y-2">
                     {boxNotes.map(n => (
@@ -952,7 +959,7 @@ export default function DispatchDetailDrawer({
               )}
 
               {generalNotes.length > 0 && (
-                <div>
+                <div data-tour="dispatch-notes">
                   <p className="text-xs text-slate-500 uppercase tracking-wide mb-1.5">General Notes</p>
                   <div className="space-y-3">
                     {generalNotes.map(n => {
@@ -989,7 +996,7 @@ export default function DispatchDetailDrawer({
 
               {/* CompanyOwner confirm */}
               {isOwner && myTrucks.length > 0 && (
-                <div>
+                <div data-tour="dispatch-confirm-receipt">
                   <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">
                     Confirm Receipt — <span className="text-slate-700">{currentConfType}</span>
                   </p>
@@ -1049,7 +1056,7 @@ export default function DispatchDetailDrawer({
 
               {/* Time Log — CompanyOwner (editable) — only for non-canceled */}
               {isOwner && myTrucks.length > 0 && dispatch.status !== 'Cancelled' && (
-                <div id="time-log-section" ref={timeLogSectionRef}>
+                <div id="time-log-section" ref={timeLogSectionRef} data-tour="dispatch-time-log">
                   <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Time Log</p>
                   <div className="space-y-2">
                     {myTrucks.map(truck => (

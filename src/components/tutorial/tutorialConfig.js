@@ -3,6 +3,8 @@ import { createPageUrl } from '@/utils';
 export const COMPANY_OWNER_TUTORIAL_ID = 'companyOwnerMainPortal';
 export const COMPANY_OWNER_TUTORIAL_DISMISSED_KEY = 'companyOwnerTutorialDismissed';
 export const COMPANY_OWNER_TUTORIAL_COMPLETED_KEY = 'companyOwnerTutorialCompleted';
+export const DISPATCH_DRAWER_TUTORIAL_SEEN_KEY = 'dispatchDrawerTutorialSeen';
+export const DISPATCH_DRAWER_TUTORIAL_COMPLETED_KEY = 'dispatchDrawerTutorialCompleted';
 
 export const companyOwnerTutorialSteps = [
   {
@@ -84,3 +86,58 @@ export const companyOwnerTutorialSteps = [
   },
 ];
 
+export const dispatchDrawerTutorialSteps = [
+  {
+    id: 'report-incident',
+    target: '[data-tour="dispatch-report-incident"]',
+    title: 'Report Incident',
+    description:
+      'This is where you can report a breakdown or any other incident related to your dispatch. Ideally, this should be done after advising the dispatcher and while you are stopped, or sometime after your shift while the details are still fresh.',
+  },
+  {
+    id: 'screenshot-dispatch',
+    target: '[data-tour="dispatch-screenshot"]',
+    title: 'Screenshot Dispatch',
+    description:
+      'Press this button to take a clean screenshot of your dispatch without the action buttons or editable sections.',
+  },
+  {
+    id: 'edit-trucks',
+    target: '[data-tour="dispatch-edit-trucks"]',
+    title: 'Edit Trucks',
+    description: 'This is where you can edit the trucks you have assigned to the dispatch.',
+  },
+  {
+    id: 'driver-assignments',
+    target: '[data-tour="dispatch-driver-assignments"]',
+    title: 'Driver Assignments',
+    description: 'This is where you can assign drivers to your dispatch.',
+    warningText: 'Please familiarize yourself with the instructions on the Drivers page before using this feature.',
+  },
+  {
+    id: 'assignment-details',
+    target: '[data-tour="dispatch-assignment-details"]',
+    title: 'Assignment Details',
+    description: 'This section shows the dispatch start time and instructions.',
+  },
+  {
+    id: 'dispatch-notes',
+    target: '[data-tour="dispatch-notes"]',
+    title: 'Dispatch Notes',
+    description: 'These are dispatch notes and reminders that may be included with a dispatch.',
+  },
+  {
+    id: 'confirm-receipt',
+    target: '[data-tour="dispatch-confirm-receipt"]',
+    title: 'Confirm Receipt',
+    description:
+      'This is where you confirm receipt of the dispatch. You must confirm any time you receive: a new dispatch, a new schedule, an amendment, a cancellation, or another important update.',
+  },
+  {
+    id: 'time-log',
+    target: '[data-tour="dispatch-time-log"]',
+    title: 'Time Log',
+    description:
+      'This is where you enter the check-in and check-out times for yourself or your drivers. The time log is for informational purposes only.',
+  },
+];

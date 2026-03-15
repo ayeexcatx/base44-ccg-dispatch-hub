@@ -25,6 +25,9 @@ export default function TutorialTooltip({
       <p className="text-xs font-medium text-slate-500">{isCompletion ? 'Completed' : `Step ${stepIndex + 1} of ${totalSteps}`}</p>
       <h3 className="mt-1 text-lg font-semibold text-slate-900">{step.title}</h3>
       <p className="mt-2 text-sm leading-relaxed text-slate-600">{step.description}</p>
+      {step.warningText ? (
+        <p className="mt-2 text-sm leading-relaxed text-red-600 font-medium">{step.warningText}</p>
+      ) : null}
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
         {isCompletion ? (
