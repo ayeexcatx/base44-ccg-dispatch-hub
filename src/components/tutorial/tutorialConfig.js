@@ -21,7 +21,7 @@ export const companyOwnerTutorialSteps = [
     id: 'home-screen',
     page: createPageUrl('Home'),
     target: '[data-tour="home-overview"]',
-    title: 'Home Screen',
+    title: 'Home Page',
     description:
       'The Home Screen provides a quick snapshot of your pending actions and upcoming dispatches.',
   },
@@ -29,7 +29,7 @@ export const companyOwnerTutorialSteps = [
     id: 'announcement-center',
     page: createPageUrl('Home'),
     target: '[data-tour="announcement-center"]',
-    title: 'Announcement Center',
+    title: 'Home: Announcement Center',
     description:
       'This is where you will receive general communications and advisories from CCG Transit.',
   },
@@ -37,7 +37,7 @@ export const companyOwnerTutorialSteps = [
     id: 'action-needed',
     page: createPageUrl('Home'),
     target: '[data-tour="action-needed"]',
-    title: 'Action Needed',
+    title: 'Home: Action Needed',
     description:
       'This section highlights dispatches that require your immediate attention, such as confirming receipt.',
     warningText: 'Items will remain in this section until you confirm receipt of your dispatch.',
@@ -46,21 +46,21 @@ export const companyOwnerTutorialSteps = [
     id: 'dispatch-preview',
     page: createPageUrl('Home'),
     target: '[data-tour="dispatch-preview"]',
-    title: 'Dispatch Preview',
+    title: 'Home: Dispatch Preview',
     description: 'This area provides a quick view of your next few assigned dispatches.',
   },
   {
     id: 'dispatches-page',
     page: createPageUrl('Home'),
     target: '[data-tour="dispatches-nav"]',
-    title: 'Dispatches',
-    description: 'The Dispatch page shows you your full dispatch history as well as all upcoming dispatches.',
+    title: 'Dispatches Page',
+    description: 'The Dispatches page shows your full dispatch history as well as all upcoming dispatches.',
   },
   {
     id: 'availability-page',
     page: createPageUrl('Home'),
     target: '[data-tour="availability-nav"]',
-    title: 'Availability',
+    title: 'Availability Page',
     description:
       'The Availability page allows you to indicate whether you are available for a specific shift and how many trucks you have available.',
   },
@@ -68,7 +68,7 @@ export const companyOwnerTutorialSteps = [
     id: 'recurring-weekly-defaults',
     page: createPageUrl('Availability'),
     target: '[data-tour="recurring-weekly-defaults"]',
-    title: 'Recurring Weekly Defaults',
+    title: 'Availability: Weekly Defaults',
     description:
       'Here you can set your default weekly availability. These settings will automatically apply to all future weeks unless changed.',
   },
@@ -76,7 +76,7 @@ export const companyOwnerTutorialSteps = [
     id: 'availability-controls',
     page: createPageUrl('Availability'),
     target: '[data-tour="availability-controls"]',
-    title: 'Availability Controls',
+    title: 'Availability: Daily Controls',
     description:
       'This section allows you to actively select the number of trucks you have available for each shift.',
     warningText: 'We recommend you visit this section daily or weekly to update the amount of trucks you have available for every upcoming shift.',
@@ -85,16 +85,16 @@ export const companyOwnerTutorialSteps = [
     id: 'drivers-page',
     page: createPageUrl('Home'),
     target: '[data-tour="drivers-nav"]',
-    title: 'Drivers',
+    title: 'Drivers Page',
     description:
-      'Use this section to add drivers and enter their information.',
+      'Use this page to add drivers and enter their information.',
     useWarning: 'Please read the instructions about the driver portal at the bottom of the page in full. Once you add a driver, you will need to request a password for them.',
   },
   {
     id: 'incidents-page',
     page: createPageUrl('Home'),
     target: '[data-tour="incidents-nav"]',
-    title: 'Incidents',
+    title: 'Incidents Page',
     description: 'This is where you can create a new incident report or view your incident history.',
   },
 ];
