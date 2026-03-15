@@ -1,4 +1,4 @@
- # CCG Dispatch Hub #
+ # CCG Dispatch Hub # 
 ---------------------------------------------------------------------
 
 CCG Dispatch Hub is a dispatch management system built for CCG Transit using Base44 and React. It supports daily dispatch operations across administrators, company owners, truck access-code users, and drivers.
