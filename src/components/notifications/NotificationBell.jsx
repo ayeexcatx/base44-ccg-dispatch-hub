@@ -100,12 +100,17 @@ export default function NotificationBell({ session }) {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
-        <div className="p-3 border-b bg-slate-50">
+      <PopoverContent
+        className="w-[min(20rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] p-0 border border-red-300 shadow-2xl"
+        align="end"
+      >
+        <div className="p-3 border-b border-red-300 bg-red-500 text-white">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-sm">Notifications</h3>
             <Link to={createPageUrl('Notifications')}>
-              <Button variant="ghost" size="sm" className="text-xs h-7">View All</Button>
+              <Button variant="ghost" size="sm" className="h-7 text-xs text-white hover:bg-red-600 hover:text-white">
+                View all
+              </Button>
             </Link>
           </div>
         </div>
