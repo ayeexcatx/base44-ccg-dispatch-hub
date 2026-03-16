@@ -16,8 +16,9 @@ const NOTE_GROUP_ORDER = {
 
 export const normalizeTemplateNote = (note = {}) => {
   const noteType = note.note_type === NOTE_TYPES.BOX ? NOTE_TYPES.BOX : NOTE_TYPES.GENERAL;
-  const displayWidth = Object.values(NOTE_DISPLAY_WIDTH).includes(note.displayWidth)
-    ? note.displayWidth
+  const rawDisplayWidth = note.displayWidth ?? note.display_width;
+  const displayWidth = Object.values(NOTE_DISPLAY_WIDTH).includes(rawDisplayWidth)
+    ? rawDisplayWidth
     : NOTE_DISPLAY_WIDTH.AUTO;
 
   const legacyText = typeof note.note_text === 'string' ? note.note_text.trim() : '';
@@ -43,6 +44,7 @@ export const normalizeTemplateNote = (note = {}) => {
     priority: Number.isFinite(Number(note.priority)) ? Number(note.priority) : 0,
     active_flag: note.active_flag !== false,
     displayWidth,
+    display_width: displayWidth,
   };
 };
 

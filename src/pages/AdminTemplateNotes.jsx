@@ -123,12 +123,16 @@ export default function AdminTemplateNotes() {
   };
 
   const saveForm = () => {
+    const displayWidth = form.displayWidth || NOTE_DISPLAY_WIDTH.AUTO;
     const basePayload = {
       note_type: form.note_type,
       title: form.title.trim(),
       active_flag: form.active_flag,
       priority: Number(form.priority) || 0,
-      displayWidth: form.displayWidth || NOTE_DISPLAY_WIDTH.AUTO,
+      // Keep both keys for backwards compatibility while ensuring persistence
+      // in environments that store snake_case entity fields.
+      displayWidth,
+      display_width: displayWidth,
     };
 
     const payload = form.note_type === NOTE_TYPES.BOX

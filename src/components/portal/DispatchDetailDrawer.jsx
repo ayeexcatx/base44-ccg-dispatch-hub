@@ -122,9 +122,9 @@ function getGeneralNoteLayout(note) {
 
 
 function getNoteColumnClass(displayWidth, autoShouldSpanWide = false) {
-  if (displayWidth === NOTE_DISPLAY_WIDTH.FULL) return 'md:col-span-2';
-  if (displayWidth === NOTE_DISPLAY_WIDTH.HALF) return '';
-  return autoShouldSpanWide ? 'md:col-span-2' : '';
+  if (displayWidth === NOTE_DISPLAY_WIDTH.FULL) return 'col-span-2';
+  if (displayWidth === NOTE_DISPLAY_WIDTH.HALF) return 'col-span-1';
+  return autoShouldSpanWide ? 'col-span-2 md:col-span-2' : 'col-span-2 md:col-span-1';
 }
 
 function TruckTimeRow({
@@ -1000,7 +1000,7 @@ export default function DispatchDetailDrawer({
               {boxNotes.length > 0 && (
                 <div data-tour="dispatch-notes" className="space-y-1.5">
                   <p className="text-xs text-slate-500 uppercase tracking-wide">Box Notes</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 md:gap-2">
+                  <div className="grid grid-cols-2 gap-1.5 md:gap-2">
                     {boxNotes.map(n => (
                       <div key={n.id} className={`rounded-lg border p-2.5 md:p-3 ${getNoteColumnClass(n.displayWidth, false)}`} style={{ borderColor: n.border_color, color: n.text_color }}>
                         {n.title && <p className="text-sm font-semibold leading-snug mb-0.5">{n.title}</p>}
@@ -1017,7 +1017,7 @@ export default function DispatchDetailDrawer({
               {generalNotes.length > 0 && (
                 <div data-tour="dispatch-notes" className="space-y-1.5">
                   <p className="text-xs text-slate-500 uppercase tracking-wide">General Notes</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-1.5 md:gap-2">
+                  <div className="grid grid-cols-2 gap-1.5 md:gap-2">
                     {generalNotes.map(n => {
                       const { bullets, shouldSpanWide } = getGeneralNoteLayout(n);
 
