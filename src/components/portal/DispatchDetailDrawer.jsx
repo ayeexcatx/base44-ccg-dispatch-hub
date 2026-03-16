@@ -904,7 +904,9 @@ export default function DispatchDetailDrawer({
 
               {(hasAdditional || dispatch.instructions || dispatch.notes || dispatch.toll_status || dispatch.start_time || dispatch.start_location) && (
                 <div data-tour="dispatch-assignment-details" className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3">
-                  <p className="text-xs text-slate-500 uppercase tracking-wide">Assignment 1</p>
+                  <p className="text-xs text-slate-500 uppercase tracking-wide">
+                    {(dispatch.additional_assignments || []).length > 0 ? 'Assignment 1' : 'Assignment'}
+                  </p>
                   {hasAdditional && (
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-2 text-sm text-slate-600">
