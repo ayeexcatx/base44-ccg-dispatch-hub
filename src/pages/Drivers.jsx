@@ -204,7 +204,7 @@ export default function Drivers() {
             <h3 className="text-lg font-semibold text-slate-900">Changing Drivers / Trucks</h3>
             <ul className="list-disc pl-5 space-y-2 text-sm leading-6 text-slate-700">
               <li>
-                If you have a driver assigned and <span className="font-medium">switch the driver</span> in the
+                If you have a driver assigned and you <span className="font-medium">switch the driver</span> in the
                 dropdown menu, the driver you removed will immediately receive a{' '}
                 <span className="text-red-600">cancellation</span> notification, and the driver you added will
                 immediately receive a <span className="text-emerald-600">new dispatch</span> notification.
