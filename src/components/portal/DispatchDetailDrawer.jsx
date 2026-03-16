@@ -773,24 +773,29 @@ export default function DispatchDetailDrawer({
                 <p className="text-xs text-slate-600 mt-2 italic">{scheduledDispatchNote}</p>
               </div>
             ) : (
-              <div className="space-y-3">
-              {dispatch.client_name && (
-                <h2 className="text-sm font-semibold text-slate-700">{dispatch.client_name}</h2>
-              )}
-              {!hasAdditional && (
-                <div className="grid grid-cols-1 gap-3 text-sm">
-                  {dispatch.job_number && (
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2 text-slate-600">
+              <div className="space-y-4">
+              <div className="space-y-1.5">
+                {dispatch.client_name && (
+                  <h2 className="text-base font-semibold text-slate-800">{dispatch.client_name}</h2>
+                )}
+                {!hasAdditional && (
+                  <div className="grid grid-cols-1 text-sm">
+                    {dispatch.job_number && (
+                      <div className="flex items-center gap-2 text-slate-700">
                         <FileText className="h-4 w-4 text-slate-400 shrink-0" />
-                        <span>Job #{dispatch.job_number}</span>
+                        <span className="font-semibold">Job #</span>
+                        <Badge className="bg-black px-2 py-0.5 text-xs font-semibold text-white hover:bg-black">
+                          {dispatch.job_number}
+                        </Badge>
                       </div>
-                    </div>
-                  )}
-                </div>
-              )}
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2.5">
               {companyName && (
-                <p className="text-xs text-slate-400">{companyName}</p>
+                <p className="text-xs font-semibold text-slate-400">{companyName}</p>
               )}
 
               {/* Trucks */}
@@ -877,6 +882,7 @@ export default function DispatchDetailDrawer({
                 )}
 
               </div>
+              </div>
             </div>
           )}
 
@@ -909,9 +915,14 @@ export default function DispatchDetailDrawer({
                   </p>
                   {hasAdditional && (
                     <div className="space-y-0.5">
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <div className="flex items-center gap-2 text-sm text-slate-700">
                         <FileText className="h-4 w-4 text-slate-400 shrink-0" />
-                        <span>Job Number{dispatch.job_number ? `: ${dispatch.job_number}` : ''}</span>
+                        <span className="font-semibold">Job #</span>
+                        {dispatch.job_number && (
+                          <Badge className="bg-black px-2 py-0.5 text-xs font-semibold text-white hover:bg-black">
+                            {dispatch.job_number}
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   )}
@@ -957,9 +968,12 @@ export default function DispatchDetailDrawer({
                         <div className="space-y-1.5">
                           {a.job_number && (
                             <div className="space-y-0.5">
-                              <div className="flex items-center gap-2 text-slate-600">
+                              <div className="flex items-center gap-2 text-slate-700">
                                 <FileText className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                                <span>Job Number: {a.job_number}</span>
+                                <span className="font-semibold">Job #</span>
+                                <Badge className="bg-black px-2 py-0.5 text-xs font-semibold text-white hover:bg-black">
+                                  {a.job_number}
+                                </Badge>
                               </div>
                             </div>
                           )}
