@@ -381,6 +381,7 @@ export default function DispatchDetailDrawer({
       const updates = assignments
         .filter((assignment) => assignment?.id)
         .map((assignment) => base44.entities.DriverDispatchAssignment.update(assignment.id, {
+          receipt_confirmed_flag: true,
           receipt_confirmed_at: confirmedAt,
           receipt_confirmed_by_driver_id: session?.driver_id,
           receipt_confirmed_by_name: session?.label || session?.driver_name || session?.name || assignment?.driver_name || undefined,
@@ -496,6 +497,7 @@ export default function DispatchDetailDrawer({
         assigned_by_code_type: session?.code_type,
         assigned_datetime: new Date().toISOString(),
         active_flag: true,
+        receipt_confirmed_flag: false,
         receipt_confirmed_at: null,
         receipt_confirmed_by_driver_id: null,
         receipt_confirmed_by_name: null,
@@ -600,16 +602,7 @@ export default function DispatchDetailDrawer({
     && driverActiveAssignments.length > 0
     && driverActiveAssignments.some((entry) => !entry?.receipt_confirmed_at);
 
-  const ownerContactName = [
-    dispatch?.company_owner_name,
-    dispatch?.owner_name,
-    dispatch?.company_owner,
-    dispatch?.dispatcher_name,
-  ].find((value) => String(value || '').trim());
-
-  const driverConfirmReceiptButtonText = ownerContactName
-    ? `Let ${String(ownerContactName).trim()} know you received this dispatch`
-    : 'Confirm Receipt';
+  const driverConfirmReceiptButtonText = 'Confirm';
   const assignedDriverNameByTruck = driverAssignments
     .filter((entry) => entry?.active_flag !== false)
     .reduce((map, entry) => {
@@ -966,24 +959,38 @@ export default function DispatchDetailDrawer({
         <div className="px-5 py-5 space-y-6">
 
           {isDriverUser && (
-            <div>
-              {canDriverConfirmReceipt ? (
+            <div className="flex items-center gap-2">
+              {driverActiveAssignments.length > 0 && (
                 <Button
                   type="button"
                   size="sm"
                   onClick={handleDriverConfirmReceipt}
-                  disabled={confirmDispatchReceiptMutation.isPending}
-                  className="bg-slate-900 hover:bg-slate-800 text-white"
+                  disabled={!canDriverConfirmReceipt || confirmDispatchReceiptMutation.isPending}
+                  className="bg-emerald-700 hover:bg-emerald-800 disabled:bg-emerald-100 disabled:text-emerald-700 text-white"
                 >
-                  {confirmDispatchReceiptMutation.isPending ? 'Confirming…' : driverConfirmReceiptButtonText}
+                  {confirmDispatchReceiptMutation.isPending
+                    ? 'Confirming…'
+                    : canDriverConfirmReceipt
+                      ? driverConfirmReceiptButtonText
+                      : 'Received Confirmed'}
                 </Button>
-              ) : driverActiveAssignments.length > 0 ? (
-                <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs">Receipt Confirmed</Badge>
-              ) : null}
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs"
+                data-screenshot-exclude="true"
+                onClick={handleReportIncident}
+                data-tour="dispatch-report-incident"
+              >
+                <AlertTriangle className="h-3.5 w-3.5 mr-1" />
+                Report Incident
+              </Button>
             </div>
           )}
 
-          {(isOwner || isTruckUser || isDriverUser) && (
+          {(isOwner || isTruckUser) && (
             <div className="flex items-center gap-2">
               <Button
                 type="button"

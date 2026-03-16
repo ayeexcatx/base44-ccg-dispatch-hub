@@ -453,6 +453,26 @@ export default function AdminDispatches() {
         const savedDispatch = await base44.entities.Dispatch.filter({ id: editing.id }, '-created_date', 1).then((r) => r[0]);
 
         if (savedDispatch) {
+          const previousStatus = editing?.status;
+          const nextStatus = savedDispatch.status;
+          const shouldResetDriverReceiptConfirmation = previousStatus !== nextStatus && (nextStatus === 'Amended' || nextStatus === 'Cancelled');
+
+          if (shouldResetDriverReceiptConfirmation) {
+            const activeDriverAssignmentsForReset = await base44.entities.DriverDispatchAssignment.filter({
+              dispatch_id: savedDispatch.id,
+              active_flag: true,
+            }, '-assigned_datetime', 500);
+
+            await Promise.all((activeDriverAssignmentsForReset || [])
+              .filter((assignment) => assignment?.id)
+              .map((assignment) => base44.entities.DriverDispatchAssignment.update(assignment.id, {
+                receipt_confirmed_flag: false,
+                receipt_confirmed_at: null,
+                receipt_confirmed_by_driver_id: null,
+                receipt_confirmed_by_name: null,
+              })));
+          }
+
           await reconcileOwnerNotificationsForDispatch(savedDispatch, accessCodes);
           const activeDriverAssignments = await base44.entities.DriverDispatchAssignment.filter({
             dispatch_id: savedDispatch.id,
