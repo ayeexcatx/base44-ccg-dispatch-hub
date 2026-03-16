@@ -360,8 +360,8 @@ export default function AvailabilityManager({ companyId, canSelectCompany = fals
           <p className="text-slate-500 text-sm font-medium opacity-100">Select your default availability that is the same every week.</p>
         </div>
         <div className="space-y-1 text-xs text-slate-500">
-          <p>(Ex.: All day shifts + Mon/Wed/Fri night shifts)</p>
-          <p>If you need off on a day that when you are usually available (default), use the availability chart ABOVE to select Unavailable.</p>
+          <p className="text-red-500">(Example: I can work all day shifts + Mon/Wed/Fri night shifts) </p>
+          <p>If you need off on a specific day when you are usually available (default), use the availability chart ABOVE to select Unavailable. </p>
         </div>
         <div className="overflow-x-auto">
           <div className="min-w-[320px] divide-y divide-slate-200 rounded border border-slate-200">
