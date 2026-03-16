@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { StickyNote, Box, Plus, Pencil, Trash2, ArrowUp, ArrowDown, Type } from 'lucide-react';
-import { NOTE_TYPES, normalizeTemplateNote, renderSimpleMarkupToHtml, sortTemplateNotesForDispatch } from '@/lib/templateNotes';
+import { NOTE_DISPLAY_WIDTH, NOTE_TYPES, normalizeTemplateNote, renderSimpleMarkupToHtml, sortTemplateNotesForDispatch } from '@/lib/templateNotes';
 
 const DEFAULT_FORM = {
   note_type: NOTE_TYPES.GENERAL,
@@ -22,6 +22,7 @@ const DEFAULT_FORM = {
   text_color: '#334155',
   active_flag: true,
   priority: 0,
+  displayWidth: NOTE_DISPLAY_WIDTH.AUTO,
 };
 
 export default function AdminTemplateNotes() {
@@ -71,6 +72,7 @@ export default function AdminTemplateNotes() {
       text_color: note.text_color || '#334155',
       active_flag: note.active_flag !== false,
       priority: note.priority || 0,
+      displayWidth: note.displayWidth || NOTE_DISPLAY_WIDTH.AUTO,
     });
     setOpen(true);
   };
@@ -126,6 +128,7 @@ export default function AdminTemplateNotes() {
       title: form.title.trim(),
       active_flag: form.active_flag,
       priority: Number(form.priority) || 0,
+      displayWidth: form.displayWidth || NOTE_DISPLAY_WIDTH.AUTO,
     };
 
     const payload = form.note_type === NOTE_TYPES.BOX
@@ -210,6 +213,7 @@ export default function AdminTemplateNotes() {
                             {n.active_flag !== false ? 'Active' : 'Inactive'}
                           </Badge>
                           <Badge variant="outline" className="text-xs">Priority: {n.priority || 0}</Badge>
+                          <Badge variant="outline" className="text-xs">Width: {n.displayWidth}</Badge>
                         </div>
                       </div>
                     </div>
@@ -323,6 +327,24 @@ export default function AdminTemplateNotes() {
                 </div>
               </div>
             )}
+
+
+            <div>
+              <Label>Display Width</Label>
+              <Select
+                value={form.displayWidth}
+                onValueChange={v => setForm(prev => ({ ...prev, displayWidth: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NOTE_DISPLAY_WIDTH.AUTO}>Auto</SelectItem>
+                  <SelectItem value={NOTE_DISPLAY_WIDTH.HALF}>Half</SelectItem>
+                  <SelectItem value={NOTE_DISPLAY_WIDTH.FULL}>Full</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
             <div>
               <Label>Priority (lower = shown first within type)</Label>

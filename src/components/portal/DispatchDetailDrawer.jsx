@@ -14,7 +14,7 @@ import { format, parseISO } from 'date-fns';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { statusBadgeColors, scheduledDispatchNote, scheduledStatusMessage } from './statusConfig';
-import { NOTE_TYPES, normalizeTemplateNote, renderSimpleMarkupToHtml } from '@/lib/templateNotes';
+import { NOTE_DISPLAY_WIDTH, NOTE_TYPES, normalizeTemplateNote, renderSimpleMarkupToHtml } from '@/lib/templateNotes';
 import { calculateWorkedHours, formatTime24h, formatWorkedHours } from '@/lib/timeLogs';
 import { toast } from 'sonner';
 import { notifyDriverAssignmentChanges } from '@/components/notifications/createNotifications';
@@ -117,6 +117,14 @@ function getGeneralNoteLayout(note) {
     bullets,
     shouldSpanWide,
   };
+}
+
+
+
+function getNoteColumnClass(displayWidth, autoShouldSpanWide = false) {
+  if (displayWidth === NOTE_DISPLAY_WIDTH.FULL) return 'md:col-span-2';
+  if (displayWidth === NOTE_DISPLAY_WIDTH.HALF) return '';
+  return autoShouldSpanWide ? 'md:col-span-2' : '';
 }
 
 function TruckTimeRow({
@@ -994,7 +1002,7 @@ export default function DispatchDetailDrawer({
                   <p className="text-xs text-slate-500 uppercase tracking-wide">Box Notes</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 md:gap-2">
                     {boxNotes.map(n => (
-                      <div key={n.id} className="rounded-lg border p-2.5 md:p-3" style={{ borderColor: n.border_color, color: n.text_color }}>
+                      <div key={n.id} className={`rounded-lg border p-2.5 md:p-3 ${getNoteColumnClass(n.displayWidth, false)}`} style={{ borderColor: n.border_color, color: n.text_color }}>
                         {n.title && <p className="text-sm font-semibold leading-snug mb-0.5">{n.title}</p>}
                         <p
                           className="text-sm leading-snug"
@@ -1018,7 +1026,7 @@ export default function DispatchDetailDrawer({
                       return (
                         <div
                           key={n.id}
-                          className={`rounded-lg border border-slate-200 bg-white/90 p-2.5 md:p-3 ${shouldSpanWide ? 'md:col-span-2' : ''}`}
+                          className={`rounded-lg border border-slate-200 bg-white/90 p-2.5 md:p-3 ${getNoteColumnClass(n.displayWidth, shouldSpanWide)}`}
                         >
                           {n.title && <p className="text-sm text-slate-700 font-semibold leading-snug mb-0.5">{n.title}</p>}
                           <ul className="mt-0.5 space-y-0.5 list-disc ml-4">

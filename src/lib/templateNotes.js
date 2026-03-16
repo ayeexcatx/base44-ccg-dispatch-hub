@@ -3,6 +3,12 @@ export const NOTE_TYPES = {
   GENERAL: 'general',
 };
 
+export const NOTE_DISPLAY_WIDTH = {
+  AUTO: 'auto',
+  HALF: 'half',
+  FULL: 'full',
+};
+
 const NOTE_GROUP_ORDER = {
   [NOTE_TYPES.BOX]: 0,
   [NOTE_TYPES.GENERAL]: 1,
@@ -10,6 +16,9 @@ const NOTE_GROUP_ORDER = {
 
 export const normalizeTemplateNote = (note = {}) => {
   const noteType = note.note_type === NOTE_TYPES.BOX ? NOTE_TYPES.BOX : NOTE_TYPES.GENERAL;
+  const displayWidth = Object.values(NOTE_DISPLAY_WIDTH).includes(note.displayWidth)
+    ? note.displayWidth
+    : NOTE_DISPLAY_WIDTH.AUTO;
 
   const legacyText = typeof note.note_text === 'string' ? note.note_text.trim() : '';
   const rawBullets = Array.isArray(note.bullet_lines)
@@ -33,6 +42,7 @@ export const normalizeTemplateNote = (note = {}) => {
     text_color: note.text_color || '#334155',
     priority: Number.isFinite(Number(note.priority)) ? Number(note.priority) : 0,
     active_flag: note.active_flag !== false,
+    displayWidth,
   };
 };
 
