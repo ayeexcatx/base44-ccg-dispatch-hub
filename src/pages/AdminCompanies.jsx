@@ -117,6 +117,8 @@ function ScoringDetailDialog({ company, score, eventForm, setEventForm, onCreate
             <summary className="cursor-pointer font-semibold text-slate-800">How this scoring works</summary>
             <div className="mt-3 text-sm text-slate-600 space-y-1">
               <p>Reliability Score combines confirmation speed, missed confirmations, completion rate, truck utilization, breakdowns, manual late events, cancellations, and scheduled confirmation performance.</p>
+              <p><strong>Truck score</strong> is based only on true mechanical/breakdown incidents linked to that truck and manual scoring entries linked to that truck.</p>
+              <p><strong>Driver score</strong> is based only on manual scoring entries linked to that driver.</p>
               <p>Only true mechanical/breakdown incident types from incident reports are counted automatically for breakdown scoring.</p>
               <p>Delay incidents do not automatically count as late issues. Late issues are tracked via manual events like "Late Arrival".</p>
               <p>Accidents from incident reports do not automatically reduce completion or reliability.</p>
@@ -134,11 +136,15 @@ function ScoringDetailDialog({ company, score, eventForm, setEventForm, onCreate
           <CardContent className="p-4 space-y-2">
             <p className="text-sm font-semibold text-slate-800">Truck Performance</p>
             {score.truckSummaries.length === 0 ? <p className="text-sm text-slate-500">No truck data available.</p> : score.truckSummaries.map((truck) => (
-              <div key={truck.truckNumber} className="rounded-lg border border-slate-200 p-3 text-sm">
-                <p className="font-semibold text-slate-800">Truck {truck.truckNumber}</p>
-                <p className="text-slate-600">Dispatches: {truck.dispatchCount} • Breakdowns: {truck.breakdowns} • Late events: {truck.lateIssues}</p>
-                <p className="text-slate-600">Completion rate: {Math.round(truck.completionRate)}%</p>
-                <p className="text-slate-700 font-semibold">Truck Score: {Math.round(truck.truckScore)} / 100</p>
+              <div key={truck.truckNumber} className="rounded-lg border border-slate-200 p-3 text-sm flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-slate-800">Truck {truck.truckNumber}</p>
+                  <p className="text-slate-600">Dispatches: {truck.dispatchCount} • Breakdowns: {truck.breakdowns} • Late events: {truck.lateIssues}</p>
+                  <p className="text-slate-600">Completion rate: {Math.round(truck.completionRate)}%</p>
+                </div>
+                <p className={`text-4xl font-bold leading-none ${truck.truckScore >= 80 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {Math.round(truck.truckScore)}
+                </p>
               </div>
             ))}
           </CardContent>
@@ -148,11 +154,15 @@ function ScoringDetailDialog({ company, score, eventForm, setEventForm, onCreate
           <CardContent className="p-4 space-y-2">
             <p className="text-sm font-semibold text-slate-800">Driver Performance</p>
             {score.driverSummaries.length === 0 ? <p className="text-sm text-slate-500">No driver data available.</p> : score.driverSummaries.map((driver) => (
-              <div key={driver.driverId} className="rounded-lg border border-slate-200 p-3 text-sm">
-                <p className="font-semibold text-slate-800">{driver.driverName}</p>
-                <p className="text-slate-600">Dispatches: {driver.dispatchCount} • Confirmation rate: {Math.round(driver.confirmationRate)}%</p>
-                <p className="text-slate-600">Logged performance events: {driver.eventCount}</p>
-                <p className="text-slate-700 font-semibold">Driver Score: {Math.round(driver.driverScore)} / 100</p>
+              <div key={driver.driverId} className="rounded-lg border border-slate-200 p-3 text-sm flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-slate-800">{driver.driverName}</p>
+                  <p className="text-slate-600">Dispatches: {driver.dispatchCount} • Confirmation rate: {Math.round(driver.confirmationRate)}%</p>
+                  <p className="text-slate-600">Logged performance events: {driver.eventCount}</p>
+                </div>
+                <p className={`text-4xl font-bold leading-none ${driver.driverScore >= 80 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {Math.round(driver.driverScore)}
+                </p>
               </div>
             ))}
           </CardContent>
@@ -232,9 +242,16 @@ function ScoringDetailDialog({ company, score, eventForm, setEventForm, onCreate
             <p className="text-xs uppercase text-slate-500">Event History</p>
             {score.events.length === 0 ? <p className="text-sm text-slate-500">No manual reliability events yet.</p> : score.events.map((event) => (
               <div key={event.id} className="rounded-lg border border-slate-200 p-3 text-sm flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-semibold text-slate-800">{event.event_type} • {event.severity || '—'}</p>
-                  <p className="text-slate-500">{new Date(event.event_date || event.created_date).toLocaleDateString()} • {event.notes || 'No notes'}</p>
+                <div className="space-y-1 min-w-0">
+                  <p className="font-semibold text-slate-800">{event.event_type || '—'}</p>
+                  <div className="grid sm:grid-cols-2 gap-x-4 gap-y-1 text-slate-600">
+                    <p><span className="font-medium text-slate-700">Event Date:</span> {event.event_date ? new Date(event.event_date).toLocaleDateString() : '—'}</p>
+                    <p><span className="font-medium text-slate-700">Related Dispatch:</span> {event.dispatch_id || '—'}</p>
+                    <p><span className="font-medium text-slate-700">Related Truck:</span> {event.truck_number || '—'}</p>
+                    <p><span className="font-medium text-slate-700">Related Driver:</span> {drivers.find((driver) => driver.id === event.driver_id)?.driver_name || '—'}</p>
+                    <p><span className="font-medium text-slate-700">Severity:</span> {event.severity || '—'}</p>
+                    <p className="sm:col-span-2 break-words"><span className="font-medium text-slate-700">Notes:</span> {event.notes || '—'}</p>
+                  </div>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => onDelete(event.id)} disabled={isDeleting} className="h-7 w-7 text-red-500 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></Button>
               </div>
