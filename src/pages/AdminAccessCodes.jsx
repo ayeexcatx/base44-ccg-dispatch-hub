@@ -240,13 +240,30 @@ export default function AdminAccessCodes() {
       return;
     }
 
+    if (form.code_type === 'Admin') {
+      const normalizedViews = Array.from(new Set(['Admin', ...(form.available_views || [])]));
+      const requiresLinkedCompanies = normalizedViews.includes('CompanyOwner');
+      const linkedCompanyIds = form.linked_company_ids || [];
+
+      if (requiresLinkedCompanies && linkedCompanyIds.length === 0) {
+        toast.error('Select at least one linked company when Company Owner workspace is enabled');
+        return;
+      }
+
+      saveMutation.mutate({
+        ...form,
+        sms_phone: smsPhone,
+        available_views: normalizedViews,
+        linked_company_ids: linkedCompanyIds,
+      });
+      return;
+    }
+
     saveMutation.mutate({
       ...form,
       sms_phone: smsPhone,
-      available_views: form.code_type === 'Admin'
-        ? (form.available_views.length > 0 ? form.available_views : ['Admin'])
-        : [],
-      linked_company_ids: form.code_type === 'Admin' ? form.linked_company_ids : [],
+      available_views: [],
+      linked_company_ids: [],
     });
   };
 

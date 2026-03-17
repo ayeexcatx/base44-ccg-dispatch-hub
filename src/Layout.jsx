@@ -64,7 +64,7 @@ function LayoutInner({ children, currentPageName }) {
     }
 
     const adminPages = ['AdminDashboard', 'AdminCompanies', 'AdminConfirmations', 'AdminAccessCodes', 'AdminDispatches', 'AdminTemplateNotes', 'AdminAnnouncements', 'AdminAvailability'];
-    const ownerPages = ['Availability', 'Drivers', 'Notifications'];
+    const ownerPages = ['Availability', 'Drivers'];
 
     if (adminPages.includes(currentPageName) && !isAdmin) {
       window.location.href = createPageUrl('Home');
@@ -72,6 +72,11 @@ function LayoutInner({ children, currentPageName }) {
     }
 
     if (ownerPages.includes(currentPageName) && !isOwner) {
+      window.location.href = isAdmin ? createPageUrl('AdminDashboard') : createPageUrl('Home');
+      return;
+    }
+
+    if (currentPageName === 'Notifications' && !(isAdmin || isOwner || isDriver)) {
       window.location.href = isAdmin ? createPageUrl('AdminDashboard') : createPageUrl('Home');
       return;
     }
