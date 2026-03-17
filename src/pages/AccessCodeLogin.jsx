@@ -4,6 +4,7 @@ import { createPageUrl } from '../utils';
 import { useSession } from '../components/session/SessionContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { getAvailableWorkspaces } from '@/components/session/workspaceUtils';
 import { ArrowRight, AlertCircle } from 'lucide-react';
 
 export default function AccessCodeLogin() {
@@ -29,7 +30,10 @@ export default function AccessCodeLogin() {
 
     login(match);
 
-    if (match.code_type === 'Admin') {
+    const workspaces = getAvailableWorkspaces(match);
+    const hasAdminWorkspace = workspaces.some((workspace) => workspace.mode === 'Admin');
+
+    if (hasAdminWorkspace || match.code_type === 'Admin') {
       window.location.href = createPageUrl('AdminDashboard');
     } else {
       window.location.href = createPageUrl('Home');

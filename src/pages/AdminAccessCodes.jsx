@@ -57,6 +57,8 @@ export default function AdminAccessCodes() {
     driver_id: '',
     sms_enabled: false,
     sms_phone: '',
+    available_views: [],
+    linked_company_ids: [],
   });
 
   const { data: codes = [], isLoading } = useQuery({
@@ -135,6 +137,8 @@ export default function AdminAccessCodes() {
       driver_id: '',
       sms_enabled: false,
       sms_phone: '',
+      available_views: type === 'Admin' ? ['Admin'] : [],
+      linked_company_ids: [],
     });
     setOpen(true);
   };
@@ -151,6 +155,8 @@ export default function AdminAccessCodes() {
       driver_id: driver.id || '',
       sms_enabled: false,
       sms_phone: formatPhoneNumber(driver.phone || ''),
+      available_views: [],
+      linked_company_ids: [],
     });
     setOpen(true);
   };
@@ -167,6 +173,8 @@ export default function AdminAccessCodes() {
       driver_id: code.driver_id || '',
       sms_enabled: code.sms_enabled === true,
       sms_phone: formatPhoneNumber(code.sms_phone || ''),
+      available_views: code.available_views || (code.code_type === 'Admin' ? ['Admin'] : []),
+      linked_company_ids: code.linked_company_ids || [],
     });
     setOpen(true);
   };
@@ -183,6 +191,29 @@ export default function AdminAccessCodes() {
       allowed_trucks: has
         ? form.allowed_trucks.filter((x) => x !== t)
         : [...form.allowed_trucks, t],
+    });
+  };
+
+  const toggleView = (view) => {
+    const has = form.available_views.includes(view);
+    const nextViews = has
+      ? form.available_views.filter((v) => v !== view)
+      : [...form.available_views, view];
+
+    setForm({
+      ...form,
+      available_views: nextViews,
+      linked_company_ids: nextViews.includes('CompanyOwner') ? form.linked_company_ids : [],
+    });
+  };
+
+  const toggleLinkedCompany = (companyId) => {
+    const has = form.linked_company_ids.includes(companyId);
+    setForm({
+      ...form,
+      linked_company_ids: has
+        ? form.linked_company_ids.filter((id) => id !== companyId)
+        : [...form.linked_company_ids, companyId],
     });
   };
 
@@ -203,6 +234,8 @@ export default function AdminAccessCodes() {
         allowed_trucks: [],
         sms_enabled: form.sms_enabled,
         sms_phone: smsPhone,
+        available_views: [],
+        linked_company_ids: [],
       });
       return;
     }
@@ -210,6 +243,10 @@ export default function AdminAccessCodes() {
     saveMutation.mutate({
       ...form,
       sms_phone: smsPhone,
+      available_views: form.code_type === 'Admin'
+        ? (form.available_views.length > 0 ? form.available_views : ['Admin'])
+        : [],
+      linked_company_ids: form.code_type === 'Admin' ? form.linked_company_ids : [],
     });
   };
 
@@ -328,6 +365,12 @@ export default function AdminAccessCodes() {
                           {c.code_type !== 'Driver' && (c.allowed_trucks || []).length > 0 && (
                             <span>Trucks: {c.allowed_trucks.join(', ')}</span>
                           )}
+                          {c.code_type === 'Admin' && (c.available_views || []).length > 0 && (
+                            <span>Views: {(c.available_views || []).join(', ')}</span>
+                          )}
+                          {c.code_type === 'Admin' && (c.linked_company_ids || []).length > 0 && (
+                            <span>Linked companies: {(c.linked_company_ids || []).length}</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -370,7 +413,7 @@ export default function AdminAccessCodes() {
               <Label>Code Type</Label>
               <Select
                 value={form.code_type}
-                onValueChange={(v) => setForm({ ...form, code_type: v, allowed_trucks: [], company_id: '', driver_id: '' })}
+                onValueChange={(v) => setForm({ ...form, code_type: v, allowed_trucks: [], company_id: '', driver_id: '', available_views: v === 'Admin' ? ['Admin'] : [], linked_company_ids: [] })}
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -381,6 +424,51 @@ export default function AdminAccessCodes() {
                 </SelectContent>
               </Select>
             </div>
+
+
+            {form.code_type === 'Admin' && (
+              <div className="space-y-3">
+                <div>
+                  <Label>Available Workspaces</Label>
+                  <div className="flex gap-2 flex-wrap mt-1">
+                    {['Admin', 'CompanyOwner'].map((view) => (
+                      <button
+                        key={view}
+                        onClick={() => toggleView(view)}
+                        className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${
+                          form.available_views.includes(view)
+                            ? 'bg-slate-900 text-white border-slate-900'
+                            : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400'
+                        }`}
+                      >
+                        {view === 'CompanyOwner' ? 'Company Owner' : view}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {form.available_views.includes('CompanyOwner') && (
+                  <div>
+                    <Label>Linked Companies</Label>
+                    <div className="flex gap-2 flex-wrap mt-1">
+                      {companies.map((company) => (
+                        <button
+                          key={company.id}
+                          onClick={() => toggleLinkedCompany(company.id)}
+                          className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${
+                            form.linked_company_ids.includes(company.id)
+                              ? 'bg-slate-900 text-white border-slate-900'
+                              : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400'
+                          }`}
+                        >
+                          {company.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {form.code_type !== 'Admin' && (
               <>
