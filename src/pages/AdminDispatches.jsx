@@ -30,30 +30,30 @@ const LIVE_STATUS_OPTIONS = ['Running', 'Broken Down', 'Delayed', 'At Plant', 'S
 
 
 const DAY_SHIFT_JOB_ACCENTS = [
-  { accent: '#0ea5e9', rowTint: 'rgba(14, 165, 233, 0.07)' },
-  { accent: '#14b8a6', rowTint: 'rgba(20, 184, 166, 0.07)' },
-  { accent: '#22c55e', rowTint: 'rgba(34, 197, 94, 0.07)' },
-  { accent: '#f59e0b', rowTint: 'rgba(245, 158, 11, 0.07)' },
-  { accent: '#f97316', rowTint: 'rgba(249, 115, 22, 0.07)' },
-  { accent: '#a855f7', rowTint: 'rgba(168, 85, 247, 0.07)' },
-  { accent: '#6366f1', rowTint: 'rgba(99, 102, 241, 0.07)' },
-  { accent: '#ec4899', rowTint: 'rgba(236, 72, 153, 0.07)' },
-  { accent: '#84cc16', rowTint: 'rgba(132, 204, 22, 0.07)' },
-  { accent: '#06b6d4', rowTint: 'rgba(6, 182, 212, 0.07)' }
-];
+{ accent: '#0ea5e9', rowTint: 'rgba(14, 165, 233, 0.07)' },
+{ accent: '#14b8a6', rowTint: 'rgba(20, 184, 166, 0.07)' },
+{ accent: '#22c55e', rowTint: 'rgba(34, 197, 94, 0.07)' },
+{ accent: '#f59e0b', rowTint: 'rgba(245, 158, 11, 0.07)' },
+{ accent: '#f97316', rowTint: 'rgba(249, 115, 22, 0.07)' },
+{ accent: '#a855f7', rowTint: 'rgba(168, 85, 247, 0.07)' },
+{ accent: '#6366f1', rowTint: 'rgba(99, 102, 241, 0.07)' },
+{ accent: '#ec4899', rowTint: 'rgba(236, 72, 153, 0.07)' },
+{ accent: '#84cc16', rowTint: 'rgba(132, 204, 22, 0.07)' },
+{ accent: '#06b6d4', rowTint: 'rgba(6, 182, 212, 0.07)' }];
+
 
 const NIGHT_SHIFT_JOB_ACCENTS = [
-  { accent: '#0369a1', rowTint: 'rgba(3, 105, 161, 0.12)' },
-  { accent: '#0f766e', rowTint: 'rgba(15, 118, 110, 0.12)' },
-  { accent: '#166534', rowTint: 'rgba(22, 101, 52, 0.12)' },
-  { accent: '#b45309', rowTint: 'rgba(180, 83, 9, 0.12)' },
-  { accent: '#9a3412', rowTint: 'rgba(154, 52, 18, 0.12)' },
-  { accent: '#6d28d9', rowTint: 'rgba(109, 40, 217, 0.12)' },
-  { accent: '#3730a3', rowTint: 'rgba(55, 48, 163, 0.12)' },
-  { accent: '#be185d', rowTint: 'rgba(190, 24, 93, 0.12)' },
-  { accent: '#4d7c0f', rowTint: 'rgba(77, 124, 15, 0.12)' },
-  { accent: '#155e75', rowTint: 'rgba(21, 94, 117, 0.12)' }
-];
+{ accent: '#0369a1', rowTint: 'rgba(3, 105, 161, 0.12)' },
+{ accent: '#0f766e', rowTint: 'rgba(15, 118, 110, 0.12)' },
+{ accent: '#166534', rowTint: 'rgba(22, 101, 52, 0.12)' },
+{ accent: '#b45309', rowTint: 'rgba(180, 83, 9, 0.12)' },
+{ accent: '#9a3412', rowTint: 'rgba(154, 52, 18, 0.12)' },
+{ accent: '#6d28d9', rowTint: 'rgba(109, 40, 217, 0.12)' },
+{ accent: '#3730a3', rowTint: 'rgba(55, 48, 163, 0.12)' },
+{ accent: '#be185d', rowTint: 'rgba(190, 24, 93, 0.12)' },
+{ accent: '#4d7c0f', rowTint: 'rgba(77, 124, 15, 0.12)' },
+{ accent: '#155e75', rowTint: 'rgba(21, 94, 117, 0.12)' }];
+
 
 const getJobAccentByShift = (shift, index) => {
   const palette = shift === 'Night Shift' ? NIGHT_SHIFT_JOB_ACCENTS : DAY_SHIFT_JOB_ACCENTS;
@@ -117,10 +117,10 @@ const syncDispatchRecordHtml = async ({
 }) => {
   const companyName = getCompanyNameFromDispatch(dispatch, companies);
   const [confirmationsForDispatch, timeEntriesForDispatch, driverAssignmentsForDispatch] = await Promise.all([
-    base44.entities.Confirmation.filter({ dispatch_id: dispatch.id }, '-confirmed_at', 500),
-    base44.entities.TimeEntry.filter({ dispatch_id: dispatch.id }, '-created_date', 500),
-    base44.entities.DriverDispatchAssignment.filter({ dispatch_id: dispatch.id }, '-assigned_datetime', 500)
-  ]);
+  base44.entities.Confirmation.filter({ dispatch_id: dispatch.id }, '-confirmed_at', 500),
+  base44.entities.TimeEntry.filter({ dispatch_id: dispatch.id }, '-created_date', 500),
+  base44.entities.DriverDispatchAssignment.filter({ dispatch_id: dispatch.id }, '-assigned_datetime', 500)]
+  );
 
   return syncDispatchHtmlToDrive({
     dispatch,
@@ -138,10 +138,10 @@ const normalizeTextField = (value) => String(value ?? '').trim();
 
 const normalizeTruckAssignments = (value) => {
   if (!Array.isArray(value)) return [];
-  return value
-  .map((truck) => normalizeTextField(truck))
-  .filter(Boolean)
-  .sort();
+  return value.
+  map((truck) => normalizeTextField(truck)).
+  filter(Boolean).
+  sort();
 };
 
 const areTruckAssignmentsEqual = (previous, next) => {
@@ -259,13 +259,13 @@ const getDispatchAssignmentsForTruck = (dispatch, truckNumber) => {
   const assignments = Array.isArray(dispatch?.assignments) ? dispatch.assignments : Array.isArray(dispatch?.additional_assignments) ? dispatch.additional_assignments : [];
   const normalizedTruck = String(truckNumber || '').trim();
 
-  return assignments
-    .filter((entry) => String(entry?.truck_number || '').trim() === normalizedTruck)
-    .map((entry) => ({
-      jobNumber: entry?.job_number || dispatch?.job_number || '',
-      startTime: formatDispatchTime(entry?.start_time || entry?.startTime)
-    }))
-    .sort((a, b) => getAssignmentSortValue(a.startTime) - getAssignmentSortValue(b.startTime));
+  return assignments.
+  filter((entry) => String(entry?.truck_number || '').trim() === normalizedTruck).
+  map((entry) => ({
+    jobNumber: entry?.job_number || dispatch?.job_number || '',
+    startTime: formatDispatchTime(entry?.start_time || entry?.startTime)
+  })).
+  sort((a, b) => getAssignmentSortValue(a.startTime) - getAssignmentSortValue(b.startTime));
 };
 
 const deriveTruckStartTime = (dispatch, truckNumber) => {
@@ -408,30 +408,30 @@ function LiveDispatchBoard({
         </CardContent>
       </Card>
 
-      {groupedShifts.every((shiftGroup) => shiftGroup.jobs.length === 0) ? (
-        <div className="text-center py-12 text-sm text-slate-500">No live dispatch activity for this date.</div>
-      ) : (
-        <div className="space-y-4">
+      {groupedShifts.every((shiftGroup) => shiftGroup.jobs.length === 0) ?
+      <div className="text-center py-12 text-sm text-slate-500">No live dispatch activity for this date.</div> :
+
+      <div className="space-y-4">
           <Card>
-              <CardContent className="p-4 space-y-4">
-                {groupedShifts.map((shiftGroup) => (
-                  <section key={shiftGroup.shift} className="space-y-4">
-                    <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-gradient-to-r from-slate-50 to-white px-4 py-3 shadow-sm">
-                      <div className="flex items-center gap-2.5 text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">
-                        {shiftGroup.shift === 'Day Shift' ? <Sun className="h-5 w-5 text-amber-500" /> : <Moon className="h-5 w-5 text-slate-500" />}
+              <CardContent className="bg-[#ffffff] p-4 space-y-4">
+                {groupedShifts.map((shiftGroup) =>
+            <section key={shiftGroup.shift} className="space-y-4">
+                    <div className="bg-neutral-800 text-slate-50 px-4 py-3 rounded-lg flex items-center justify-between gap-3 border border-slate-200 from-slate-50 to-white shadow-sm">
+                      <div className="text-slate-50 text-xl font-bold tracking-tight flex items-center gap-2.5 sm:text-2xl">
+                        {shiftGroup.shift === 'Day Shift' ? <Sun className="text-amber-300 lucide lucide-sun h-5 w-5" /> : <Moon className="h-5 w-5 text-slate-500" />}
                         {shiftGroup.shift}
                       </div>
                       <Badge variant="secondary" className="text-xs font-medium text-slate-600">{shiftGroup.jobs.length} jobs</Badge>
                     </div>
                     <div className="space-y-4">
-                      {shiftGroup.jobs.length === 0 && (
-                        <p className="text-xs text-slate-400 px-1 py-1">No active jobs in this shift.</p>
-                      )}
+                      {shiftGroup.jobs.length === 0 &&
+                <p className="text-xs text-slate-400 px-1 py-1">No active jobs in this shift.</p>
+                }
                       {shiftGroup.jobs.map((job, jobIndex) => {
-                        const jobAccent = getJobAccentByShift(shiftGroup.shift, jobIndex);
+                  const jobAccent = getJobAccentByShift(shiftGroup.shift, jobIndex);
 
-                        return (
-                        <article key={job.groupKey} className="rounded-xl border border-slate-300 bg-slate-100/80 shadow-sm overflow-hidden">
+                  return (
+                    <article key={job.groupKey} className="rounded-xl border border-slate-300 bg-slate-100/80 shadow-sm overflow-hidden">
                           <div className="h-1.5" style={{ backgroundColor: jobAccent.accent }} />
                           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 border-b border-slate-300 bg-white/90 px-4 py-3.5">
                             <div className="space-y-1">
@@ -440,23 +440,23 @@ function LiveDispatchBoard({
                               <p className="text-xs font-medium" style={{ color: jobAccent.accent }}>Filled {job.assignedCount} of {job.requestedCount} requested slots</p>
                             </div>
                             <div className="flex items-center gap-1.5 self-start sm:self-auto">
-                              <Button variant="outline" size="sm" className="h-8 px-2.5 text-xs bg-white" disabled={requestUpdatingKey===`${job.groupKey}:down`} onClick={() => onAdjustRequestedCount(job, -1)}>- Slot</Button>
-                              <Button variant="outline" size="sm" className="h-8 px-2.5 text-xs bg-white" disabled={requestUpdatingKey===`${job.groupKey}:up`} onClick={() => onAdjustRequestedCount(job, 1)}>+ Slot</Button>
+                              <Button variant="outline" size="sm" className="h-8 px-2.5 text-xs bg-white" disabled={requestUpdatingKey === `${job.groupKey}:down`} onClick={() => onAdjustRequestedCount(job, -1)}>- Slot</Button>
+                              <Button variant="outline" size="sm" className="h-8 px-2.5 text-xs bg-white" disabled={requestUpdatingKey === `${job.groupKey}:up`} onClick={() => onAdjustRequestedCount(job, 1)}>+ Slot</Button>
                             </div>
                           </div>
                           <div className="space-y-2.5 p-3.5">
-                            {job.lines.map((line) => (
-                              <div key={line.lineKey} className={`rounded-lg border px-3.5 py-3 ${line.isPlaceholder ? 'border-dashed border-slate-300 bg-slate-50' : 'border-slate-200 bg-white shadow-[0_1px_0_rgba(15,23,42,0.04)]'}`} style={line.isPlaceholder ? undefined : { borderLeftWidth: '4px', borderLeftColor: jobAccent.accent, backgroundColor: jobAccent.rowTint }}>
-                                {line.isPlaceholder ? (
-                                  <div className="flex items-center justify-between gap-2">
+                            {job.lines.map((line) =>
+                        <div key={line.lineKey} className={`rounded-lg border px-3.5 py-3 ${line.isPlaceholder ? 'border-dashed border-slate-300 bg-slate-50' : 'border-slate-200 bg-white shadow-[0_1px_0_rgba(15,23,42,0.04)]'}`} style={line.isPlaceholder ? undefined : { borderLeftWidth: '4px', borderLeftColor: jobAccent.accent, backgroundColor: jobAccent.rowTint }}>
+                                {line.isPlaceholder ?
+                          <div className="flex items-center justify-between gap-2">
                                     <div>
                                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Requested Truck Slot</p>
                                       <p className="text-xs text-slate-400">Unfilled placeholder</p>
                                     </div>
                                     <Badge variant="outline" className="text-[10px] border-dashed border-slate-400 bg-white text-slate-600">Open Slot</Badge>
-                                  </div>
-                                ) : (
-                                  <div className="space-y-2">
+                                  </div> :
+
+                          <div className="space-y-2">
                                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                       <button type="button" className="text-left space-y-1" onClick={() => onOpenDispatch(line.dispatch)}>
                                         <p className="text-sm font-bold text-slate-900">Truck {line.truckNumber || 'Unassigned'} {line.driverName ? `• ${line.driverName}` : ''}</p>
@@ -472,32 +472,32 @@ function LiveDispatchBoard({
                                       </Select>
                                     </div>
                                     {statusUpdatingKey === line.statusKey && <p className="text-[10px] text-slate-400">Saving status...</p>}
-                                    {line.additionalAssignments.length > 0 && (
-                                      <div className="pl-2.5 border-l-2 border-indigo-200 space-y-1">
-                                        {line.additionalAssignments.map((assignment) => (
-                                          <p key={assignment.lineKey} className="text-xs text-indigo-700">
+                                    {line.additionalAssignments.length > 0 &&
+                            <div className="pl-2.5 border-l-2 border-indigo-200 space-y-1">
+                                        {line.additionalAssignments.map((assignment) =>
+                              <p key={assignment.lineKey} className="text-xs text-indigo-700">
                                             Additional assignment: Job #{assignment.jobNumber || 'No Job #'} • {assignment.startTime || 'TBD'}
                                           </p>
-                                        ))}
+                              )}
                                       </div>
-                                    )}
+                            }
                                   </div>
-                                )}
+                          }
                               </div>
-                            ))}
+                        )}
                           </div>
-                        </article>
-                      );
-                      })}
+                        </article>);
+
+                })}
                     </div>
                   </section>
-                ))}
+            )}
               </CardContent>
             </Card>
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 }
 
 export default function AdminDispatches() {
@@ -618,9 +618,9 @@ export default function AdminDispatches() {
 
       activeEditLockDispatchIdRef.current = null;
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['dispatches-admin'] }),
-        queryClient.invalidateQueries({ queryKey: ['portal-dispatches'] })
-      ]);
+      queryClient.invalidateQueries({ queryKey: ['dispatches-admin'] }),
+      queryClient.invalidateQueries({ queryKey: ['portal-dispatches'] })]
+      );
       return true;
     } catch {
       toast.error('Failed to release edit lock. Please retry or refresh.');
@@ -646,9 +646,9 @@ export default function AdminDispatches() {
         const byName = latest.edit_locked_by_name ? ` (${latest.edit_locked_by_name})` : '';
         toast.error(`This dispatch is currently being edited by another admin${byName}.`);
         await Promise.all([
-          queryClient.invalidateQueries({ queryKey: ['dispatches-admin'] }),
-          queryClient.invalidateQueries({ queryKey: ['portal-dispatches'] })
-        ]);
+        queryClient.invalidateQueries({ queryKey: ['dispatches-admin'] }),
+        queryClient.invalidateQueries({ queryKey: ['portal-dispatches'] })]
+        );
         return null;
       }
 
@@ -661,9 +661,9 @@ export default function AdminDispatches() {
 
       activeEditLockDispatchIdRef.current = dispatchId;
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['dispatches-admin'] }),
-        queryClient.invalidateQueries({ queryKey: ['portal-dispatches'] })
-      ]);
+      queryClient.invalidateQueries({ queryKey: ['dispatches-admin'] }),
+      queryClient.invalidateQueries({ queryKey: ['portal-dispatches'] })]
+      );
 
       return {
         ...latest,
@@ -701,29 +701,29 @@ export default function AdminDispatches() {
           if (shouldResetDriverReceiptConfirmation) {
             const activeDriverAssignmentsForReset = await base44.entities.DriverDispatchAssignment.filter({
               dispatch_id: savedDispatch.id,
-              active_flag: true,
+              active_flag: true
             }, '-assigned_datetime', 500);
 
-            await Promise.all((activeDriverAssignmentsForReset || [])
-              .filter((assignment) => assignment?.id)
-              .map((assignment) => base44.entities.DriverDispatchAssignment.update(assignment.id, {
-                receipt_confirmed_flag: false,
-                receipt_confirmed_at: null,
-                receipt_confirmed_by_driver_id: null,
-                receipt_confirmed_by_name: null,
-              })));
+            await Promise.all((activeDriverAssignmentsForReset || []).
+            filter((assignment) => assignment?.id).
+            map((assignment) => base44.entities.DriverDispatchAssignment.update(assignment.id, {
+              receipt_confirmed_flag: false,
+              receipt_confirmed_at: null,
+              receipt_confirmed_by_driver_id: null,
+              receipt_confirmed_by_name: null
+            })));
           }
 
           await reconcileOwnerNotificationsForDispatch(savedDispatch, accessCodes);
           const activeDriverAssignments = await base44.entities.DriverDispatchAssignment.filter({
             dispatch_id: savedDispatch.id,
-            active_flag: true,
+            active_flag: true
           }, '-assigned_datetime', 500);
 
           await notifyDriversForDispatchEdit({
             previousDispatch: editing,
             nextDispatch: savedDispatch,
-            driverAssignments: activeDriverAssignments,
+            driverAssignments: activeDriverAssignments
           });
 
           try {
@@ -881,9 +881,9 @@ export default function AdminDispatches() {
       setRequestUpdatingKey(`${job.groupKey}:${direction}`);
       const nextCount = Math.max(job.assignedCount, (job.requestedCount || 0) + delta);
       const existing = liveBoardRequests.find((entry) =>
-        entry.date === job.date &&
-        (entry.shift_time || 'Day Shift') === job.shift &&
-        String(entry.job_number || '') === String(job.jobNumber || '')
+      entry.date === job.date &&
+      (entry.shift_time || 'Day Shift') === job.shift &&
+      String(entry.job_number || '') === String(job.jobNumber || '')
       );
 
       if (existing) {
@@ -925,15 +925,15 @@ export default function AdminDispatches() {
       if (filters.dateTo && d.date > filters.dateTo) return false;
       if (filters.query.trim()) {
         const term = filters.query.trim().toLowerCase();
-        const assignmentTags = (Array.isArray(d.additional_assignments) ? d.additional_assignments : [])
-          .flatMap((a) => [a?.job_number, a?.reference_tag])
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-        const searchable = [d.client_name, d.job_number, d.reference_tag, assignmentTags]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
+        const assignmentTags = (Array.isArray(d.additional_assignments) ? d.additional_assignments : []).
+        flatMap((a) => [a?.job_number, a?.reference_tag]).
+        filter(Boolean).
+        join(' ').
+        toLowerCase();
+        const searchable = [d.client_name, d.job_number, d.reference_tag, assignmentTags].
+        filter(Boolean).
+        join(' ').
+        toLowerCase();
         if (!searchable.includes(term)) return false;
       }
       return true;
@@ -964,22 +964,22 @@ export default function AdminDispatches() {
 
   const liveBoardGroupedShifts = useMemo(() => {
     const search = boardSearch.trim().toLowerCase();
-    const byDispatchTruckDriver = driverAssignments
-      .filter((assignment) => assignment.active_flag !== false)
-      .reduce((acc, assignment) => {
-        const key = buildLiveLineKey(assignment.dispatch_id, assignment.truck_number);
-        acc[key] = assignment.driver_name || acc[key] || '';
-        return acc;
-      }, {});
+    const byDispatchTruckDriver = driverAssignments.
+    filter((assignment) => assignment.active_flag !== false).
+    reduce((acc, assignment) => {
+      const key = buildLiveLineKey(assignment.dispatch_id, assignment.truck_number);
+      acc[key] = assignment.driver_name || acc[key] || '';
+      return acc;
+    }, {});
 
-    const filteredDispatches = dispatches
-      .filter((dispatch) => !ACTIVE_LIVE_EXCLUDED_STATUSES.has(dispatch.status))
-      .filter((dispatch) => dispatch.date === liveBoardSelectedDateKey);
+    const filteredDispatches = dispatches.
+    filter((dispatch) => !ACTIVE_LIVE_EXCLUDED_STATUSES.has(dispatch.status)).
+    filter((dispatch) => dispatch.date === liveBoardSelectedDateKey);
 
     const shiftGroups = [
-      { shift: 'Day Shift', jobs: [] },
-      { shift: 'Night Shift', jobs: [] }
-    ];
+    { shift: 'Day Shift', jobs: [] },
+    { shift: 'Night Shift', jobs: [] }];
+
     const allJobMap = new Map();
 
     filteredDispatches.forEach((dispatch) => {
@@ -1033,9 +1033,9 @@ export default function AdminDispatches() {
 
     allJobMap.forEach((job) => {
       const requestEntry = liveBoardRequests.find((entry) =>
-        entry.date === job.date &&
-        (entry.shift_time || 'Day Shift') === job.shift &&
-        String(entry.job_number || '') === String(job.jobNumber || '')
+      entry.date === job.date &&
+      (entry.shift_time || 'Day Shift') === job.shift &&
+      String(entry.job_number || '') === String(job.jobNumber || '')
       );
 
       job.lines.sort((a, b) => (a.startTime || 'zz').localeCompare(b.startTime || 'zz'));
@@ -1066,7 +1066,7 @@ export default function AdminDispatches() {
       if (search) {
         const hasJobMatch = `${job.jobNumber} ${job.clientName}`.toLowerCase().includes(search);
         const hasLineMatch = job.lines.some((line) =>
-          line.isPlaceholder ? false : `${line.truckNumber || ''} ${line.driverName || ''}`.toLowerCase().includes(search)
+        line.isPlaceholder ? false : `${line.truckNumber || ''} ${line.driverName || ''}`.toLowerCase().includes(search)
         );
         if (!hasJobMatch && !hasLineMatch) return;
       }
@@ -1182,7 +1182,7 @@ export default function AdminDispatches() {
   };
 
   const liveBoardDispatchCount = useMemo(() => liveBoardGroupedShifts.reduce((sum, shiftGroup) =>
-    sum + shiftGroup.jobs.reduce((jobSum, job) => jobSum + job.assignedCount, 0),
+  sum + shiftGroup.jobs.reduce((jobSum, job) => jobSum + job.assignedCount, 0),
   0), [liveBoardGroupedShifts]);
 
   const dispatchCountLabel = tab === 'live-board' ? `${liveBoardDispatchCount} active truck lines` : `${currentList.length} dispatches`;
@@ -1294,8 +1294,8 @@ export default function AdminDispatches() {
         onChangeLiveStatus={(line, value) => updateLiveStatusMutation.mutate({ dispatch: line.dispatch, truckNumber: line.truckNumber, liveStatus: value })}
         onAdjustRequestedCount={(job, delta) => adjustLiveRequestMutation.mutate({ job, delta })}
         statusUpdatingKey={statusUpdatingKey}
-        requestUpdatingKey={requestUpdatingKey}
-      /> :
+        requestUpdatingKey={requestUpdatingKey} /> :
+
       currentList.length === 0 ?
       <div className="text-center py-16 text-slate-500 text-sm">No dispatches found</div> :
 
@@ -1338,9 +1338,9 @@ export default function AdminDispatches() {
                         {firstLineTimeText ? ` • ${firstLineTimeText}` : ''}
                       </span>
                     </div>
-                    {d.status === 'Scheduled' && (
+                    {d.status === 'Scheduled' &&
                       <p className="text-xs text-blue-600 italic mt-0.5">{scheduledStatusMessage}</p>
-                    )}
+                      }
                     <div className="flex items-center gap-3 text-sm text-slate-700 flex-wrap">
                       {d.client_name && <span className="font-medium">{d.client_name}</span>}
                     </div>
@@ -1349,9 +1349,9 @@ export default function AdminDispatches() {
                         <span className="flex items-center gap-1"><FileText className="h-3 w-3" />#{d.job_number}</span>
                         }
                     </div>
-                    {d.reference_tag && (
+                    {d.reference_tag &&
                       <p className="text-xs text-slate-400 mt-0.5">Reference Tag: {d.reference_tag}</p>
-                    )}
+                      }
                     <div className="mt-2">
                       <div className="text-slate-400 text-xs mb-1">{companyMap[d.company_id] || '—'}</div>
                       <div className="flex items-center gap-1 flex-wrap">
@@ -1364,11 +1364,11 @@ export default function AdminDispatches() {
                   </div>
                   <div className="hidden sm:flex flex-col items-end justify-between gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                     {d.edit_locked && d.edit_locked_by_session_id && d.edit_locked_by_session_id !== session?.id &&
-                    <div className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+                      <div className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
                         <Lock className="h-3 w-3" />
                         <span>{d.edit_locked_by_name ? `Locked by ${d.edit_locked_by_name}` : 'Editing in progress'}</span>
                       </div>
-                    }
+                      }
                     <div className="flex gap-1">
                     <Button variant="ghost" size="icon" onClick={() => openDrawer(d)} className="h-8 w-8" title="Preview">
                       <Eye className="h-3.5 w-3.5" />
@@ -1377,10 +1377,10 @@ export default function AdminDispatches() {
                       <Copy className="h-3.5 w-3.5" />
                     </Button>
                     <Button
-                        variant="ghost" size="icon"
-                        onClick={() => archiveMutation.mutate({ dispatch: d, archive: !d.archived_flag })}
-                        className="h-8 w-8 text-slate-500 hover:text-amber-600"
-                        title={d.archived_flag ? 'Unarchive' : 'Archive'}>
+                          variant="ghost" size="icon"
+                          onClick={() => archiveMutation.mutate({ dispatch: d, archive: !d.archived_flag })}
+                          className="h-8 w-8 text-slate-500 hover:text-amber-600"
+                          title={d.archived_flag ? 'Unarchive' : 'Archive'}>
 
                       {d.archived_flag ? <ArchiveX className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}
                     </Button>
@@ -1393,35 +1393,35 @@ export default function AdminDispatches() {
                     </div>
 
                     <div className="text-right max-w-[210px]">
-                      {latestActivity?.message ? (
+                      {latestActivity?.message ?
                         <>
                           <p className="text-[10px] text-slate-500 leading-tight line-clamp-1">{latestActivity.message}</p>
                           {latestActivityTimestamp && <p className="text-[10px] text-slate-400">{latestActivityTimestamp}</p>}
-                        </>
-                      ) : (
+                        </> :
+
                         <p className="text-[10px] text-slate-400 italic">No activity yet.</p>
-                      )}
+                        }
                     </div>
                   </div>
                 </div>
 
                 <div className="sm:hidden mt-3 pt-3 border-t border-slate-200/80" onClick={(e) => e.stopPropagation()}>
                   {d.edit_locked && d.edit_locked_by_session_id && d.edit_locked_by_session_id !== session?.id &&
-                  <div className="mb-2 inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+                    <div className="mb-2 inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
                       <Lock className="h-3 w-3" />
                       <span>{d.edit_locked_by_name ? `Locked by ${d.edit_locked_by_name}` : 'Editing in progress'}</span>
                     </div>
-                  }
+                    }
 
                   <div className="mb-2">
-                    {latestActivity?.message ? (
+                    {latestActivity?.message ?
                       <>
                         <p className="text-[10px] text-slate-500 leading-tight">{latestActivity.message}</p>
                         {latestActivityTimestamp && <p className="text-[10px] text-slate-400">{latestActivityTimestamp}</p>}
-                      </>
-                    ) : (
+                      </> :
+
                       <p className="text-[10px] text-slate-400 italic">No activity yet.</p>
-                    )}
+                      }
                   </div>
 
                   <div className="flex items-center justify-between gap-1">
@@ -1432,10 +1432,10 @@ export default function AdminDispatches() {
                       <Copy className="h-3.5 w-3.5" />
                     </Button>
                     <Button
-                      variant="ghost" size="icon"
-                      onClick={() => archiveMutation.mutate({ dispatch: d, archive: !d.archived_flag })}
-                      className="h-9 w-9 text-slate-500 hover:text-amber-600"
-                      title={d.archived_flag ? 'Unarchive' : 'Archive'}>
+                        variant="ghost" size="icon"
+                        onClick={() => archiveMutation.mutate({ dispatch: d, archive: !d.archived_flag })}
+                        className="h-9 w-9 text-slate-500 hover:text-amber-600"
+                        title={d.archived_flag ? 'Unarchive' : 'Archive'}>
                       {d.archived_flag ? <ArchiveX className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}
                     </Button>
                     <Button variant="ghost" size="icon" onClick={() => openEdit(d)} className="h-9 w-9">
