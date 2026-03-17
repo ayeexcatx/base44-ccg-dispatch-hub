@@ -113,7 +113,7 @@ function ScoringDetailDialog({ company, score, eventForm, setEventForm, onCreate
 
       <Card>
         <CardContent className="p-4 space-y-2">
-          <details open>
+          <details>
             <summary className="cursor-pointer font-semibold text-slate-800">How this scoring works</summary>
             <div className="mt-3 text-sm text-slate-600 space-y-1">
               <p>Reliability Score combines confirmation speed, missed confirmations, completion rate, truck utilization, breakdowns, manual late events, cancellations, and scheduled confirmation performance.</p>
@@ -138,6 +138,7 @@ function ScoringDetailDialog({ company, score, eventForm, setEventForm, onCreate
                 <p className="font-semibold text-slate-800">Truck {truck.truckNumber}</p>
                 <p className="text-slate-600">Dispatches: {truck.dispatchCount} • Breakdowns: {truck.breakdowns} • Late events: {truck.lateIssues}</p>
                 <p className="text-slate-600">Completion rate: {Math.round(truck.completionRate)}%</p>
+                <p className="text-slate-700 font-semibold">Truck Score: {Math.round(truck.truckScore)} / 100</p>
               </div>
             ))}
           </CardContent>
@@ -146,12 +147,12 @@ function ScoringDetailDialog({ company, score, eventForm, setEventForm, onCreate
         <Card>
           <CardContent className="p-4 space-y-2">
             <p className="text-sm font-semibold text-slate-800">Driver Performance</p>
-            <p className="text-xs text-slate-500">Confirmation rate is currently based on confirmations tied to assigned dispatches, not explicit per-driver confirmations.</p>
             {score.driverSummaries.length === 0 ? <p className="text-sm text-slate-500">No driver data available.</p> : score.driverSummaries.map((driver) => (
               <div key={driver.driverId} className="rounded-lg border border-slate-200 p-3 text-sm">
                 <p className="font-semibold text-slate-800">{driver.driverName}</p>
                 <p className="text-slate-600">Dispatches: {driver.dispatchCount} • Confirmation rate: {Math.round(driver.confirmationRate)}%</p>
                 <p className="text-slate-600">Logged performance events: {driver.eventCount}</p>
+                <p className="text-slate-700 font-semibold">Driver Score: {Math.round(driver.driverScore)} / 100</p>
               </div>
             ))}
           </CardContent>
@@ -315,6 +316,8 @@ export default function AdminCompanies() {
   }, [dispatches, selectedCompany, eventForm.event_date]);
   const selectedCompanyDrivers = useMemo(() => drivers.filter((driver) => driver.company_id === selectedCompany?.id), [drivers, selectedCompany]);
 
+  const sortedCompanies = useMemo(() => companies.slice().sort((a, b) => (a.name || "").localeCompare(b.name || "", undefined, { sensitivity: "base" })), [companies]);
+
   const openNew = () => {
     setEditing(null);
     setForm({ name: '', address: '', contact_methods: [{ type: 'Office', value: '' }], trucks: [], status: 'active' });
@@ -429,7 +432,7 @@ export default function AdminCompanies() {
             </Select>
           </div>
           <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {companies.map((company) => {
+            {sortedCompanies.map((company) => {
               const score = scoreByCompany.get(company.id);
               if (!score) return null;
               const trend = getTrendStyling(score.trend);

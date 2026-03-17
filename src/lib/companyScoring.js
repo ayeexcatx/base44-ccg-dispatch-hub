@@ -24,10 +24,10 @@ export const SCORING_WEIGHTS = {
 };
 
 export const SCORING_PERIODS = {
-  last30: { key: 'last30', label: 'Last 30 Days', shortLabel: '30-Day', getRange: (now) => ({ start: subDays(startOfDay(now), 30), end: startOfDay(now) }) },
-  last90: { key: 'last90', label: 'Last 90 Days', shortLabel: '90-Day', getRange: (now) => ({ start: subDays(startOfDay(now), 90), end: startOfDay(now) }) },
-  ytd: { key: 'ytd', label: 'Year to Date', shortLabel: 'YTD', getRange: (now) => ({ start: startOfYear(startOfDay(now)), end: startOfDay(now) }) },
-  last12m: { key: 'last12m', label: 'Last 12 Months', shortLabel: '12-Month', getRange: (now) => ({ start: subMonths(startOfDay(now), 12), end: startOfDay(now) }) },
+  last30: { key: 'last30', label: 'Last 30 Days', shortLabel: '30-Day', getRange: (now) => ({ start: subDays(startOfDay(now), 30), end: now }) },
+  last90: { key: 'last90', label: 'Last 90 Days', shortLabel: '90-Day', getRange: (now) => ({ start: subDays(startOfDay(now), 90), end: now }) },
+  ytd: { key: 'ytd', label: 'Year to Date', shortLabel: 'YTD', getRange: (now) => ({ start: startOfYear(startOfDay(now)), end: now }) },
+  last12m: { key: 'last12m', label: 'Last 12 Months', shortLabel: '12-Month', getRange: (now) => ({ start: subMonths(startOfDay(now), 12), end: now }) },
 };
 
 const EVENT_IMPACT = {
@@ -48,6 +48,7 @@ const EVENT_IMPACT = {
 
 const NON_COMPLETION_EVENT_TYPES = new Set(['Company Cancellation', 'Last-Minute Cancellation', 'No Show']);
 const CANCELLATION_EVENT_TYPES = new Set(['Company Cancellation', 'Last-Minute Cancellation']);
+const DRIVER_NEGATIVE_EVENT_TYPES = new Set(['Driver Issue', 'Customer Complaint', 'Late Arrival', 'No Show']);
 
 const clamp = (value, min = 0, max = 100) => Math.max(min, Math.min(max, value));
 
@@ -76,18 +77,10 @@ const inRange = (date, start, end) => date && date >= start && date < end;
 const isTrueBreakdownIncident = (incident) => {
   const type = String(incident?.incident_type || '').trim().toLowerCase();
   if (!type) return false;
-  if (type.includes('non-mechanical') || type.includes('damage/non-mechanical')) return false;
+  if (type.includes('delay') || type.includes('accident')) return false;
+  if (type.includes('non-mechanical') || type.includes('damage')) return false;
 
-  const allowed = [
-    'mechanical breakdown',
-    'mechanical failure',
-    'engine failure',
-    'truck breakdown',
-    'breakdown',
-    'mechanical issue',
-  ];
-
-  return allowed.some((keyword) => type === keyword || type.startsWith(`${keyword} `) || type.includes(` ${keyword}`));
+  return type.includes('mechanical') || type.includes('breakdown');
 };
 
 export const getTrendLabel = (currentScore, previousScore) => {
@@ -274,26 +267,42 @@ export const calculateCompanyScore = ({
   const truckSummaries = trucks.map((truckNumber) => {
     const truckDispatches = relevantDispatches.filter((dispatch) => (dispatch.trucks_assigned || []).includes(truckNumber));
     const truckDispatchIds = new Set(truckDispatches.map((dispatch) => dispatch.id));
+    const truckBreakdownIncidents = scopedIncidents.filter((incident) => (
+      isTrueBreakdownIncident(incident)
+      && (incident.truck_number === truckNumber || truckDispatchIds.has(incident.dispatch_id))
+    )).length;
+    const truckIssueEvents = scopedEvents.filter((event) => event.event_type === 'Truck Issue' && (event.truck_number === truckNumber || truckDispatchIds.has(event.dispatch_id))).length;
+    const truckExceptionalEvents = scopedEvents.filter((event) => event.event_type === 'Exceptional Performance' && (event.truck_number === truckNumber || truckDispatchIds.has(event.dispatch_id))).length;
+    const truckScore = clamp(100 - (truckBreakdownIncidents * 8) - (truckIssueEvents * 5) + (truckExceptionalEvents * 2));
+
     return {
       truckNumber,
       dispatchCount: truckDispatches.length,
-      breakdowns: scopedIncidents.filter((incident) => truckDispatchIds.has(incident.dispatch_id) && isTrueBreakdownIncident(incident)).length,
+      breakdowns: truckBreakdownIncidents + truckIssueEvents,
       lateIssues: scopedEvents.filter((event) => truckDispatchIds.has(event.dispatch_id) && event.event_type === 'Late Arrival').length,
       completionRate: toPercent(Math.max(0, truckDispatches.length - scopedEvents.filter((event) => truckDispatchIds.has(event.dispatch_id) && (NON_COMPLETION_EVENT_TYPES.has(event.event_type) || event.impacts_completion_rate)).length), truckDispatches.length || 1),
+      truckScore,
     };
   });
 
   const driverSummaries = companyDrivers.map((driver) => {
-    const assignmentDispatchIds = new Set(companyAssignments.filter((assignment) => assignment.driver_id === driver.id).map((assignment) => assignment.dispatch_id));
+    const relevantDriverAssignments = companyAssignments.filter((assignment) => assignment.driver_id === driver.id && inRange(parseDate(assignment.assigned_datetime || assignment.created_date), rangeStart, rangeEnd));
+    const assignmentDispatchIds = new Set(relevantDriverAssignments.map((assignment) => assignment.dispatch_id));
     const assignedDispatches = relevantDispatches.filter((dispatch) => assignmentDispatchIds.has(dispatch.id));
-    const assignedConfirmations = scopedConfirmations.filter((confirmation) => assignmentDispatchIds.has(confirmation.dispatch_id));
+    const driverConfirmedDispatches = new Set(relevantDriverAssignments
+      .filter((assignment) => assignment.receipt_confirmed_at)
+      .map((assignment) => assignment.dispatch_id));
+    const negativeEventCount = scopedEvents.filter((event) => event.driver_id === driver.id && DRIVER_NEGATIVE_EVENT_TYPES.has(event.event_type)).length;
+    const positiveEventCount = scopedEvents.filter((event) => event.driver_id === driver.id && event.event_type === 'Exceptional Performance').length;
+    const driverScore = clamp(100 - (negativeEventCount * 6) + (positiveEventCount * 2));
 
     return {
       driverId: driver.id,
       driverName: driver.driver_name || 'Unknown Driver',
       dispatchCount: assignedDispatches.length,
-      confirmationRate: toPercent(assignedConfirmations.length, assignedDispatches.length || 1),
+      confirmationRate: toPercent(driverConfirmedDispatches.size, assignedDispatches.length || 1),
       eventCount: scopedEvents.filter((event) => event.driver_id === driver.id).length,
+      driverScore,
     };
   });
 
