@@ -63,6 +63,7 @@ import Incidents from './pages/Incidents';
 import Notifications from './pages/Notifications';
 import Portal from './pages/Portal';
 import Drivers from './pages/Drivers';
+import Profile from './pages/Profile';
 import __Layout from './Layout.jsx';
 
 
@@ -82,6 +83,7 @@ export const PAGES = {
     "Incidents": Incidents,
     "Notifications": Notifications,
     "Portal": Portal,
+    "Profile": Profile,
 }
 
 export const pagesConfig = {

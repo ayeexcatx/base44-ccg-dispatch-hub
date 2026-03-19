@@ -53,6 +53,79 @@
       ],
       "default": "active",
       "description": "Company status"
+    },
+    "sms_contact_method_index": {
+      "type": "number",
+      "description": "Zero-based contact_methods index used as the SMS target for company owner notifications"
+    },
+    "pending_profile_change": {
+      "type": "object",
+      "description": "Pending company profile edit request submitted by a company owner for admin review",
+      "properties": {
+        "requested_name": {
+          "type": "string"
+        },
+        "requested_address": {
+          "type": "string"
+        },
+        "requested_contact_methods": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "requested_contact_info": {
+          "type": "string"
+        },
+        "current_name": {
+          "type": "string"
+        },
+        "current_address": {
+          "type": "string"
+        },
+        "current_contact_methods": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "current_contact_info": {
+          "type": "string"
+        },
+        "requested_by_access_code_id": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "Pending",
+            "Approved",
+            "Rejected"
+          ]
+        },
+        "requested_at": {
+          "type": "string"
+        },
+        "reviewed_at": {
+          "type": "string"
+        }
+      }
     }
   },
   "required": [

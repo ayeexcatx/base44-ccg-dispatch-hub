@@ -50,6 +50,16 @@
     "notes": {
       "type": "string",
       "description": "Optional notes about the driver"
+    },
+    "owner_sms_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the company owner has enabled SMS notifications for this driver"
+    },
+    "driver_sms_opt_in": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the driver personally opted in to SMS notifications from their Profile page"
     }
   },
   "required": [

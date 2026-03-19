@@ -11,30 +11,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import DeleteConfirmationDialog from '@/components/admin/DeleteConfirmationDialog';
 import { Key, Plus, Pencil, Trash2, Truck, Building2, Shield, Copy, UserRound } from 'lucide-react';
+import { getCompanyOwnerSmsState, getDriverSmsState, normalizeSmsPhone as normalizePhoneShared, formatPhoneNumber as formatPhoneShared } from '@/lib/sms';
 import { toast } from 'sonner';
 
 function formatPhoneNumber(value) {
-  const rawDigits = String(value || '').replace(/\D/g, '');
-  const digits = rawDigits.length === 11 && rawDigits.startsWith('1')
-    ? rawDigits.slice(1)
-    : rawDigits.slice(0, 10);
-  if (!digits) return '';
-  if (digits.length < 4) return `(${digits}`;
-  if (digits.length < 7) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  return formatPhoneShared(value);
 }
 
 function normalizeSmsPhone(value) {
-  const rawDigits = String(value || '').replace(/\D/g, '');
-  const tenDigitNumber = rawDigits.length === 11 && rawDigits.startsWith('1')
-    ? rawDigits.slice(1)
-    : rawDigits;
-
-  if (tenDigitNumber.length !== 10) {
-    return String(value || '').trim();
-  }
-
-  return `+1${tenDigitNumber}`;
+  return normalizePhoneShared(value);
 }
 
 function generateCode(len = 8) {
@@ -226,16 +211,18 @@ export default function AdminAccessCodes() {
 
     if (form.code_type === 'Driver') {
       if (!form.company_id || !form.driver_id) return;
+      const driver = drivers.find((d) => d.id === form.driver_id);
+      const driverSmsState = getDriverSmsState(driver);
       saveMutation.mutate({
         code: form.code,
-        label: form.label || drivers.find((d) => d.id === form.driver_id)?.driver_name || '',
+        label: form.label || driver?.driver_name || '',
         active_flag: form.active_flag,
         code_type: 'Driver',
         company_id: form.company_id,
         driver_id: form.driver_id,
         allowed_trucks: [],
-        sms_enabled: form.sms_enabled,
-        sms_phone: smsPhone,
+        sms_enabled: driverSmsState.effective,
+        sms_phone: driverSmsState.normalizedPhone || '',
         available_views: [],
         linked_company_ids: [],
       });
@@ -257,6 +244,19 @@ export default function AdminAccessCodes() {
         sms_phone: smsPhone,
         available_views: normalizedViews,
         linked_company_ids: linkedCompanyIds,
+      });
+      return;
+    }
+
+    if (form.code_type === 'CompanyOwner') {
+      const company = companies.find((companyRecord) => companyRecord.id === form.company_id);
+      const ownerSmsState = getCompanyOwnerSmsState({ accessCode: editing || form, company });
+      saveMutation.mutate({
+        ...form,
+        sms_enabled: ownerSmsState.effective,
+        sms_phone: ownerSmsState.normalizedPhone || '',
+        available_views: [],
+        linked_company_ids: [],
       });
       return;
     }
@@ -364,6 +364,8 @@ export default function AdminAccessCodes() {
             const Icon = codeTypeIcons[c.code_type] || Key;
             const comp = companies.find((co) => co.id === c.company_id);
             const driver = drivers.find((d) => d.id === c.driver_id);
+            const driverSmsState = c.code_type === 'Driver' ? getDriverSmsState(driver) : null;
+            const ownerSmsState = c.code_type === 'CompanyOwner' ? getCompanyOwnerSmsState({ accessCode: c, company: comp }) : null;
             return (
               <Card key={c.id} className={`transition-shadow hover:shadow-sm ${c.active_flag === false ? 'opacity-50' : ''}`}>
                 <CardContent className="p-4 sm:p-5">
@@ -387,7 +389,11 @@ export default function AdminAccessCodes() {
                         <div className="flex items-center gap-2 mt-1 text-xs text-slate-500 flex-wrap">
                           {comp && <span>Company: {comp.name}</span>}
                           {driver && <span>Driver: {driver.driver_name || driver.id}</span>}
-                          {c.sms_enabled === true && c.sms_phone && <span>SMS: {formatPhoneNumber(c.sms_phone)}</span>}
+                          {c.code_type === 'Driver' && driverSmsState && <span>SMS enabled: {driverSmsState.effective ? 'Yes' : 'No'}</span>}
+                          {c.code_type === 'Driver' && driverSmsState?.normalizedPhone && <span>SMS phone: {formatPhoneNumber(driverSmsState.normalizedPhone)}</span>}
+                          {c.code_type === 'CompanyOwner' && ownerSmsState && <span>SMS enabled: {ownerSmsState.effective ? 'Yes' : 'No'}</span>}
+                          {c.code_type === 'CompanyOwner' && ownerSmsState?.normalizedPhone && <span>SMS phone: {formatPhoneNumber(ownerSmsState.normalizedPhone)}</span>}
+                          {(c.code_type === 'Truck' || c.code_type === 'Admin') && c.sms_enabled === true && c.sms_phone && <span>SMS: {formatPhoneNumber(c.sms_phone)}</span>}
                           {c.code_type !== 'Driver' && (c.allowed_trucks || []).length > 0 && (
                             <span>Trucks: {c.allowed_trucks.join(', ')}</span>
                           )}
@@ -567,6 +573,7 @@ export default function AdminAccessCodes() {
               </>
             )}
 
+            {(form.code_type === 'Truck' || form.code_type === 'Admin') ? (<>
             <div className="flex items-center justify-between">
               <Label>SMS Enabled</Label>
               <Switch checked={form.sms_enabled} onCheckedChange={(v) => setForm({ ...form, sms_enabled: v })} />
@@ -580,6 +587,11 @@ export default function AdminAccessCodes() {
                 placeholder="(555) 123-4567"
               />
             </div>
+            </>) : (
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+                SMS fields for company owner and driver access codes are informational here. Manage consent from Profile and company/driver records.
+              </div>
+            )}
 
             <div className="flex items-center justify-between">
               <Label>Active</Label>

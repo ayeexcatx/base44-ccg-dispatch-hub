@@ -14,6 +14,7 @@ import DeleteConfirmationDialog from '@/components/admin/DeleteConfirmationDialo
 import { Building2, Plus, Pencil, Trash2, X, Truck, TrendingUp, TrendingDown, Minus, UserRound, Check } from 'lucide-react';
 import { format } from 'date-fns';
 import { calculateCompanyScore, SCORING_EVENT_TYPES, SCORING_PERIODS } from '@/lib/companyScoring';
+import { getCompanySmsContact, getDriverSmsState } from '@/lib/sms';
 
 const CONTACT_TYPE_OPTIONS = ['Office', 'Cell', 'Email', 'Fax', 'Other'];
 const PHONE_CONTACT_TYPES = ['Office', 'Cell', 'Fax'];
@@ -70,6 +71,23 @@ const getTrendStyling = (trend) => {
   if (trend === 'Trending Up') return { icon: TrendingUp, color: 'text-emerald-600' };
   if (trend === 'Trending Down') return { icon: TrendingDown, color: 'text-red-600' };
   return { icon: Minus, color: 'text-slate-500' };
+};
+
+
+const hasOwn = (obj, key) => Object.prototype.hasOwnProperty.call(obj || {}, key);
+
+const renderContactMethodsList = (contactMethods = [], fallbackText = '') => {
+  if (Array.isArray(contactMethods) && contactMethods.some((method) => method?.value)) {
+    return (
+      <div className="space-y-1">
+        {contactMethods.filter((method) => method?.value).map((method, index) => (
+          <p key={`contact-method-${index}`}><span className="font-medium text-slate-700">{method.type || 'Other'}:</span> {method.value}</p>
+        ))}
+      </div>
+    );
+  }
+
+  return <p>{fallbackText || '—'}</p>;
 };
 
 const MetricCard = ({ metric }) => (
@@ -298,6 +316,35 @@ export default function AdminCompanies() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['companies'] }),
   });
 
+  const reviewProfileChangeMutation = useMutation({
+    mutationFn: async ({ company, action }) => {
+      const pending = company?.pending_profile_change;
+      if (!pending) return company;
+      if (action === 'approve') {
+        const reviewTimestamp = new Date().toISOString();
+        const approvedPayload = {
+          pending_profile_change: { ...pending, status: 'Approved', reviewed_at: reviewTimestamp },
+        };
+
+        if (hasOwn(pending, 'requested_name')) approvedPayload.name = pending.requested_name;
+        if (hasOwn(pending, 'requested_address')) approvedPayload.address = pending.requested_address;
+        if (hasOwn(pending, 'requested_contact_methods')) approvedPayload.contact_methods = pending.requested_contact_methods;
+        if (hasOwn(pending, 'requested_contact_info')) approvedPayload.contact_info = pending.requested_contact_info;
+
+        const approvedCompany = await base44.entities.Company.update(company.id, approvedPayload);
+        await base44.entities.Company.update(company.id, { pending_profile_change: null });
+        return approvedCompany;
+      }
+      return base44.entities.Company.update(company.id, {
+        pending_profile_change: { ...pending, status: 'Rejected', reviewed_at: new Date().toISOString() },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      queryClient.invalidateQueries({ queryKey: ['access-codes'] });
+    },
+  });
+
   const saveEventMutation = useMutation({
     mutationFn: (payload) => base44.entities.CompanyScoringEvent.create(payload),
     onSuccess: () => {
@@ -443,6 +490,8 @@ export default function AdminCompanies() {
                             <div className="mt-1.5 space-y-0.5">{c.contact_methods.filter((method) => method?.value).map((method, index) => <p key={`${c.id}-contact-${index}`} className="text-sm text-slate-500"><span className="font-medium text-slate-600">{method.type}:</span> {method.value}</p>)}</div>
                           ) : c.contact_info && <p className="text-sm text-slate-500 mt-0.5">{c.contact_info}</p>}
                           <div className="flex items-center gap-1.5 mt-2 flex-wrap"><Truck className="h-3.5 w-3.5 text-slate-400" />{(c.trucks || []).length === 0 ? <span className="text-xs text-slate-400">No trucks</span> : (c.trucks || []).map((t) => <Badge key={t} variant="outline" className="text-xs font-mono">{t}</Badge>)}</div>
+                          {c.pending_profile_change?.status === 'Pending' && <div className="mt-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">Company owner requested a profile update and it is pending admin approval.</div>}
+                          {(() => { const smsContact = getCompanySmsContact(c); return smsContact.method ? <p className="text-xs text-slate-500 mt-2">SMS target: <span className="font-medium text-slate-700">{smsContact.method.type}: {smsContact.method.value}</span></p> : null; })()}
                           {(() => {
                             const companyDrivers = (driversByCompany.get(c.id) || []).slice().sort((a, b) => (a.driver_name || '').localeCompare(b.driver_name || ''));
                             if (companyDrivers.length === 0) return null;
@@ -456,7 +505,7 @@ export default function AdminCompanies() {
                                         <p className="font-medium text-slate-700 flex items-center gap-1.5"><UserRound className="h-3.5 w-3.5 text-slate-400" />{driver.driver_name || 'Unnamed driver'}</p>
                                         <p className="text-slate-500 mt-0.5">{driver.phone || 'No phone number'}</p>
                                       </div>
-                                      <Badge variant={driver.sms_enabled ? 'default' : 'secondary'} className="shrink-0 text-[11px]">{driver.sms_enabled ? <><Check className="h-3 w-3 mr-1" />SMS</> : 'No SMS'}</Badge>
+                                      {(() => { const smsState = getDriverSmsState(driver); return <Badge variant={smsState.effective ? 'default' : 'secondary'} className="shrink-0 text-[11px]">{smsState.effective ? <><Check className="h-3 w-3 mr-1" />SMS Active</> : 'SMS Off'}</Badge>; })()}
                                     </div>
                                   ))}
                                 </div>
@@ -465,6 +514,32 @@ export default function AdminCompanies() {
                           })()}
                         </div>
                       </div>
+                      {c.pending_profile_change?.status === 'Pending' && (
+                        <div className="mt-3 w-full rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm space-y-2">
+                          <p className="font-medium text-slate-900">Pending company profile change request</p>
+                          <div className="grid sm:grid-cols-2 gap-2 text-xs text-slate-600">
+                            <div><p className="font-semibold text-slate-700">Company name</p><p>Current: {c.pending_profile_change.current_name || c.name || '—'}</p><p>Requested: {c.pending_profile_change.requested_name || '—'}</p></div>
+                            <div><p className="font-semibold text-slate-700">Address</p><p className="whitespace-pre-line">Current: {c.pending_profile_change.current_address || c.address || '—'}</p><p className="whitespace-pre-line">Requested: {c.pending_profile_change.requested_address || '—'}</p></div>
+                            <div className="sm:col-span-2">
+                              <p className="font-semibold text-slate-700">Contact methods</p>
+                              <div className="grid sm:grid-cols-2 gap-3">
+                                <div>
+                                  <p className="font-medium text-slate-700 mb-1">Current</p>
+                                  {renderContactMethodsList(c.pending_profile_change.current_contact_methods, c.pending_profile_change.current_contact_info || c.contact_info || '—')}
+                                </div>
+                                <div>
+                                  <p className="font-medium text-slate-700 mb-1">Requested</p>
+                                  {renderContactMethodsList(c.pending_profile_change.requested_contact_methods, c.pending_profile_change.requested_contact_info || '—')}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="sm" className="bg-slate-900 hover:bg-slate-800" onClick={() => reviewProfileChangeMutation.mutate({ company: c, action: 'approve' })} disabled={reviewProfileChangeMutation.isPending}>Approve</Button>
+                            <Button size="sm" variant="outline" onClick={() => reviewProfileChangeMutation.mutate({ company: c, action: 'reject' })} disabled={reviewProfileChangeMutation.isPending}>Reject</Button>
+                          </div>
+                        </div>
+                      )}
                       <div className="flex gap-1">
                         <Button variant="ghost" size="icon" onClick={() => openEdit(c)} className="h-8 w-8"><Pencil className="h-3.5 w-3.5" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => setCompanyPendingDelete(c)} className="h-8 w-8 text-red-500 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></Button>

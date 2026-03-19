@@ -2,8 +2,9 @@ import React, { useEffect, useMemo } from 'react';
 import { SessionProvider, useSession } from './components/session/SessionContext';
 import { createPageUrl } from './utils';
 import { Link, useLocation } from 'react-router-dom';
-import { LogOut, Truck, Shield, Building2, Megaphone, TriangleAlert, CalendarDays, Home, CheckCircle2, FileText, UserRound, Bell } from 'lucide-react';
+import { LogOut, Truck, Shield, Building2, Megaphone, TriangleAlert, CalendarDays, Home, CheckCircle2, FileText, UserRound, Bell, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import { useQuery } from '@tanstack/react-query';
@@ -73,6 +74,11 @@ function LayoutInner({ children, currentPageName }) {
     }
 
     if (ownerPages.includes(currentPageName) && !isOwner) {
+      window.location.href = isAdmin ? createPageUrl('AdminDashboard') : createPageUrl('Home');
+      return;
+    }
+
+    if (currentPageName === 'Profile' && !(isAdmin || isOwner || isDriver)) {
       window.location.href = isAdmin ? createPageUrl('AdminDashboard') : createPageUrl('Home');
       return;
     }
@@ -168,6 +174,24 @@ function LayoutInner({ children, currentPageName }) {
                 )}
 
                 {(isAdmin || isOwner || isDriver) && <NotificationBell session={session} />}
+
+                {(isAdmin || isOwner || isDriver) && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-500 hover:text-slate-700" aria-label="Open menu">
+                        <Menu className="h-5 w-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <Link to={createPageUrl('Profile')} className="cursor-pointer">
+                          <UserRound className="h-4 w-4" />
+                          Profile
+                        </Link>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
 
                 <Button
                   variant="ghost"

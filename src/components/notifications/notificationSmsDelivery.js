@@ -1,5 +1,6 @@
 import { base44 } from '@/api/base44Client';
 import { formatDispatchDateTimeLine } from '@/components/notifications/dispatchDateTimeFormat';
+import { getCompanyOwnerSmsState, getDriverSmsState } from '@/lib/sms';
 
 const SMS_PROVIDER = 'signalwire';
 
@@ -96,6 +97,41 @@ async function createSmsLog({
   }
 }
 
+
+async function resolveSmsEligibility(recipient) {
+  if (!recipient) {
+    return { smsEnabled: false, smsPhone: '', skipReason: 'recipient_access_code_not_found' };
+  }
+
+  if (recipient.code_type === 'Driver') {
+    const driverRecords = await base44.entities.Driver.filter({ id: recipient.driver_id }, '-created_date', 1);
+    const driver = driverRecords?.[0] || null;
+    const state = getDriverSmsState(driver);
+    return {
+      smsEnabled: state.effective,
+      smsPhone: state.normalizedPhone || '',
+      skipReason: !state.ownerEnabled ? 'owner_sms_disabled' : !state.driverOptedIn ? 'driver_not_opted_in' : !state.hasValidPhone ? 'missing_sms_phone' : null,
+    };
+  }
+
+  if (recipient.code_type === 'CompanyOwner') {
+    const companyRecords = await base44.entities.Company.filter({ id: recipient.company_id }, '-created_date', 1);
+    const company = companyRecords?.[0] || null;
+    const state = getCompanyOwnerSmsState({ accessCode: recipient, company });
+    return {
+      smsEnabled: state.effective,
+      smsPhone: state.normalizedPhone || '',
+      skipReason: !state.optedIn ? 'owner_not_opted_in' : !state.hasValidPhone ? 'missing_sms_phone' : null,
+    };
+  }
+
+  return {
+    smsEnabled: recipient.sms_enabled === true,
+    smsPhone: normalizeText(recipient.sms_phone),
+    skipReason: recipient.sms_enabled === true ? null : 'sms_disabled',
+  };
+}
+
 async function resolveRecipientAccessCode(notification) {
   const recipientId = notification?.recipient_access_code_id || notification?.recipient_id;
   if (!recipientId) return null;
@@ -154,8 +190,7 @@ export async function sendNotificationSmsIfEligible(notification) {
       return;
     }
 
-    const smsEnabled = recipient.sms_enabled === true;
-    const smsPhone = normalizeText(recipient.sms_phone);
+    const { smsEnabled, smsPhone, skipReason } = await resolveSmsEligibility(recipient);
 
     if (!smsEnabled) {
       console.log('SMS debug exit: sms disabled', {
@@ -169,7 +204,7 @@ export async function sendNotificationSmsIfEligible(notification) {
         phone: smsPhone || null,
         message: notification.message || null,
         status: 'skipped',
-        skipReason: 'sms_disabled',
+        skipReason: skipReason || 'sms_disabled',
       });
       return;
     }
