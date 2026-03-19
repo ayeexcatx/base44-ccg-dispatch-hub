@@ -9,6 +9,10 @@ export const COMPANY_OWNER_TUTORIAL_DISMISSED_KEY = 'companyOwnerTutorialDismiss
 export const COMPANY_OWNER_TUTORIAL_COMPLETED_KEY = 'companyOwnerTutorialCompleted';
 export const DISPATCH_DRAWER_TUTORIAL_SEEN_KEY = 'dispatchDrawerTutorialSeen';
 export const DISPATCH_DRAWER_TUTORIAL_COMPLETED_KEY = 'dispatchDrawerTutorialCompleted';
+export const DISPATCH_DRAWER_TUTORIAL_LANGUAGE = {
+  ENGLISH: 'en',
+  PORTUGUESE: 'pt',
+};
 
 const COMPANY_OWNER_TUTORIAL_COMPLETION_STEPS = {
   [COMPANY_OWNER_TUTORIAL_LANGUAGE.ENGLISH]: {
@@ -21,9 +25,15 @@ const COMPANY_OWNER_TUTORIAL_COMPLETION_STEPS = {
   },
 };
 
-const DISPATCH_DRAWER_TUTORIAL_COMPLETION_STEP = {
-  title: 'Dispatch Tutorial Complete',
-  description: 'You can replay this tutorial anytime using the Tutorial button in the dispatch drawer.',
+const DISPATCH_DRAWER_TUTORIAL_COMPLETION_STEPS = {
+  [DISPATCH_DRAWER_TUTORIAL_LANGUAGE.ENGLISH]: {
+    title: 'Dispatch Tutorial Complete',
+    description: 'You can replay this tutorial anytime using the Tutorial button in the dispatch drawer.',
+  },
+  [DISPATCH_DRAWER_TUTORIAL_LANGUAGE.PORTUGUESE]: {
+    title: 'title9',
+    description: 'description',
+  },
 };
 
 export const companyOwnerTutorialSteps = {
@@ -188,64 +198,120 @@ export const companyOwnerTutorialSteps = {
   ],
 };
 
-export const dispatchDrawerTutorialSteps = [
-  {
-    id: 'report-incident',
-    target: '[data-tour="dispatch-report-incident"]',
-    title: 'Report Incident',
-    description:
-      'Click here to report breakdowns, accidents, delays, or any other incident related to this dispatch.',
-    warningText: 'This should be done after informing the dispatcher of your incident and is for record-keeping purposes. We encourage you to create reports immediately and visit the Incidents page to record your updates as you resolve the incident.',
-  },
-  {
-    id: 'screenshot-dispatch',
-    target: '[data-tour="dispatch-screenshot"]',
-    title: 'Screenshot Dispatch',
-    description:
-      'Click here to take a clean screenshot of your dispatch without the any of the action buttons or editable sections.',
-  },
-  {
-    id: 'edit-trucks',
-    target: '[data-tour="dispatch-edit-trucks"]',
-    title: 'Edit Trucks',
-    description: 'Click here to edit the truck numbers assigned to this dispatch.',
-  },
-  {
-    id: 'driver-assignments',
-    target: '[data-tour="dispatch-driver-assignments"]',
-    title: 'Driver Assignments',
-    description: 'Click the dropdown menu to assign drivers to your dispatch.',
-    warningText: 'Please familiarize yourself with the instructions on the Drivers page before using this feature.',
-  },
-  {
-    id: 'assignment-details',
-    target: '[data-tour="dispatch-assignment-details"]',
-    title: 'Assignment Details',
-    description: 'This section shows the standard details and instructions of the assignment.',
-  },
-  {
-    id: 'dispatch-notes',
-    target: '[data-tour="dispatch-notes"]',
-    title: 'Dispatch Notes',
-    description: 'These are dispatch notes and reminders that are included every dispatch.',
-  },
-  {
-    id: 'confirm-receipt',
-    target: '[data-tour="dispatch-confirm-receipt"]',
-    title: 'Confirm Receipt',
-    description:
-      'Click here to confirm receipt of the dispatch.',
-    warningText: 'You must confirm any time you receive: a new dispatch, a new schedule, an amendment, a cancellation, or another important update.',
-  },
-  {
-    id: 'time-log',
-    target: '[data-tour="dispatch-time-log"]',
-    tooltipPlacement: 'top',
-    title: 'Time Log',
-    description:
-      'This is where you enter the check-in and check-out times for yourself or your drivers. The time log is for informational purposes only.',
-  },
-];
+export const dispatchDrawerTutorialSteps = {
+  [DISPATCH_DRAWER_TUTORIAL_LANGUAGE.ENGLISH]: [
+    {
+      id: 'report-incident',
+      target: '[data-tour="dispatch-report-incident"]',
+      title: 'Report Incident',
+      description:
+        'Click here to report breakdowns, accidents, delays, or any other incident related to this dispatch.',
+      warningText: 'This should be done after informing the dispatcher of your incident and is for record-keeping purposes. We encourage you to create reports immediately and visit the Incidents page to record your updates as you resolve the incident.',
+    },
+    {
+      id: 'screenshot-dispatch',
+      target: '[data-tour="dispatch-screenshot"]',
+      title: 'Screenshot Dispatch',
+      description:
+        'Click here to take a clean screenshot of your dispatch without the any of the action buttons or editable sections.',
+    },
+    {
+      id: 'edit-trucks',
+      target: '[data-tour="dispatch-edit-trucks"]',
+      title: 'Edit Trucks',
+      description: 'Click here to edit the truck numbers assigned to this dispatch.',
+    },
+    {
+      id: 'driver-assignments',
+      target: '[data-tour="dispatch-driver-assignments"]',
+      title: 'Driver Assignments',
+      description: 'Click the dropdown menu to assign drivers to your dispatch.',
+      warningText: 'Please familiarize yourself with the instructions on the Drivers page before using this feature.',
+    },
+    {
+      id: 'assignment-details',
+      target: '[data-tour="dispatch-assignment-details"]',
+      title: 'Assignment Details',
+      description: 'This section shows the standard details and instructions of the assignment.',
+    },
+    {
+      id: 'dispatch-notes',
+      target: '[data-tour="dispatch-notes"]',
+      title: 'Dispatch Notes',
+      description: 'These are dispatch notes and reminders that are included every dispatch.',
+    },
+    {
+      id: 'confirm-receipt',
+      target: '[data-tour="dispatch-confirm-receipt"]',
+      title: 'Confirm Receipt',
+      description:
+        'Click here to confirm receipt of the dispatch.',
+      warningText: 'You must confirm any time you receive: a new dispatch, a new schedule, an amendment, a cancellation, or another important update.',
+    },
+    {
+      id: 'time-log',
+      target: '[data-tour="dispatch-time-log"]',
+      tooltipPlacement: 'top',
+      title: 'Time Log',
+      description:
+        'This is where you enter the check-in and check-out times for yourself or your drivers. The time log is for informational purposes only.',
+    },
+  ],
+  [DISPATCH_DRAWER_TUTORIAL_LANGUAGE.PORTUGUESE]: [
+    {
+      id: 'report-incident',
+      target: '[data-tour="dispatch-report-incident"]',
+      title: 'title1',
+      description: 'description',
+      warningText: 'description',
+    },
+    {
+      id: 'screenshot-dispatch',
+      target: '[data-tour="dispatch-screenshot"]',
+      title: 'title2',
+      description: 'description',
+    },
+    {
+      id: 'edit-trucks',
+      target: '[data-tour="dispatch-edit-trucks"]',
+      title: 'title3',
+      description: 'description',
+    },
+    {
+      id: 'driver-assignments',
+      target: '[data-tour="dispatch-driver-assignments"]',
+      title: 'title4',
+      description: 'description',
+      warningText: 'description',
+    },
+    {
+      id: 'assignment-details',
+      target: '[data-tour="dispatch-assignment-details"]',
+      title: 'title5',
+      description: 'description',
+    },
+    {
+      id: 'dispatch-notes',
+      target: '[data-tour="dispatch-notes"]',
+      title: 'title6',
+      description: 'description',
+    },
+    {
+      id: 'confirm-receipt',
+      target: '[data-tour="dispatch-confirm-receipt"]',
+      title: 'title7',
+      description: 'description',
+      warningText: 'description',
+    },
+    {
+      id: 'time-log',
+      target: '[data-tour="dispatch-time-log"]',
+      tooltipPlacement: 'top',
+      title: 'title8',
+      description: 'description',
+    },
+  ],
+};
 
 export const tutorialRegistry = {
   [COMPANY_OWNER_TUTORIAL_ID]: {
@@ -258,8 +324,9 @@ export const tutorialRegistry = {
     },
   },
   dispatchDrawer: {
-    steps: dispatchDrawerTutorialSteps,
-    completionStep: DISPATCH_DRAWER_TUTORIAL_COMPLETION_STEP,
+    stepsByLanguage: dispatchDrawerTutorialSteps,
+    completionStepsByLanguage: DISPATCH_DRAWER_TUTORIAL_COMPLETION_STEPS,
+    defaultLanguage: DISPATCH_DRAWER_TUTORIAL_LANGUAGE.ENGLISH,
     storageKeys: {
       seen: DISPATCH_DRAWER_TUTORIAL_SEEN_KEY,
       completed: DISPATCH_DRAWER_TUTORIAL_COMPLETED_KEY,
