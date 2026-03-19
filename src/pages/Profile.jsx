@@ -438,7 +438,7 @@ function CompanyOwnerProfile({ session }) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button onClick={() => profileRequestMutation.mutate()} disabled={profileRequestMutation.isPending} className="bg-slate-900 hover:bg-slate-800">
+            <Button onClick={() => profileRequestMutation.mutate()} disabled={profileRequestMutation.isPending} className="bg-red-600 text-white hover:bg-red-700">
               {profileRequestMutation.isPending ? 'Submitting...' : 'Submit Changes for Approval'}
             </Button>
           </DialogFooter>
