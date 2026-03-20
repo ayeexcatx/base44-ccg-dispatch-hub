@@ -229,42 +229,42 @@ export default function AdminDashboard() {
         <p className="text-sm text-slate-500 mt-1">Overview of your dispatch operations</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {stats.map(s => (
-          <Link key={s.label} to={createPageUrl(s.link)} state={s.state}>
+          <Link key={s.label} to={createPageUrl(s.link)} state={s.state} className="h-full">
             <Card className="h-full hover:shadow-md transition-shadow cursor-pointer group">
-              <CardContent className="p-4 sm:p-5 h-full flex flex-col">
-                <div className="flex items-center justify-between gap-3 mb-4">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className={`h-10 w-10 rounded-xl ${s.color} bg-opacity-10 flex items-center justify-center shrink-0`}>
+              <CardContent className="flex h-full flex-col p-3.5 sm:p-5">
+                <div className="mb-4 flex items-start justify-between gap-2 sm:items-center sm:gap-3">
+                  <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${s.color} bg-opacity-10`}>
                       <s.icon className={`h-5 w-5 ${s.color.replace('bg-', 'text-')}`} />
                     </div>
-                    <p className={`text-xs leading-tight truncate ${s.isAction ? 'text-emerald-700 font-semibold' : 'text-slate-500'}`}>
+                    <p className={`min-w-0 text-[11px] leading-4 sm:text-xs sm:leading-tight ${s.isAction ? 'font-semibold text-emerald-700' : 'text-slate-500'}`}>
                       {s.headerLabel}
                     </p>
                   </div>
-                  <ArrowRight className="h-3.5 w-3.5 text-slate-300 group-hover:text-slate-500 transition-colors shrink-0 translate-y-0.5 sm:translate-y-0" />
+                  <ArrowRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-300 transition-colors group-hover:text-slate-500 sm:mt-0" />
                 </div>
 
-                <div className="flex-1 flex items-center">
+                <div className="flex flex-1 items-center">
                   {s.shiftCounts ? (
-                    <div className="w-full space-y-1.5">
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="rounded-md bg-slate-50 px-2 py-1.5">
-                          <p className="text-[11px] text-slate-500">Day Shift</p>
-                          <p className="text-base font-semibold text-slate-900 leading-tight">{s.shiftCounts.day}</p>
+                    <div className="w-full space-y-2">
+                      <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
+                        <div className="rounded-lg bg-slate-50 px-3 py-2">
+                          <p className="text-[11px] font-medium uppercase tracking-[0.02em] text-slate-500">Day Shift</p>
+                          <p className="mt-1 text-lg font-semibold leading-tight text-slate-900 sm:text-base">{s.shiftCounts.day}</p>
                         </div>
-                        <div className="rounded-md bg-slate-50 px-2 py-1.5">
-                          <p className="text-[11px] text-slate-500">Night Shift</p>
-                          <p className="text-base font-semibold text-slate-900 leading-tight">{s.shiftCounts.night}</p>
+                        <div className="rounded-lg bg-slate-50 px-3 py-2">
+                          <p className="text-[11px] font-medium uppercase tracking-[0.02em] text-slate-500">Night Shift</p>
+                          <p className="mt-1 text-lg font-semibold leading-tight text-slate-900 sm:text-base">{s.shiftCounts.night}</p>
                         </div>
                       </div>
                       {s.showSundayNightIndicator ? (
-                        <p className="text-[10px] text-slate-400 leading-tight">Sun Night Scheduled</p>
+                        <p className="px-0.5 text-[10px] leading-tight text-slate-400">Sun Night Scheduled</p>
                       ) : null}
                     </div>
                   ) : (
-                    <p className="text-2xl font-semibold text-slate-900 leading-tight">{s.value}</p>
+                    <p className="text-xl font-semibold leading-snug text-slate-900 sm:text-2xl sm:leading-tight">{s.value}</p>
                   )}
                 </div>
               </CardContent>
