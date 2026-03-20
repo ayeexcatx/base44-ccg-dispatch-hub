@@ -106,29 +106,154 @@ function ContactMethodEditor({ methods, setMethods, smsIndex, setSmsIndex, readO
 }
 
 function AdminProfile({ session }) {
+  const queryClient = useQueryClient();
+  const [editOpen, setEditOpen] = useState(false);
+  const [form, setForm] = useState({ label: '', sms_phone: '', sms_enabled: false });
+
+  const { data: accessCodes = [] } = useQuery({
+    queryKey: ['admin-profile', session?.id],
+    queryFn: () => base44.entities.AccessCode.filter({ id: session.id }, '-created_date', 1),
+    enabled: !!session?.id,
+  });
+
+  const adminAccessCode = accessCodes[0] || session || null;
+  const adminName = adminAccessCode?.label || adminAccessCode?.name || adminAccessCode?.code || 'Admin';
+  const adminPhone = adminAccessCode?.sms_phone || '';
+  const adminSmsOptedIn = adminAccessCode?.sms_enabled === true;
+  const hasChanges = form.label !== adminName
+    || normalizeSmsPhone(form.sms_phone) !== normalizeSmsPhone(adminPhone)
+    || form.sms_enabled !== adminSmsOptedIn;
+
+  useEffect(() => {
+    if (!adminAccessCode) return;
+    setForm({
+      label: adminName,
+      sms_phone: formatPhoneNumber(adminPhone),
+      sms_enabled: adminSmsOptedIn,
+    });
+  }, [adminAccessCode, adminName, adminPhone, adminSmsOptedIn]);
+
+  const closeEditModal = (nextOpen) => {
+    if (nextOpen) {
+      setEditOpen(true);
+      return;
+    }
+
+    if (hasChanges && !window.confirm('Discard your unsaved admin profile changes?')) {
+      return;
+    }
+
+    setEditOpen(false);
+    setForm({
+      label: adminName,
+      sms_phone: formatPhoneNumber(adminPhone),
+      sms_enabled: adminSmsOptedIn,
+    });
+  };
+
+  const mutation = useMutation({
+    mutationFn: async () => base44.entities.AccessCode.update(adminAccessCode.id, {
+      label: form.label.trim() || adminName,
+      sms_phone: normalizeSmsPhone(form.sms_phone),
+      sms_enabled: form.sms_enabled,
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-profile', session?.id] });
+      queryClient.invalidateQueries({ queryKey: ['access-codes'] });
+      setEditOpen(false);
+      toast.success('Admin profile updated');
+    },
+  });
+
+  if (!adminAccessCode) return <div className="text-sm text-slate-500">Admin profile not found.</div>;
+
   return (
-    <Card>
-      <CardContent className="p-6 space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center"><Shield className="h-5 w-5 text-slate-600" /></div>
-          <div>
-            <h2 className="text-2xl font-semibold text-slate-900">Admin Profile</h2>
-            <p className="text-sm text-slate-500">Basic access details for this admin sign-in.</p>
+    <>
+      <Card>
+        <CardContent className="p-6 space-y-5">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center"><Shield className="h-5 w-5 text-slate-600" /></div>
+              <div>
+                <h2 className="text-2xl font-semibold text-slate-900">Admin Profile</h2>
+                <p className="text-sm text-slate-500">Basic access details for this admin sign-in. Edit profile details in the modal below.</p>
+              </div>
+            </div>
+            <Button onClick={() => setEditOpen(true)} className="bg-slate-900 hover:bg-slate-800">Edit Profile</Button>
           </div>
-        </div>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div className="rounded-lg border p-4">
-            <p className="text-xs uppercase text-slate-500">Admin name</p>
-            <p className="mt-1 font-medium text-slate-900">{session?.label || session?.name || session?.code || 'Admin'}</p>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="rounded-lg border p-4">
+              <p className="text-xs uppercase text-slate-500">Admin name</p>
+              <p className="mt-1 font-medium text-slate-900">{adminName}</p>
+            </div>
+            <div className="rounded-lg border p-4">
+              <p className="text-xs uppercase text-slate-500">Phone number</p>
+              <p className="mt-1 text-sm text-slate-700">{adminPhone ? formatPhoneNumber(adminPhone) : 'No admin phone on this record.'}</p>
+            </div>
           </div>
-          <div className="rounded-lg border p-4">
-            <p className="text-xs uppercase text-slate-500">Contact / SMS</p>
-            <p className="mt-1 text-sm text-slate-700">{session?.sms_phone ? formatPhoneNumber(session.sms_phone) : 'No admin SMS phone on this record.'}</p>
-            <Badge variant={session?.sms_enabled ? 'default' : 'secondary'} className="mt-2">{session?.sms_enabled ? 'SMS status available' : 'SMS display only'}</Badge>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-6 space-y-4">
+          <div className="flex items-center gap-2"><BellRing className="h-4 w-4 text-slate-500" /><h3 className="text-lg font-semibold text-slate-900">Your SMS Notifications</h3></div>
+          <div className="flex items-center justify-between rounded-lg border p-4 gap-4">
+            <div>
+              <Label className="text-base">Receive SMS Notifications</Label>
+              <p className="text-sm text-slate-500">This opt-in is saved on your admin profile now so future admin SMS support can use the same preference flow.</p>
+            </div>
+            <Switch checked={adminSmsOptedIn} disabled />
           </div>
-        </div>
-      </CardContent>
-    </Card>
+          <div className="grid sm:grid-cols-2 gap-3 text-sm">
+            <div className="rounded-lg bg-slate-50 p-3 border"><p className="text-slate-500">Phone for future SMS</p><p className="font-medium text-slate-900">{adminPhone ? formatPhoneNumber(adminPhone) : 'No phone selected'}</p></div>
+            <div className="rounded-lg bg-slate-50 p-3 border"><p className="text-slate-500">SMS opt-in saved</p><p className={`font-medium ${adminSmsOptedIn ? 'text-emerald-700' : 'text-slate-900'}`}>{adminSmsOptedIn ? 'Yes' : 'No'}</p></div>
+          </div>
+          <p className="text-sm text-slate-500">Admin SMS delivery is not enabled yet. Saving this preference does not change current notification behavior.</p>
+        </CardContent>
+      </Card>
+
+      <Dialog open={editOpen} onOpenChange={closeEditModal}>
+        <DialogContent
+          className="sm:max-w-lg"
+          onInteractOutside={(event) => {
+            if (hasChanges) event.preventDefault();
+          }}
+          onEscapeKeyDown={(event) => {
+            if (hasChanges) event.preventDefault();
+          }}
+        >
+          <DialogHeader className="pr-8">
+            <DialogTitle>Edit Profile</DialogTitle>
+            <DialogDescription>Update your admin name, phone number, and SMS preference. Changes save directly to your admin access record.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-1">
+            <div className="space-y-2">
+              <Label htmlFor="admin-name">Name</Label>
+              <Input id="admin-name" value={form.label} onChange={(e) => setForm((prev) => ({ ...prev, label: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="admin-phone">Phone number</Label>
+              <Input id="admin-phone" value={form.sms_phone} placeholder="(555) 123-4567" onChange={(e) => setForm((prev) => ({ ...prev, sms_phone: formatPhoneNumber(e.target.value) }))} />
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-4 gap-4">
+              <div>
+                <Label className="text-base">Receive SMS Notifications</Label>
+                <p className="text-sm text-slate-500">This preference is stored now for future admin SMS support. It does not enable admin SMS delivery today.</p>
+              </div>
+              <Switch checked={form.sms_enabled} onCheckedChange={(checked) => setForm((prev) => ({ ...prev, sms_enabled: checked }))} />
+            </div>
+            {hasChanges && <p className="text-xs text-amber-700">You have unsaved changes. Use Save to keep them or Cancel to discard them.</p>}
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => closeEditModal(false)}>Cancel</Button>
+            <Button onClick={() => mutation.mutate()} disabled={mutation.isPending} className="bg-red-600 text-white hover:bg-red-700">
+              {mutation.isPending ? 'Saving...' : 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
