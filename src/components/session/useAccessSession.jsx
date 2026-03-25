@@ -42,7 +42,7 @@ function pickInitialWorkspace(accessCode) {
   };
 }
 
-function buildEffectiveSession(accessCode, activeViewMode, activeCompanyId) {
+function buildEffectiveSession(accessCode, activeViewMode, activeCompanyId, ownerWorkspaceAllowedTrucks = null) {
   if (!accessCode) return null;
 
   if (accessCode.code_type === 'Truck' || accessCode.code_type === 'Driver') {
@@ -55,11 +55,16 @@ function buildEffectiveSession(accessCode, activeViewMode, activeCompanyId) {
   }
 
   if (activeViewMode === 'CompanyOwner') {
+    const allowedTrucks = Array.isArray(ownerWorkspaceAllowedTrucks)
+      ? ownerWorkspaceAllowedTrucks
+      : accessCode.allowed_trucks;
+
     return {
       ...accessCode,
       raw_code_type: accessCode.code_type,
       code_type: 'CompanyOwner',
       company_id: activeCompanyId,
+      allowed_trucks: Array.isArray(allowedTrucks) ? allowedTrucks : [],
       activeViewMode: 'CompanyOwner',
       activeCompanyId,
     };
@@ -77,6 +82,7 @@ function buildEffectiveSession(accessCode, activeViewMode, activeCompanyId) {
 export function useAccessSession() {
   const [accessCode, setAccessCode] = useState(null);
   const [workspace, setWorkspace] = useState({ activeViewMode: null, activeCompanyId: null });
+  const [ownerWorkspaceAllowedTrucks, setOwnerWorkspaceAllowedTrucks] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const persistWorkspace = useCallback((nextWorkspace) => {
@@ -87,6 +93,48 @@ export function useAccessSession() {
       localStorage.removeItem(STORAGE_WORKSPACE_COMPANY_ID);
     }
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function resolveOwnerWorkspaceAllowedTrucks() {
+      if (!accessCode) {
+        setOwnerWorkspaceAllowedTrucks(null);
+        return;
+      }
+
+      if (workspace.activeViewMode !== 'CompanyOwner') {
+        setOwnerWorkspaceAllowedTrucks(null);
+        return;
+      }
+
+      if (accessCode.code_type !== 'Admin') {
+        setOwnerWorkspaceAllowedTrucks(Array.isArray(accessCode.allowed_trucks) ? accessCode.allowed_trucks : []);
+        return;
+      }
+
+      if (!workspace.activeCompanyId) {
+        setOwnerWorkspaceAllowedTrucks([]);
+        return;
+      }
+
+      try {
+        const companies = await base44.entities.Company.filter({ id: workspace.activeCompanyId }, '-created_date', 1);
+        if (cancelled) return;
+        const company = companies?.[0];
+        setOwnerWorkspaceAllowedTrucks(Array.isArray(company?.trucks) ? company.trucks : []);
+      } catch {
+        if (cancelled) return;
+        setOwnerWorkspaceAllowedTrucks([]);
+      }
+    }
+
+    resolveOwnerWorkspaceAllowedTrucks();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [accessCode, workspace.activeCompanyId, workspace.activeViewMode]);
 
   useEffect(() => {
     async function loadSession() {
@@ -133,11 +181,17 @@ export function useAccessSession() {
     localStorage.removeItem(STORAGE_WORKSPACE_COMPANY_ID);
     setAccessCode(null);
     setWorkspace({ activeViewMode: null, activeCompanyId: null });
+    setOwnerWorkspaceAllowedTrucks(null);
   };
 
   const session = useMemo(
-    () => buildEffectiveSession(accessCode, workspace.activeViewMode, workspace.activeCompanyId),
-    [accessCode, workspace.activeCompanyId, workspace.activeViewMode],
+    () => buildEffectiveSession(
+      accessCode,
+      workspace.activeViewMode,
+      workspace.activeCompanyId,
+      ownerWorkspaceAllowedTrucks,
+    ),
+    [accessCode, ownerWorkspaceAllowedTrucks, workspace.activeCompanyId, workspace.activeViewMode],
   );
 
   return {
