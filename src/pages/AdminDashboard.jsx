@@ -1,22 +1,16 @@
 import React, { useMemo, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import AnnouncementCard from '@/components/announcements/AnnouncementCard';
-import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
+import { addDays, format } from 'date-fns';
+import { Clock, FileText, CheckCircle2 } from 'lucide-react';
 import { createPageUrl } from '../utils';
 import { buildOpenConfirmationRows } from '@/components/notifications/openConfirmations';
 import { createRuntimeVersionToken, APP_RUNTIME_VERSION_CONFIG_KEY } from '@/lib/runtimeVersion';
-import { toast } from 'sonner';
-import {
-  Building2, Key, FileText, StickyNote,
-  ArrowRight, Clock, CheckCircle2, Megaphone, AlertTriangle
-} from 'lucide-react';
-import { addDays, format } from 'date-fns';
+import DashboardSummaryCards from '@/components/admin/admin-dashboard/DashboardSummaryCards';
+import ActiveAnnouncementsSection from '@/components/admin/admin-dashboard/ActiveAnnouncementsSection';
+import QuickActionsSection from '@/components/admin/admin-dashboard/QuickActionsSection';
+import ForceRefreshSection from '@/components/admin/admin-dashboard/ForceRefreshSection';
 
 export default function AdminDashboard() {
   const queryClient = useQueryClient();
@@ -144,7 +138,6 @@ export default function AdminDashboard() {
     },
   ];
 
-
   const companyMap = useMemo(
     () => Object.fromEntries(companies.map(company => [company.id, company.name])),
     [companies]
@@ -199,7 +192,6 @@ export default function AdminDashboard() {
     return labels.length > 0 ? `Specific Access Codes: ${labels.join(', ')}` : 'Specific Access Codes';
   };
 
-
   const handleForceRefreshConfirm = () => {
     const trimmedCode = refreshAdminCode.trim();
     if (!trimmedCode) {
@@ -229,216 +221,36 @@ export default function AdminDashboard() {
         <p className="text-sm text-slate-500 mt-1">Overview of your dispatch operations</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        {stats.map(s => (
-          <Link key={s.label} to={createPageUrl(s.link)} state={s.state} className="h-full">
-            <Card className="h-full hover:shadow-md transition-shadow cursor-pointer group">
-              <CardContent className="flex h-full flex-col p-3.5 sm:p-5">
-                <div className="mb-4 flex items-start justify-between gap-2 sm:items-center sm:gap-3">
-                  <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
-                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${s.color} bg-opacity-10`}>
-                      <s.icon className={`h-5 w-5 ${s.color.replace('bg-', 'text-')}`} />
-                    </div>
-                    <p className={`min-w-0 text-[11px] leading-4 sm:text-xs sm:leading-tight ${s.isAction ? 'font-semibold text-emerald-700' : 'text-slate-500'}`}>
-                      {s.headerLabel}
-                    </p>
-                  </div>
-                  <ArrowRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-300 transition-colors group-hover:text-slate-500 sm:mt-0" />
-                </div>
+      <DashboardSummaryCards stats={stats} createPageUrl={createPageUrl} />
 
-                <div className="flex flex-1 items-center">
-                  {s.shiftCounts ? (
-                    <div className="w-full space-y-2">
-                      <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
-                        <div className="rounded-lg bg-slate-50 px-3 py-2">
-                          <p className="text-[11px] font-medium uppercase tracking-[0.02em] text-slate-500">Day Shift</p>
-                          <p className="mt-1 text-lg font-semibold leading-tight text-slate-900 sm:text-base">{s.shiftCounts.day}</p>
-                        </div>
-                        <div className="rounded-lg bg-slate-50 px-3 py-2">
-                          <p className="text-[11px] font-medium uppercase tracking-[0.02em] text-slate-500">Night Shift</p>
-                          <p className="mt-1 text-lg font-semibold leading-tight text-slate-900 sm:text-base">{s.shiftCounts.night}</p>
-                        </div>
-                      </div>
-                      {s.showSundayNightIndicator ? (
-                        <p className="px-0.5 text-[10px] leading-tight text-slate-400">Sun Night Scheduled</p>
-                      ) : null}
-                    </div>
-                  ) : (
-                    <p className="text-xl font-semibold leading-snug text-slate-900 sm:text-2xl sm:leading-tight">{s.value}</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
+      <ActiveAnnouncementsSection
+        announcements={activeAnnouncements}
+        formatAudience={formatAudience}
+      />
 
-      <Card className="rounded-lg border bg-white shadow-sm overflow-hidden">
-        <div className="border-b border-slate-100 bg-blue-700 px-4 py-3">
-          <div className="flex items-center gap-2">
-            <Megaphone className="h-4 w-4 text-white" />
-            <h3 className="text-sm font-semibold text-white">Active Announcements</h3>
-          </div>
-        </div>
-        <CardContent className="bg-white p-0">
-          {activeAnnouncements.length === 0 ? (
-            <p className="p-5 text-sm text-slate-500">No active announcements.</p>
-          ) : (
-            <div className="divide-y divide-slate-100 bg-white">
-              {activeAnnouncements.map((announcement) => (
-                <AnnouncementCard
-                  key={announcement.id}
-                  announcement={announcement}
-                  variant="plain"
-                  footer={(
-                    <div className="mt-2 text-xs text-slate-600">
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                        <p>
-                          <span className="font-medium text-slate-700">Added:</span>{' '}
-                          {announcement.created_at
-                            ? format(new Date(announcement.created_at), 'MMM d, yyyy · h:mm a')
-                            : '—'}
-                        </p>
-                        <p>
-                          <span className="font-medium text-slate-700">Audience:</span>{' '}
-                          {formatAudience(announcement)}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                />
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <QuickActionsSection createPageUrl={createPageUrl} />
 
-      <div>
-        <h3 className="text-sm font-semibold text-slate-700 mb-3">Quick Actions</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <Link to={createPageUrl('AdminDispatches')}>
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-blue-50 flex items-center justify-center">
-                  <FileText className="h-4 w-4 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-900">Manage Dispatches</p>
-                  <p className="text-xs text-slate-500">Create & edit</p>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-          <Link to={createPageUrl('AdminCompanies')}>
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-emerald-50 flex items-center justify-center">
-                  <Building2 className="h-4 w-4 text-emerald-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-900">Manage Companies</p>
-                  <p className="text-xs text-slate-500">Add trucks & info</p>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-          <Link to={createPageUrl('AdminAccessCodes')}>
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-amber-50 flex items-center justify-center">
-                  <Key className="h-4 w-4 text-amber-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-900">Access Codes</p>
-                  <p className="text-xs text-slate-500">Create & manage</p>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-          <Link to={createPageUrl('AdminTemplateNotes')}>
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-purple-50 flex items-center justify-center">
-                  <StickyNote className="h-4 w-4 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-900">Template Notes</p>
-                  <p className="text-xs text-slate-500">Manage notes</p>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-        </div>
-      </div>
-
-      <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h3 className="text-sm font-semibold text-amber-900">Maintenance</h3>
-            <p className="text-xs text-amber-800">Force all active sessions to reload and pick up the latest runtime version.</p>
-          </div>
-          <Button
-            variant="outline"
-            className="border-amber-300 bg-white text-amber-900 hover:bg-amber-100"
-            onClick={() => {
-              setRefreshConfirmError('');
-              setRefreshAdminCode('');
-              setIsRefreshConfirmOpen(true);
-            }}
-          >
-            Force App Refresh
-          </Button>
-        </div>
-      </div>
-
-      <Dialog open={isRefreshConfirmOpen} onOpenChange={setIsRefreshConfirmOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base">
-              <AlertTriangle className="h-4 w-4 text-amber-600" />
-              Confirm Forced Refresh
-            </DialogTitle>
-            <DialogDescription>
-              Are you sure you want to force app refresh now?
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-2">
-            <Label htmlFor="refresh-admin-code">Enter an admin access code to confirm</Label>
-            <Input
-              id="refresh-admin-code"
-              value={refreshAdminCode}
-              onChange={(event) => {
-                setRefreshAdminCode(event.target.value);
-                setRefreshConfirmError('');
-              }}
-              placeholder="Admin access code"
-              autoComplete="off"
-            />
-            {refreshConfirmError && <p className="text-sm text-red-600">{refreshConfirmError}</p>}
-          </div>
-
-          <DialogFooter className="gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setIsRefreshConfirmOpen(false);
-                setRefreshConfirmError('');
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={handleForceRefreshConfirm}
-              disabled={refreshTriggerMutation.isPending || !refreshAdminCode.trim()}
-            >
-              {refreshTriggerMutation.isPending ? 'Continuing…' : 'Continue'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ForceRefreshSection
+        isOpen={isRefreshConfirmOpen}
+        refreshAdminCode={refreshAdminCode}
+        refreshConfirmError={refreshConfirmError}
+        isPending={refreshTriggerMutation.isPending}
+        onOpen={() => {
+          setRefreshConfirmError('');
+          setRefreshAdminCode('');
+          setIsRefreshConfirmOpen(true);
+        }}
+        onClose={() => {
+          setIsRefreshConfirmOpen(false);
+          setRefreshConfirmError('');
+        }}
+        onConfirm={handleForceRefreshConfirm}
+        onOpenChange={setIsRefreshConfirmOpen}
+        onCodeChange={(value) => {
+          setRefreshAdminCode(value);
+          setRefreshConfirmError('');
+        }}
+      />
     </div>
   );
 }

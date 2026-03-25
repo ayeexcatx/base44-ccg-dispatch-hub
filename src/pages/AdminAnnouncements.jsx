@@ -1,18 +1,17 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Pencil, Users, Building2, KeyRound } from 'lucide-react';
 import { format } from 'date-fns';
 import { useSession } from '../components/session/SessionContext';
+import AdminAnnouncementsHeader from '@/components/admin/admin-announcements/AdminAnnouncementsHeader';
+import AdminAnnouncementsList from '@/components/admin/admin-announcements/AdminAnnouncementsList';
 
 const priorityColors = {
   1: 'bg-red-50 text-red-700 border-red-200',
@@ -212,20 +211,9 @@ export default function AdminAnnouncements() {
     return `${(a.target_access_code_ids || []).length} access code(s)`;
   };
 
-  const companyMap = {};
-  companies.forEach(c => { companyMap[c.id] = c.name; });
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold text-slate-900">Announcements</h2>
-          <p className="text-sm text-slate-500">{announcements.length} total</p>
-        </div>
-        <Button onClick={openNew} className="bg-slate-900 hover:bg-slate-800 text-xs">
-          <Plus className="h-3.5 w-3.5 mr-1" />New Announcement
-        </Button>
-      </div>
+      <AdminAnnouncementsHeader total={announcements.length} onNew={openNew} />
 
       {isLoading ? (
         <div className="flex justify-center py-12">
@@ -234,60 +222,14 @@ export default function AdminAnnouncements() {
       ) : announcements.length === 0 ? (
         <div className="text-center py-16 text-slate-500 text-sm">No announcements yet</div>
       ) : (
-        <div className="grid gap-3">
-          {announcements.map(a => (
-            <Card key={a.id} className={`${!a.active_flag ? 'opacity-60' : ''}`}>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <Badge className={`${priorityColors[a.priority] || priorityColors[3]} border text-xs`}>
-                        P{a.priority}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs flex items-center gap-1">
-                        {a.target_type === 'All' && <Users className="h-3 w-3" />}
-                        {a.target_type === 'Companies' && <Building2 className="h-3 w-3" />}
-                        {a.target_type === 'AccessCodes' && <KeyRound className="h-3 w-3" />}
-                        {targetLabel(a)}
-                      </Badge>
-                      {!a.active_flag && <Badge variant="outline" className="text-xs text-slate-400">Inactive</Badge>}
-                      {a.created_at && (
-                        <span className="text-xs text-slate-400">{format(new Date(a.created_at), 'MMM d, yyyy')}</span>
-                      )}
-                    </div>
-                    <p className="text-sm text-slate-900">{a.title}</p>
-                    <p className="text-xs text-slate-500 mt-1 line-clamp-2 whitespace-pre-wrap">{a.message}</p>
-                    <div className="mt-2">
-                      <p className="text-[11px] text-slate-400 uppercase tracking-wide mb-1">Activity</p>
-                      {Array.isArray(a.admin_activity_log) && a.admin_activity_log.length > 0 ? (
-                        <div className="space-y-1">
-                          {a.admin_activity_log.slice(0, 3).map((entry, idx) => (
-                            <div key={`${entry.timestamp || 'activity'}-${idx}`} className="text-[11px] text-slate-500">
-                              <span className="text-slate-400">{formatActivityTimestamp(entry.timestamp)}</span>
-                              <span className="mx-1">•</span>
-                              <span>{entry.message || entry.action || 'Activity update'}</span>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-xs text-slate-400 italic">No activity yet.</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Switch
-                      checked={a.active_flag !== false}
-                      onCheckedChange={(v) => toggleMutation.mutate({ announcement: a, active: v })}
-                    />
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(a)} className="h-8 w-8">
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <AdminAnnouncementsList
+          announcements={announcements}
+          onToggleActive={(announcement, active) => toggleMutation.mutate({ announcement, active })}
+          onEdit={openEdit}
+          targetLabel={targetLabel}
+          priorityColors={priorityColors}
+          formatActivityTimestamp={formatActivityTimestamp}
+        />
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
