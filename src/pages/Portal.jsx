@@ -821,7 +821,7 @@ export default function Portal() {
                   forceOpen={isForcedOpenCard}
                   onDrawerClose={handleDrawerClose}
                   onOpenDispatch={handleDispatchOpen}
-                  visibleTrucksOverride={isDriverUser ? (driverAssignedTrucksByDispatch.get(d.id) || []) : undefined}
+                  visibleTrucksOverride={isDriverUser ? (driverAssignedTrucksByDispatch.get(normalizeId(d.id)) || []) : undefined}
                 />
               </div>
             );
