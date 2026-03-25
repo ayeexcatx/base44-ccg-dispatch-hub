@@ -2,6 +2,12 @@ import { base44 } from '@/api/base44Client';
 import { format, parseISO } from 'date-fns';
 import { formatDispatchDateTimeLine } from '@/components/notifications/dispatchDateTimeFormat';
 import { sendNotificationSmsIfEligible } from '@/components/notifications/notificationSmsDelivery';
+import {
+  buildConfirmedTruckSetForStatus,
+  parseStatusFromDispatchStatusKey,
+  reconcileRequiredTruckList,
+  expandRequiredTruckList,
+} from '@/components/notifications/confirmationStateHelpers';
 
 const statusLabels = {
   Scheduled: 'Scheduled (details to follow)',
@@ -426,15 +432,11 @@ function getRelevantTrucks(dispatch, accessCode) {
 }
 
 function reconcileExistingRequiredTrucks(notification, dispatch, accessCode) {
-  const originalRequired = Array.isArray(notification?.required_trucks)
-    ? notification.required_trucks
-    : [];
-  const currentDispatchTrucks = new Set(dispatch?.trucks_assigned || []);
-  const allowedTrucks = new Set(accessCode?.allowed_trucks || []);
-
-  return originalRequired.filter(truck =>
-    currentDispatchTrucks.has(truck) && allowedTrucks.has(truck)
-  );
+  return reconcileRequiredTruckList({
+    existingRequired: Array.isArray(notification?.required_trucks) ? notification.required_trucks : [],
+    dispatchTrucks: dispatch?.trucks_assigned || [],
+    ownerAllowedTrucks: accessCode?.allowed_trucks || [],
+  });
 }
 
 function buildOwnerDispatchMessage(dispatch, statusText, relevantTrucks) {
@@ -456,8 +458,7 @@ function buildOwnerDispatchMessage(dispatch, statusText, relevantTrucks) {
 }
 
 function parseStatusFromDedupKey(notification) {
-  const parts = String(notification?.dispatch_status_key || '').split(':');
-  return parts.length >= 2 ? parts[1] : '';
+  return parseStatusFromDispatchStatusKey(notification?.dispatch_status_key);
 }
 
 async function resolveStaleOwnerStatusNotifications(dispatchId, ownerAccessCodeId, currentStatus) {
@@ -671,7 +672,11 @@ export async function expandCurrentStatusRequiredTrucks(dispatch, addedTrucks = 
       dispatch_id: dispatch.id,
       confirmation_type: status,
     }, '-confirmed_at', 500);
-    const confirmedTruckSet = new Set((confirmations || []).map(c => c.truck_number));
+    const confirmedTruckSet = buildConfirmedTruckSetForStatus({
+      confirmations,
+      dispatchId: dispatch.id,
+      status,
+    });
 
     for (const ownerCode of ownerCodes) {
       const ownerAddedTrucks = normalizedAdded.filter(truck =>
@@ -689,7 +694,7 @@ export async function expandCurrentStatusRequiredTrucks(dispatch, addedTrucks = 
       const existingRequired = existingNotification
         ? reconcileExistingRequiredTrucks(existingNotification, dispatch, ownerCode)
         : [];
-      const nextRequired = [...new Set([...existingRequired, ...ownerAddedTrucks])];
+      const nextRequired = expandRequiredTruckList(existingRequired, ownerAddedTrucks);
       const newlyAddedRequired = nextRequired.filter((truck) => !existingRequired.includes(truck));
       const message = buildOwnerDispatchMessage(dispatch, statusText, nextRequired);
       const allConfirmed = nextRequired.every(truck => confirmedTruckSet.has(truck));
@@ -805,8 +810,12 @@ export async function reconcileOwnerNotificationsForDispatch(dispatch, accessCod
       const relevantTrucks = reconcileExistingRequiredTrucks(notification, dispatch, ownerCode);
       const statusText = statusLabels[status] || status;
       const message = buildOwnerDispatchMessage(dispatch, statusText, relevantTrucks);
-      const confirmedTrucks = (confirmationsByStatus[status] || []).map(c => c.truck_number);
-      const allConfirmed = relevantTrucks.every(t => confirmedTrucks.includes(t));
+      const confirmedTruckSet = buildConfirmedTruckSetForStatus({
+        confirmations: confirmationsByStatus[status] || [],
+        dispatchId: dispatch.id,
+        status,
+      });
+      const allConfirmed = relevantTrucks.every((truck) => confirmedTruckSet.has(truck));
 
       await base44.entities.Notification.update(notification.id, {
         required_trucks: relevantTrucks,

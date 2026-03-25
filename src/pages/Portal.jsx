@@ -36,6 +36,7 @@ import {
   canUserSeeDispatch,
   normalizeVisibilityId,
 } from '@/lib/dispatchVisibility';
+import { buildConfirmedTruckSetForStatus, getConfirmationsForDispatchStatus } from '@/components/notifications/confirmationStateHelpers';
 
 
 function formatConflictDispatchSummary(dispatch) {
@@ -387,16 +388,18 @@ export default function Portal() {
         await clearRemovedTruckDriverAssignments(updatedDispatch, removedTrucks);
         await clearRemovedTruckDriverAssignments(updatedConflictingDispatch, [incomingTruck]);
 
-        const currentStatusConfirmations = confirmations.filter((confirmation) =>
-          confirmation.dispatch_id === dispatch.id &&
-          confirmation.confirmation_type === currentStatus
-        );
+        const currentStatusConfirmations = getConfirmationsForDispatchStatus({
+          confirmations,
+          dispatchId: dispatch.id,
+          status: currentStatus,
+        });
 
         const conflictingStatus = conflictingDispatch.status;
-        const conflictingStatusConfirmations = confirmations.filter((confirmation) =>
-          confirmation.dispatch_id === conflictingDispatch.id &&
-          confirmation.confirmation_type === conflictingStatus
-        );
+        const conflictingStatusConfirmations = getConfirmationsForDispatchStatus({
+          confirmations,
+          dispatchId: conflictingDispatch.id,
+          status: conflictingStatus,
+        });
 
         const removeConfirmationIds = currentStatusConfirmations
           .filter((confirmation) => removedTrucks.includes(confirmation.truck_number))
@@ -480,10 +483,11 @@ export default function Portal() {
 
       await clearRemovedTruckDriverAssignments(updatedDispatch, removedTrucks);
 
-      const currentStatusConfirmations = confirmations.filter((confirmation) =>
-        confirmation.dispatch_id === dispatch.id &&
-        confirmation.confirmation_type === currentStatus
-      );
+      const currentStatusConfirmations = getConfirmationsForDispatchStatus({
+        confirmations,
+        dispatchId: dispatch.id,
+        status: currentStatus,
+      });
 
       const removeConfirmationIds = currentStatusConfirmations
         .filter((confirmation) => removedTrucks.includes(confirmation.truck_number))
@@ -587,11 +591,12 @@ export default function Portal() {
 
   const handleConfirm = async (dispatch, truck, confType) => {
     const confirmationKey = `${dispatch.id}:${truck}:${confType}`;
-    const alreadyConfirmed = confirmations.some(c =>
-      c.dispatch_id === dispatch.id &&
-      c.truck_number === truck &&
-      c.confirmation_type === confType
-    );
+    const confirmedTruckSet = buildConfirmedTruckSetForStatus({
+      confirmations,
+      dispatchId: dispatch.id,
+      status: confType,
+    });
+    const alreadyConfirmed = confirmedTruckSet.has(truck);
     if (alreadyConfirmed || pendingOwnerConfirmationKeysRef.current.has(confirmationKey)) return;
 
     pendingOwnerConfirmationKeysRef.current.add(confirmationKey);

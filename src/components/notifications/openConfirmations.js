@@ -1,3 +1,9 @@
+import {
+  buildConfirmedTruckSetForStatus,
+  parseStatusFromDispatchStatusKey,
+  reconcileRequiredTruckList,
+} from './confirmationStateHelpers';
+
 const NON_CONFIRMATION_CATEGORIES = new Set(['dispatch_update_info']);
 
 const dedupeTruckRows = (rows) => {
@@ -11,8 +17,7 @@ const dedupeTruckRows = (rows) => {
 };
 
 const parseStatusFromDedupKey = (notification) => {
-  const parts = String(notification?.dispatch_status_key || '').split(':');
-  return parts.length >= 2 ? parts[1] : '';
+  return parseStatusFromDispatchStatusKey(notification?.dispatch_status_key);
 };
 
 const resolveRequiredTrucks = (notification, dispatch, ownerCode) => {
@@ -21,16 +26,15 @@ const resolveRequiredTrucks = (notification, dispatch, ownerCode) => {
     : [];
 
   if (!baseRequired.length) return [];
+  if (!ownerCode) {
+    const dispatchTruckSet = new Set(dispatch?.trucks_assigned || []);
+    return baseRequired.filter((truck) => dispatchTruckSet.has(truck));
+  }
 
-  const dispatchTruckSet = new Set(dispatch?.trucks_assigned || []);
-  const ownerAllowedSet = ownerCode
-    ? new Set(ownerCode.allowed_trucks || [])
-    : null;
-
-  return baseRequired.filter((truck) => {
-    if (!dispatchTruckSet.has(truck)) return false;
-    if (ownerAllowedSet && !ownerAllowedSet.has(truck)) return false;
-    return true;
+  return reconcileRequiredTruckList({
+    existingRequired: baseRequired,
+    dispatchTrucks: dispatch?.trucks_assigned || [],
+    ownerAllowedTrucks: ownerCode?.allowed_trucks || [],
   });
 };
 
@@ -67,14 +71,11 @@ export function buildOpenConfirmationRows({
     const requiredTrucks = resolveRequiredTrucks(notification, dispatch, ownerCode);
     if (!requiredTrucks.length) return;
 
-    const confirmedTrucks = new Set(
-      confirmations
-        .filter((confirmation) => (
-          confirmation.dispatch_id === dispatch.id &&
-          confirmation.confirmation_type === status
-        ))
-        .map((confirmation) => confirmation.truck_number)
-    );
+    const confirmedTrucks = buildConfirmedTruckSetForStatus({
+      confirmations,
+      dispatchId: dispatch.id,
+      status,
+    });
 
     const companyName = companyById.get(dispatch.company_id)?.name || 'Unknown Company';
 

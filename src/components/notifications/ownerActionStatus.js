@@ -1,8 +1,13 @@
+import {
+  buildConfirmedTruckSetForStatus,
+  deriveConfirmationCoverage,
+  parseStatusFromDispatchStatusKey,
+} from './confirmationStateHelpers';
+
 export const NON_CONFIRMATION_NOTIFICATION_CATEGORIES = new Set(['dispatch_update_info', 'driver_dispatch_seen']);
 
 function parseStatusFromDedupKey(notification) {
-  const parts = String(notification?.dispatch_status_key || '').split(':');
-  return parts.length >= 2 ? parts[1] : '';
+  return parseStatusFromDispatchStatusKey(notification?.dispatch_status_key);
 }
 
 export function getOwnerNotificationRequiredTrucks({ notification, dispatch = null, ownerAllowedTrucks = [] }) {
@@ -48,19 +53,13 @@ export function getOwnerNotificationActionStatus({
   }
 
   const requiredTrucks = getOwnerNotificationRequiredTrucks({ notification, dispatch, ownerAllowedTrucks });
-  const confirmationSet = new Set(
-    confirmations
-      .filter((confirmation) => (
-        confirmation.dispatch_id === dispatchId &&
-        confirmation.confirmation_type === status &&
-        confirmation?.truck_number
-      ))
-      .map((confirmation) => confirmation.truck_number)
-  );
-
-  const confirmedTrucks = requiredTrucks.filter((truck) => confirmationSet.has(truck));
-  const pendingTrucks = requiredTrucks.filter((truck) => !confirmationSet.has(truck));
-  const needsAction = pendingTrucks.length > 0;
+  const confirmationSet = buildConfirmedTruckSetForStatus({
+    confirmations,
+    dispatchId,
+    status,
+  });
+  const { confirmedTrucks, pendingTrucks, done, total, allConfirmed } = deriveConfirmationCoverage(requiredTrucks, confirmationSet);
+  const needsAction = !allConfirmed;
 
   return {
     isOwnerConfirmationNotification: true,
@@ -68,8 +67,8 @@ export function getOwnerNotificationActionStatus({
     requiredTrucks,
     confirmedTrucks,
     pendingTrucks,
-    total: requiredTrucks.length,
-    done: confirmedTrucks.length,
+    total,
+    done,
     needsAction,
     effectiveReadFlag: notification?.read_flag || !needsAction,
   };

@@ -28,6 +28,7 @@ import DispatchActivityLogSection from './DispatchActivityLogSection';
 import DispatchTimeLogSection from './DispatchTimeLogSection';
 import DispatchDriverConfirmationSection from './DispatchDriverConfirmationSection';
 import { getVisibleTrucksForDispatch } from '@/lib/dispatchVisibility';
+import { buildConfirmedTruckSetForStatus } from '@/components/notifications/confirmationStateHelpers';
 
 const tollColors = {
   Authorized: 'bg-green-50 text-green-700',
@@ -611,18 +612,18 @@ export default function DispatchDetailDrawer({
   };
 
   const currentConfType = dispatch.status;
+  const currentConfirmedTruckSet = buildConfirmedTruckSetForStatus({
+    confirmations,
+    dispatchId: dispatch.id,
+    status: currentConfType,
+  });
   const hasAdditional = Array.isArray(dispatch.additional_assignments) && dispatch.additional_assignments.length > 0;
 
   const normalizedTemplateNotes = (templateNotes || []).map(normalizeTemplateNote);
   const boxNotes = normalizedTemplateNotes.filter(n => n.note_type === NOTE_TYPES.BOX);
   const generalNotes = normalizedTemplateNotes.filter(n => n.note_type !== NOTE_TYPES.BOX);
 
-  const isTruckConfirmedForCurrent = (truck) =>
-    confirmations.some(c =>
-      c.dispatch_id === dispatch.id &&
-      c.truck_number === truck &&
-      c.confirmation_type === currentConfType
-    );
+  const isTruckConfirmedForCurrent = (truck) => currentConfirmedTruckSet.has(truck);
 
   const getTruckCurrentConfirmation = (truck) =>
     confirmations.find(c =>
