@@ -12,8 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { BellRing, Building2, Copy, Eye, KeyRound, Shield, UserRound } from 'lucide-react';
+import { BellRing, Copy, Shield, UserRound } from 'lucide-react';
 import { buildCompanyProfileRequestPayload, formatPhoneNumber, getAdminSmsProductState, getCompanyOwnerSmsState, getCompanySmsContact, getDriverSmsState, hasUsSmsPhone, normalizeContactMethods, normalizeSmsPhone, PHONE_CONTACT_TYPES } from '@/lib/sms';
+import DriverProfileSmsCard from '@/components/profile/DriverProfileSmsCard';
+import { CompanyOwnerProfileOverview, CompanyOwnerSmsCard } from '@/components/profile/CompanyOwnerProfileSections';
 
 const CONTACT_TYPE_OPTIONS = ['Office', 'Cell', 'Email', 'Fax', 'Other'];
 
@@ -310,21 +312,15 @@ function DriverProfile({ session }) {
           <div className="rounded-lg border p-4"><p className="text-xs uppercase text-slate-500">Driver name</p><p className="mt-1 font-medium text-slate-900">{driver.driver_name}</p></div>
           <div className="rounded-lg border p-4"><p className="text-xs uppercase text-slate-500">Phone number</p><p className="mt-1 font-medium text-slate-900">{driver.phone || '—'}</p></div>
         </div>
-        <div className="rounded-xl border border-slate-200 p-4 space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <Label className="text-base">Receive SMS notifications</Label>
-              <p className="text-sm text-slate-500">SMS is sent only when your company owner enables SMS for you and you opt in here.</p>
-            </div>
-            <Switch checked={optedIn} disabled={mutation.isPending} onCheckedChange={(checked) => { setOptedIn(checked); mutation.mutate(checked); }} />
-          </div>
-          <div className="grid sm:grid-cols-3 gap-3 text-sm">
-            <div className="rounded-lg bg-slate-50 p-3 border"><p className="text-slate-500">Owner enabled</p><p className="font-medium text-slate-900">{smsState.ownerEnabled ? 'Yes' : 'No'}</p></div>
-            <div className="rounded-lg bg-slate-50 p-3 border"><p className="text-slate-500">You opted in</p><p className="font-medium text-slate-900">{smsState.driverOptedIn ? 'Yes' : 'No'}</p></div>
-            <div className="rounded-lg bg-slate-50 p-3 border"><p className="text-slate-500">SMS active</p><p className={`font-medium ${smsState.effective ? 'text-emerald-700' : 'text-slate-900'}`}>{smsState.effective ? 'Yes' : 'No'}</p></div>
-          </div>
-          {!smsState.ownerEnabled && <p className="text-sm text-amber-700">Your company owner has not enabled SMS for your driver record yet.</p>}
-        </div>
+        <DriverProfileSmsCard
+          smsState={smsState}
+          optedIn={optedIn}
+          isPending={mutation.isPending}
+          onToggle={(checked) => {
+            setOptedIn(checked);
+            mutation.mutate(checked);
+          }}
+        />
       </CardContent>
     </Card>
   );
@@ -460,86 +456,24 @@ function CompanyOwnerProfile({ session }) {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardContent className="p-6 space-y-5">
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center"><Building2 className="h-5 w-5 text-slate-600" /></div>
-              <div>
-                <h2 className="text-2xl font-semibold text-slate-900">Company Profile</h2>
-                <p className="text-sm text-slate-500">Profile information is view-only here. Use Edit to submit changes for admin approval.</p>
-              </div>
-            </div>
-            <Button onClick={() => setEditOpen(true)} className="bg-slate-900 hover:bg-slate-800">Edit</Button>
-          </div>
+      <CompanyOwnerProfileOverview
+        company={company}
+        contactSummary={contactSummary}
+        hasPendingRequest={hasPendingRequest}
+        hasRequestedCode={hasRequestedCode}
+        requestCodePending={requestCodeMutation.isPending}
+        latestOwnerCode={latestOwnerCode}
+        onOpenEdit={() => setEditOpen(true)}
+        onRequestCode={() => requestCodeMutation.mutate()}
+        onViewCode={() => setViewCodeOpen(true)}
+      />
 
-          {hasPendingRequest && (
-            <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-              Pending approval: your requested company profile update is awaiting admin review.
-            </div>
-          )}
-
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-lg border p-4 sm:col-span-2">
-                <p className="text-xs uppercase text-slate-500">Company name</p>
-                <p className="mt-1 font-medium text-slate-900">{company.name || '—'}</p>
-              </div>
-              <div className="rounded-lg border p-4 sm:col-span-2">
-                <p className="text-xs uppercase text-slate-500">Address</p>
-                <p className="mt-1 whitespace-pre-line text-sm text-slate-900">{company.address || '—'}</p>
-              </div>
-              <div className="rounded-lg border p-4 sm:col-span-2">
-                <p className="text-xs uppercase text-slate-500">Contact info</p>
-                <div className="mt-2 space-y-1.5 text-sm text-slate-700">
-                  {contactSummary.length > 0
-                    ? contactSummary.map((method, index) => (
-                      <p key={`owner-contact-${index}`}><span className="font-medium text-slate-900">{method.type}:</span> {method.value}</p>
-                    ))
-                    : <p>—</p>}
-                </div>
-              </div>
-              <div className="rounded-lg border p-4 sm:col-span-2">
-                <p className="text-xs uppercase text-slate-500">Truck numbers</p>
-                <div className="mt-2 flex flex-wrap gap-2">{(company.trucks || []).length ? company.trucks.map((truck) => <Badge key={truck} variant="outline" className="font-mono">{truck}</Badge>) : <span className="text-sm text-slate-500">No trucks listed.</span>}</div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
-                <div className="flex items-center gap-2"><KeyRound className="h-4 w-4 text-slate-500" /><h3 className="font-semibold text-slate-900">Access code</h3></div>
-                <p className="text-sm text-slate-500">Generate and view the company owner access code for this profile.</p>
-                <Button onClick={() => requestCodeMutation.mutate()} disabled={requestCodeMutation.isPending} className="w-full bg-red-600 text-white hover:bg-red-700">
-                  <KeyRound className="mr-2 h-4 w-4" />
-                  {requestCodeMutation.isPending ? 'Generating...' : hasRequestedCode ? 'Request New Code' : 'Request Access Code'}
-                </Button>
-                <Button variant="outline" onClick={() => setViewCodeOpen(true)} disabled={!latestOwnerCode?.code} className="w-full">
-                  <Eye className="mr-2 h-4 w-4" />View Access Code
-                </Button>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="p-6 space-y-4">
-          <div className="flex items-center gap-2"><BellRing className="h-4 w-4 text-slate-500" /><h3 className="text-lg font-semibold text-slate-900">Your SMS notifications</h3></div>
-          <div className="flex items-center justify-between rounded-lg border p-4 gap-4">
-            <div>
-              <Label className="text-base">Receive SMS notifications</Label>
-              <p className="text-sm text-slate-500">You receive SMS only when you opt in here and a valid SMS contact is selected on the company profile.</p>
-            </div>
-            <Switch checked={smsState.optedIn} disabled={smsMutation.isPending || !smsState.target.phone} onCheckedChange={(checked) => smsMutation.mutate(checked)} />
-          </div>
-          <div className="grid sm:grid-cols-3 gap-3 text-sm">
-            <div className="rounded-lg bg-slate-50 p-3 border"><p className="text-slate-500">Use for SMS</p><p className="font-medium text-slate-900">{smsState.target.method ? `${smsState.target.method.type}: ${smsState.target.method.value}` : 'No phone selected'}</p></div>
-            <div className="rounded-lg bg-slate-50 p-3 border"><p className="text-slate-500">Number used for SMS</p><p className="font-medium text-slate-900">{smsContact.phone ? formatPhoneNumber(smsContact.phone) : 'No phone selected'}</p></div>
-            <div className="rounded-lg bg-slate-50 p-3 border"><p className="text-slate-500">SMS active</p><p className={`font-medium ${smsState.effective ? 'text-emerald-700' : 'text-slate-900'}`}>{smsState.effective ? 'Yes' : 'No'}</p></div>
-          </div>
-          {!smsState.target.phone && <p className="text-sm text-red-600">Select a valid phone contact for SMS on this profile before opting in.</p>}
-        </CardContent>
-      </Card>
+      <CompanyOwnerSmsCard
+        smsState={smsState}
+        smsContact={smsContact}
+        smsPending={smsMutation.isPending}
+        onToggle={(checked) => smsMutation.mutate(checked)}
+      />
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
