@@ -100,8 +100,6 @@ export default function AdminAccessCodes() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['access-codes'] }),
   });
 
-  const selectedCompany = companies.find((c) => c.id === form.company_id);
-  const companyTrucks = selectedCompany?.trucks || [];
   const driversForCompany = useMemo(
     () => drivers.filter((d) => d.company_id === form.company_id),
     [drivers, form.company_id],
@@ -164,16 +162,6 @@ export default function AdminAccessCodes() {
       linked_company_ids: code.linked_company_ids || [],
     });
     setOpen(true);
-  };
-
-  const toggleTruck = (t) => {
-    const has = form.allowed_trucks.includes(t);
-    setForm({
-      ...form,
-      allowed_trucks: has
-        ? form.allowed_trucks.filter((x) => x !== t)
-        : [...form.allowed_trucks, t],
-    });
   };
 
   const toggleView = (view) => {
@@ -382,7 +370,7 @@ export default function AdminAccessCodes() {
                           {c.code_type === 'Driver' && driverSmsState?.normalizedPhone && <span>SMS phone: {formatPhoneNumber(driverSmsState.normalizedPhone)}</span>}
                           {c.code_type === 'CompanyOwner' && ownerSmsState && <span>SMS enabled: {ownerSmsState.effective ? 'Yes' : 'No'}</span>}
                           {c.code_type === 'CompanyOwner' && ownerSmsState?.normalizedPhone && <span>SMS phone: {formatPhoneNumber(ownerSmsState.normalizedPhone)}</span>}
-                          {c.code_type !== 'Driver' && (c.allowed_trucks || []).length > 0 && (
+                          {c.code_type === 'Admin' && (c.allowed_trucks || []).length > 0 && (
                             <span>Trucks: {c.allowed_trucks.join(', ')}</span>
                           )}
                           {c.code_type === 'Admin' && (c.available_views || []).length > 0 && (
@@ -534,27 +522,6 @@ export default function AdminAccessCodes() {
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
-                )}
-
-                {form.code_type !== 'Driver' && form.code_type !== 'CompanyOwner' && form.company_id && companyTrucks.length > 0 && (
-                  <div>
-                    <Label>Select Trucks</Label>
-                    <div className="flex gap-2 flex-wrap mt-1">
-                      {companyTrucks.map((t) => (
-                        <button
-                          key={t}
-                          onClick={() => toggleTruck(t)}
-                          className={`px-3 py-1.5 rounded-lg border text-sm font-mono transition-colors ${
-                            form.allowed_trucks.includes(t)
-                              ? 'bg-slate-900 text-white border-slate-900'
-                              : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400'
-                          }`}
-                        >
-                          {t}
-                        </button>
-                      ))}
-                    </div>
                   </div>
                 )}
               </>
