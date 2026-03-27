@@ -172,9 +172,13 @@ function AdminProfile({ session }) {
       if (form.sms_enabled && !smsConsentChecked) {
         throw new Error('Consent is required before enabling SMS notifications.');
       }
+      const normalizedSmsPhone = normalizeSmsPhone(form.sms_phone);
+      if (form.sms_enabled && !hasUsSmsPhone(normalizedSmsPhone)) {
+        throw new Error('Enter a valid US 10-digit SMS phone number (example: (555) 123-4567).');
+      }
       const payload = {
         label: form.label.trim() || adminName,
-        sms_phone: normalizeSmsPhone(form.sms_phone),
+        sms_phone: normalizedSmsPhone,
         sms_enabled: form.sms_enabled,
       };
       if (form.sms_enabled) {

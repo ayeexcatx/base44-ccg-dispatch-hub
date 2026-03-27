@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import DeleteConfirmationDialog from '@/components/admin/DeleteConfirmationDialog';
 import { Key, Plus, Pencil, Trash2, Building2, Shield, Copy, UserRound } from 'lucide-react';
-import { getCompanyOwnerSmsState, getDriverSmsState, normalizeSmsPhone as normalizePhoneShared, formatPhoneNumber as formatPhoneShared } from '@/lib/sms';
+import { getCompanyOwnerSmsState, getDriverSmsState, normalizeSmsPhone as normalizePhoneShared, formatPhoneNumber as formatPhoneShared, hasUsSmsPhone } from '@/lib/sms';
 import { buildSmsConsentFields } from '@/lib/smsConsent';
 import SmsConsentDisclosure from '@/components/profile/SmsConsentDisclosure';
 import { toast } from 'sonner';
@@ -234,6 +234,11 @@ export default function AdminAccessCodes() {
     if (form.code_type === 'Admin') {
       if (form.sms_enabled && !smsConsentChecked) {
         toast.error('Consent is required before enabling SMS notifications.');
+        return;
+      }
+
+      if (form.sms_enabled && !hasUsSmsPhone(smsPhone)) {
+        toast.error('Enter a valid US 10-digit SMS phone number (example: (555) 123-4567).');
         return;
       }
 
