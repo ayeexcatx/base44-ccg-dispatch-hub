@@ -9,7 +9,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { BellRing, Copy, Shield, UserRound } from 'lucide-react';
@@ -436,7 +435,7 @@ function CompanyOwnerProfile({ session }) {
         linked_company_ids: Array.isArray(activeAccessCode?.linked_company_ids) && activeAccessCode.linked_company_ids.length > 0
           ? activeAccessCode.linked_company_ids
           : [company.id],
-        allowed_trucks: Array.isArray(activeAccessCode?.allowed_trucks) ? activeAccessCode.allowed_trucks : [],
+        allowed_trucks: [],
         sms_enabled: smsState.effective,
         sms_phone: smsState.normalizedPhone || '',
       });
@@ -561,11 +560,6 @@ function CompanyOwnerProfile({ session }) {
               <p className="text-xs text-slate-500 mb-2">Select which phone contact should be used for company owner SMS.</p>
               <ContactMethodEditor methods={form.contact_methods} setMethods={(updater) => setForm((prev) => ({ ...prev, contact_methods: typeof updater === 'function' ? updater(prev.contact_methods) : updater }))} smsIndex={smsIndex} setSmsIndex={setSmsIndex} />
               <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => setForm((prev) => ({ ...prev, contact_methods: [...prev.contact_methods, { type: 'Office', value: '' }] }))}>Add Contact</Button>
-            </div>
-            <div>
-              <Label>Truck numbers</Label>
-              <div className="mt-2 flex flex-wrap gap-2">{(company.trucks || []).length ? company.trucks.map((truck) => <Badge key={truck} variant="outline" className="font-mono">{truck}</Badge>) : <span className="text-sm text-slate-500">No trucks listed.</span>}</div>
-              <p className="text-xs text-slate-500 mt-2">Truck numbers are view-only on the company owner profile.</p>
             </div>
           </div>
           <DialogFooter>
