@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
+import { useAuth } from '@/lib/AuthContext';
 import {
   canCompanyOwnerViewAssignmentsAndTimeLogs,
 } from './statusConfig';
@@ -26,6 +27,7 @@ import DispatchDrawerTemplateNotesSection from './DispatchDrawerTemplateNotesSec
 import { getVisibleTrucksForDispatch } from '@/lib/dispatchVisibility';
 import { buildConfirmedTruckSetForStatus } from '@/components/notifications/confirmationStateHelpers';
 import { deactivateDriverAssignment, upsertDriverAssignment } from '@/services/driverAssignmentMutationService';
+import { resolveDriverIdentity } from '@/services/currentAppIdentityService';
 
 const UNASSIGNED_DRIVER_VALUE = '__unassigned__';
 const DRIVER_SHIFT_CONFLICT_MESSAGE = 'That driver is already assigned on a different dispatch for the same shift. Please remove the driver from that assignment or select a different driver.';
@@ -257,6 +259,7 @@ export default function DispatchDetailDrawer({
   dispatch, session, confirmations, timeEntries, templateNotes,
   onConfirm, onTimeEntry, onOwnerTruckUpdate, companyName: _companyName, open, onClose
 }) {
+  const { currentAppIdentity } = useAuth();
   const jobNumberBadgeClassName = 'bg-black px-2 py-0.5 text-[11px] font-semibold text-white hover:bg-black';
   const [draftTimeEntries, setDraftTimeEntries] = useState({});
   const [isSavingAll, setIsSavingAll] = useState(false);
@@ -309,6 +312,10 @@ export default function DispatchDetailDrawer({
   const isOwner = session.code_type === 'CompanyOwner';
   const isAdmin = session.code_type === 'Admin';
   const isDriverUser = session.code_type === 'Driver';
+  const driverIdentity = useMemo(
+    () => resolveDriverIdentity({ currentAppIdentity, session }),
+    [currentAppIdentity, session],
+  );
 
   const { data: companyDrivers = [] } = useQuery({
     queryKey: ['drivers', dispatch?.company_id],
@@ -333,9 +340,9 @@ export default function DispatchDetailDrawer({
 
 
   const { data: currentDriverAssignments = [] } = useQuery({
-    queryKey: ['driver-dispatch-assignments', dispatch?.id, session?.driver_id],
-    queryFn: () => base44.entities.DriverDispatchAssignment.filter({ dispatch_id: dispatch.id, driver_id: session.driver_id }, '-assigned_datetime', 200),
-    enabled: open && isDriverUser && !!dispatch?.id && !!session?.driver_id,
+    queryKey: ['driver-dispatch-assignments', dispatch?.id, driverIdentity],
+    queryFn: () => base44.entities.DriverDispatchAssignment.filter({ dispatch_id: dispatch.id, driver_id: driverIdentity }, '-assigned_datetime', 200),
+    enabled: open && isDriverUser && !!dispatch?.id && !!driverIdentity,
   });
 
   useEffect(() => {

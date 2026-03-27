@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from '../components/session/SessionContext';
+import { useAuth } from '@/lib/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import AnnouncementCard from '@/components/announcements/AnnouncementCard';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +27,7 @@ import {
   getVisibleTrucksForDispatch as getVisibleDispatchTrucks,
   normalizeVisibilityId,
 } from '@/lib/dispatchVisibility';
+import { resolveDriverIdentity } from '@/services/currentAppIdentityService';
 
 const dateOnly = (v) => (typeof v === 'string' ? v.slice(0, 10) : v);
 const normalizeId = (value) => normalizeVisibilityId(value);
@@ -159,7 +161,12 @@ function MiniDispatchCard({ dispatch, companyName, truckNumbers = [] }) {
 
 export default function Home() {
   const { session } = useSession();
+  const { currentAppIdentity } = useAuth();
   const navigate = useNavigate();
+  const driverIdentity = useMemo(
+    () => resolveDriverIdentity({ currentAppIdentity, session }),
+    [currentAppIdentity, session],
+  );
   const { data: companies = [] } = useQuery({
     queryKey: ['companies-home-workspace-label'],
     queryFn: () => base44.entities.Company.list(),
@@ -185,9 +192,9 @@ export default function Home() {
 
 
   const { data: driverAssignments = [] } = useQuery({
-    queryKey: ['driver-dispatch-assignments', session?.driver_id],
-    queryFn: () => base44.entities.DriverDispatchAssignment.filter({ driver_id: session.driver_id }, '-assigned_datetime', 500),
-    enabled: isDriver && !!session?.driver_id,
+    queryKey: ['driver-dispatch-assignments', driverIdentity],
+    queryFn: () => base44.entities.DriverDispatchAssignment.filter({ driver_id: driverIdentity }, '-assigned_datetime', 500),
+    enabled: isDriver && !!driverIdentity,
   });
 
   const { data: dispatches = [] } = useQuery({

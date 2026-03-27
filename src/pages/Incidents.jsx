@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '@/components/session/SessionContext';
+import { useAuth } from '@/lib/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +18,7 @@ import { createPageUrl } from '@/utils';
 import { buildDispatchOpenPath } from '@/lib/dispatchOpenOrchestration';
 import { toast } from 'sonner';
 import { canUserSeeIncident, normalizeVisibilityId } from '@/lib/dispatchVisibility';
+import { resolveDriverIdentity } from '@/services/currentAppIdentityService';
 
 const INCIDENT_TYPES = [
   'Mechanical Issue',
@@ -87,6 +89,7 @@ const getIncidentCreatedDateTime = (incident) => incident?.incident_datetime || 
 
 export default function Incidents() {
   const { session } = useSession();
+  const { currentAppIdentity } = useAuth();
   const queryClient = useQueryClient();
   const location = useLocation();
   const navigate = useNavigate();
@@ -100,6 +103,10 @@ export default function Incidents() {
   const isAdmin = session?.code_type === 'Admin';
   const isOwner = session?.code_type === 'CompanyOwner';
   const isDriver = session?.code_type === 'Driver';
+  const driverIdentity = useMemo(
+    () => resolveDriverIdentity({ currentAppIdentity, session }),
+    [currentAppIdentity, session],
+  );
 
   const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const createFromDispatch = queryParams.get('create') === '1';
@@ -126,9 +133,9 @@ export default function Incidents() {
   });
 
   const { data: driverAssignments = [] } = useQuery({
-    queryKey: ['incident-driver-dispatch-assignments', session?.driver_id],
-    queryFn: () => base44.entities.DriverDispatchAssignment.filter({ driver_id: session.driver_id }, '-assigned_datetime', 1000),
-    enabled: !!session && isDriver && !!session?.driver_id,
+    queryKey: ['incident-driver-dispatch-assignments', driverIdentity],
+    queryFn: () => base44.entities.DriverDispatchAssignment.filter({ driver_id: driverIdentity }, '-assigned_datetime', 1000),
+    enabled: !!session && isDriver && !!driverIdentity,
   });
 
   const { data: dispatches = [] } = useQuery({

@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSession } from '../components/session/SessionContext';
+import { useAuth } from '@/lib/AuthContext';
 import PortalDispatchList from '../components/portal/PortalDispatchList';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +41,7 @@ import {
   normalizeVisibilityId,
 } from '@/lib/dispatchVisibility';
 import { buildConfirmedTruckSetForStatus } from '@/components/notifications/confirmationStateHelpers';
+import { resolveDriverIdentity } from '@/services/currentAppIdentityService';
 
 function getSessionActorMetadata(session) {
   const actorName = session?.label || session?.name || session?.driver_name || session?.code || '';
@@ -63,6 +65,7 @@ function myTrucksForHistory(dispatch, timeEntries, session) {
 
 export default function Portal() {
   const { session } = useSession();
+  const { currentAppIdentity } = useAuth();
   const [tab, setTab] = useState('today');
   const queryClient = useQueryClient();
   const location = useLocation();
@@ -80,6 +83,10 @@ export default function Portal() {
     targetNotificationId,
   } = getDispatchOpenTargets(location.search, { normalizeId });
   const actorMetadata = getSessionActorMetadata(session);
+  const driverIdentity = useMemo(
+    () => resolveDriverIdentity({ currentAppIdentity, session }),
+    [currentAppIdentity, session],
+  );
 
   const { data: dispatches = [] } = useQuery({
     queryKey: ['portal-dispatches', session?.company_id],
@@ -88,9 +95,9 @@ export default function Portal() {
   });
 
   const { data: driverAssignments = [] } = useQuery({
-    queryKey: ['driver-dispatch-assignments', session?.driver_id],
-    queryFn: () => base44.entities.DriverDispatchAssignment.filter({ driver_id: session.driver_id }, '-assigned_datetime', 500),
-    enabled: session?.code_type === 'Driver' && !!session?.driver_id,
+    queryKey: ['driver-dispatch-assignments', driverIdentity],
+    queryFn: () => base44.entities.DriverDispatchAssignment.filter({ driver_id: driverIdentity }, '-assigned_datetime', 500),
+    enabled: session?.code_type === 'Driver' && !!driverIdentity,
   });
 
   const { data: companies = [] } = useQuery({
@@ -234,8 +241,8 @@ export default function Portal() {
       queryClient.invalidateQueries({ queryKey: ['dispatches-admin'] });
       queryClient.invalidateQueries({ queryKey: ['driver-dispatch-assignments'] });
       queryClient.invalidateQueries({ queryKey: ['driver-dispatch-assignments', variables?.dispatch?.id] });
-      queryClient.invalidateQueries({ queryKey: ['driver-dispatch-assignments', session?.driver_id] });
-      queryClient.invalidateQueries({ queryKey: ['incident-driver-dispatch-assignments', session?.driver_id] });
+      queryClient.invalidateQueries({ queryKey: ['driver-dispatch-assignments', driverIdentity] });
+      queryClient.invalidateQueries({ queryKey: ['incident-driver-dispatch-assignments', driverIdentity] });
       (result?.affectedDispatchIds || []).forEach((dispatchId) => {
         queryClient.invalidateQueries({ queryKey: ['driver-dispatch-assignments', dispatchId] });
       });

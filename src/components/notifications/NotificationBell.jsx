@@ -10,6 +10,7 @@ import { buildDispatchOpenPath } from '@/lib/dispatchOpenOrchestration';
 import { useNavigate } from 'react-router-dom';
 import NotificationBellItem from './NotificationBellItem';
 import { useOwnerNotifications } from './useOwnerNotifications';
+import { useAuth } from '@/lib/AuthContext';
 import { getNotificationDisplay } from './formatNotificationDetailsMessage';
 import { useConfirmationsQuery } from './useConfirmationsQuery';
 import {
@@ -21,19 +22,25 @@ import {
   getDriverDispatchIdSet,
   normalizeVisibilityId,
 } from '@/lib/dispatchVisibility';
+import { resolveDriverIdentity } from '@/services/currentAppIdentityService';
 
 const normalizeId = (value) => normalizeVisibilityId(value);
 
 export default function NotificationBell({ session }) {
+  const { currentAppIdentity } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = React.useState(false);
   const { notifications, unreadCount, markReadAsync } = useOwnerNotifications(session);
   const isDriver = session?.code_type === 'Driver';
+  const driverIdentity = React.useMemo(
+    () => resolveDriverIdentity({ currentAppIdentity, session }),
+    [currentAppIdentity, session],
+  );
 
   const { data: driverAssignments = [] } = useQuery({
-    queryKey: ['driver-dispatch-assignments', session?.driver_id],
-    queryFn: () => base44.entities.DriverDispatchAssignment.filter({ driver_id: session.driver_id }, '-assigned_datetime', 500),
-    enabled: isDriver && !!session?.driver_id,
+    queryKey: ['driver-dispatch-assignments', driverIdentity],
+    queryFn: () => base44.entities.DriverDispatchAssignment.filter({ driver_id: driverIdentity }, '-assigned_datetime', 500),
+    enabled: isDriver && !!driverIdentity,
   });
 
   const { data: dispatches = [] } = useQuery({

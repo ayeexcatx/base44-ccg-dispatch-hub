@@ -11,3 +11,10 @@ export function getCurrentAppIdentity(authenticatedUser) {
     onboarding_complete: Boolean(authenticatedUser.onboarding_complete),
   };
 }
+
+export function resolveDriverIdentity({ currentAppIdentity, authenticatedUser, session } = {}) {
+  return currentAppIdentity?.driver_id
+    || authenticatedUser?.driver_id
+    || session?.driver_id
+    || null;
+}
