@@ -1,8 +1,12 @@
 export function resolveProfileName(user) {
   const candidates = [
+    user?.app_display_name,
+    user?.admin_display_name,
     user?.full_name,
     user?.display_name,
     user?.name,
+    user?.user_metadata?.app_display_name,
+    user?.raw_user_meta_data?.app_display_name,
     user?.user_metadata?.full_name,
     user?.user_metadata?.display_name,
     user?.user_metadata?.name,
