@@ -363,7 +363,23 @@ export default function Portal() {
       notifyTruckConfirmation(dispatch, truck, companyName);
 
       if (session?.code_type === 'CompanyOwner') {
-        await resolveOwnerNotificationIfComplete(dispatch, null, session.id);
+        const ownerNotificationAccessCodeIds = [...new Set(
+          (notifications || [])
+            .filter((notification) =>
+              String(notification.related_dispatch_id || '') === String(dispatch.id || '')
+              && notification.recipient_type === 'AccessCode'
+            )
+            .map((notification) => notification.recipient_access_code_id || notification.recipient_id)
+            .filter(Boolean)
+            .map((id) => String(id))
+        )];
+        const ownerResolutionTargets = ownerNotificationAccessCodeIds.length
+          ? ownerNotificationAccessCodeIds
+          : [session.id].filter(Boolean).map((id) => String(id));
+
+        await Promise.all(ownerResolutionTargets.map((ownerAccessCodeId) =>
+          resolveOwnerNotificationIfComplete(dispatch, null, ownerAccessCodeId)
+        ));
         await queryClient.invalidateQueries({ queryKey: ['notifications'] });
       }
     } finally {
