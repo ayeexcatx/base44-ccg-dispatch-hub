@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { BellRing, Building2, Eye, KeyRound } from 'lucide-react';
+import { BellRing, Building2 } from 'lucide-react';
 import { formatPhoneNumber } from '@/lib/sms';
 import SmsConsentDisclosure from '@/components/profile/SmsConsentDisclosure';
 
@@ -12,12 +12,7 @@ export function CompanyOwnerProfileOverview({
   company,
   contactSummary,
   hasPendingRequest,
-  hasRequestedCode,
-  requestCodePending,
-  latestOwnerCode,
   onOpenEdit,
-  onRequestCode,
-  onViewCode,
 }) {
   return (
     <Card>
@@ -62,20 +57,6 @@ export function CompanyOwnerProfileOverview({
             <div className="rounded-lg border p-4 sm:col-span-2">
               <p className="text-xs uppercase text-slate-500">Truck numbers</p>
               <div className="mt-2 flex flex-wrap gap-2">{(company.trucks || []).length ? company.trucks.map((truck) => <Badge key={truck} variant="outline" className="font-mono">{truck}</Badge>) : <span className="text-sm text-slate-500">No trucks listed.</span>}</div>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
-              <div className="flex items-center gap-2"><KeyRound className="h-4 w-4 text-slate-500" /><h3 className="font-semibold text-slate-900">Access code</h3></div>
-              <p className="text-sm text-slate-500">Generate and view the company owner access code for this profile.</p>
-              <Button onClick={onRequestCode} disabled={requestCodePending} className="w-full bg-red-600 text-white hover:bg-red-700">
-                <KeyRound className="mr-2 h-4 w-4" />
-                {requestCodePending ? 'Generating...' : hasRequestedCode ? 'Request New Code' : 'Request Access Code'}
-              </Button>
-              <Button variant="outline" onClick={onViewCode} disabled={!latestOwnerCode?.code} className="w-full">
-                <Eye className="mr-2 h-4 w-4" />View Access Code
-              </Button>
             </div>
           </div>
         </div>

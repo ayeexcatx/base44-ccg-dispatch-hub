@@ -338,7 +338,6 @@ export default function AdminAccessCodes() {
             const comp = companies.find((co) => co.id === c.company_id);
             const driver = drivers.find((d) => d.id === c.driver_id);
             const driverSmsState = c.code_type === 'Driver' ? getDriverSmsState(driver) : null;
-            const ownerSmsState = c.code_type === 'CompanyOwner' ? getCompanyOwnerSmsState({ accessCode: c, company: comp }) : null;
             return (
               <Card key={c.id} className={`transition-shadow hover:shadow-sm ${c.active_flag === false ? 'opacity-50' : ''}`}>
                 <CardContent className="p-4 sm:p-5">
@@ -364,8 +363,6 @@ export default function AdminAccessCodes() {
                           {driver && <span>Driver: {driver.driver_name || driver.id}</span>}
                           {c.code_type === 'Driver' && driverSmsState && <span>SMS enabled: {driverSmsState.effective ? 'Yes' : 'No'}</span>}
                           {c.code_type === 'Driver' && driverSmsState?.normalizedPhone && <span>SMS phone: {formatPhoneNumber(driverSmsState.normalizedPhone)}</span>}
-                          {c.code_type === 'CompanyOwner' && ownerSmsState && <span>SMS enabled: {ownerSmsState.effective ? 'Yes' : 'No'}</span>}
-                          {c.code_type === 'CompanyOwner' && ownerSmsState?.normalizedPhone && <span>SMS phone: {formatPhoneNumber(ownerSmsState.normalizedPhone)}</span>}
                           {c.code_type === 'Admin' && (c.allowed_trucks || []).length > 0 && (
                             <span>Trucks: {c.allowed_trucks.join(', ')}</span>
                           )}

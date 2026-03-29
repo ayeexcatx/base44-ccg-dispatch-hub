@@ -275,6 +275,7 @@ export function useAccessSession() {
   const [accessCode, setAccessCode] = useState(null);
   const [workspace, setWorkspace] = useState({ activeViewMode: null, activeCompanyId: null });
   const [ownerWorkspaceAllowedTrucks, setOwnerWorkspaceAllowedTrucks] = useState(null);
+  const [resolvedLinkedIdentity, setResolvedLinkedIdentity] = useState(currentAppIdentity);
   const [loading, setLoading] = useState(true);
 
   const persistWorkspace = useCallback((nextWorkspace) => {
@@ -404,12 +405,15 @@ export function useAccessSession() {
           setWorkspace({ activeViewMode: null, activeCompanyId: null });
           setOwnerWorkspaceAllowedTrucks(null);
         }
+
+        setResolvedLinkedIdentity(authoritativeLinkedIdentity);
       } catch {
         if (cancelled) return;
         localStorage.removeItem(STORAGE_ACCESS_CODE_ID);
         setAccessCode(null);
         setWorkspace({ activeViewMode: null, activeCompanyId: null });
         setOwnerWorkspaceAllowedTrucks(null);
+        setResolvedLinkedIdentity(currentAppIdentity);
       }
 
       if (cancelled) return;
@@ -462,7 +466,7 @@ export function useAccessSession() {
   const session = useMemo(() => {
     if (isAuthenticated) {
       const linkedSession = buildLinkedUserSession({
-        linkedIdentity: currentAppIdentity,
+        linkedIdentity: resolvedLinkedIdentity,
         authenticatedUser: user,
         fallbackSession: accessCodeSession,
         workspace,
@@ -470,7 +474,7 @@ export function useAccessSession() {
       if (linkedSession) return linkedSession;
     }
     return accessCodeSession;
-  }, [accessCodeSession, currentAppIdentity, isAuthenticated, user, workspace]);
+  }, [accessCodeSession, isAuthenticated, resolvedLinkedIdentity, user, workspace]);
 
   return {
     session,

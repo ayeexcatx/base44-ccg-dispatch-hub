@@ -12,7 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { BellRing, Copy, Shield, UserRound } from 'lucide-react';
+import { BellRing, Shield, UserRound } from 'lucide-react';
 import { buildCompanyProfileRequestPayload, formatPhoneNumber, getAdminSmsProductState, getCompanyOwnerSmsState, getCompanySmsContact, getDriverSmsState, hasUsSmsPhone, normalizeContactMethods, normalizeSmsPhone, PHONE_CONTACT_TYPES } from '@/lib/sms';
 import { buildSmsConsentFields } from '@/lib/smsConsent';
 import { sendSmsWelcomeIfNeeded } from '@/lib/smsIntro';
@@ -60,13 +60,6 @@ async function syncOwnerAccessCodes(company, accessCodeId = null, accessCodeSmsE
       sms_enabled: nextEnabled && Boolean(phone),
     });
   }));
-}
-
-function generateCode(len = 8) {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let result = '';
-  for (let i = 0; i < len; i += 1) result += chars.charAt(Math.floor(Math.random() * chars.length));
-  return result;
 }
 
 function ContactMethodEditor({ methods, setMethods, smsIndex, setSmsIndex, readOnly = false }) {
@@ -414,7 +407,6 @@ function CompanyOwnerProfile({ session }) {
   const activeCompanyId = getActiveCompanyId(session);
   const queryClient = useQueryClient();
   const [editOpen, setEditOpen] = useState(false);
-  const [viewCodeOpen, setViewCodeOpen] = useState(false);
   const [form, setForm] = useState({ name: '', address: '', contact_methods: [{ type: 'Office', value: '' }] });
   const [smsIndex, setSmsIndex] = useState(0);
 
@@ -432,14 +424,12 @@ function CompanyOwnerProfile({ session }) {
 
   const company = companies[0] || null;
   const activeAccessCode = accessCodes.find((code) => code.id === session?.id) || session;
-  const latestOwnerCode = accessCodes[0] || activeAccessCode;
   const smsState = getCompanyOwnerSmsState({ accessCode: activeAccessCode, company });
   const smsContact = getCompanySmsContact(company);
   const ownerConsentRecorded = activeAccessCode?.sms_consent_given === true
     || Boolean(activeAccessCode?.sms_consent_at)
     || Boolean(activeAccessCode?.sms_consent_method);
   const hasPendingRequest = company?.pending_profile_change?.status === 'Pending';
-  const hasRequestedCode = accessCodes.length > 0;
 
   useEffect(() => {
     if (!company) return;
@@ -450,34 +440,6 @@ function CompanyOwnerProfile({ session }) {
     });
     setSmsIndex(Number.isInteger(company.sms_contact_method_index) ? company.sms_contact_method_index : 0);
   }, [company]);
-
-  const requestCodeMutation = useMutation({
-    mutationFn: async () => {
-      if (!company) return null;
-      const newCode = await base44.entities.AccessCode.create({
-        code: generateCode(),
-        label: `${company.name || 'Company'} Owner`,
-        active_flag: true,
-        code_type: 'CompanyOwner',
-        company_id: company.id,
-        available_views: Array.isArray(activeAccessCode?.available_views) && activeAccessCode.available_views.length > 0
-          ? activeAccessCode.available_views
-          : ['CompanyOwner'],
-        linked_company_ids: Array.isArray(activeAccessCode?.linked_company_ids) && activeAccessCode.linked_company_ids.length > 0
-          ? activeAccessCode.linked_company_ids
-          : [company.id],
-        sms_enabled: smsState.effective,
-        sms_phone: smsState.normalizedPhone || '',
-      });
-      return newCode;
-    },
-    onSuccess: (newCode) => {
-      queryClient.invalidateQueries({ queryKey: ['owner-profile-access-codes', activeCompanyId] });
-      queryClient.invalidateQueries({ queryKey: ['access-codes'] });
-      if (newCode?.code) setViewCodeOpen(true);
-      toast.success('Access code generated');
-    },
-  });
 
   const profileRequestMutation = useMutation({
     mutationFn: async () => {
@@ -542,17 +504,6 @@ function CompanyOwnerProfile({ session }) {
     return methods.length > 0 ? methods : [];
   }, [company]);
 
-  const copyAccessCode = async () => {
-    if (!latestOwnerCode?.code) return;
-    try {
-      await navigator.clipboard.writeText(latestOwnerCode.code);
-      toast.success('Access code copied');
-    } catch (error) {
-      console.error('Failed copying access code', error);
-      toast.error('Could not copy access code');
-    }
-  };
-
   if (!company) return <div className="text-sm text-slate-500">Company profile not found.</div>;
 
   return (
@@ -561,12 +512,7 @@ function CompanyOwnerProfile({ session }) {
         company={company}
         contactSummary={contactSummary}
         hasPendingRequest={hasPendingRequest}
-        hasRequestedCode={hasRequestedCode}
-        requestCodePending={requestCodeMutation.isPending}
-        latestOwnerCode={latestOwnerCode}
         onOpenEdit={() => setEditOpen(true)}
-        onRequestCode={() => requestCodeMutation.mutate()}
-        onViewCode={() => setViewCodeOpen(true)}
       />
 
       <CompanyOwnerSmsCard
@@ -601,22 +547,6 @@ function CompanyOwnerProfile({ session }) {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={viewCodeOpen} onOpenChange={setViewCodeOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader className="pr-8">
-            <DialogTitle>Company Owner Access Code</DialogTitle>
-            <DialogDescription>Use this code to sign in as a company owner for {company.name || 'this company'}.</DialogDescription>
-          </DialogHeader>
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-center">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Access code</p>
-            <p className="mt-2 text-3xl font-bold tracking-[0.3em] text-slate-900">{latestOwnerCode?.code || 'Unavailable'}</p>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={copyAccessCode} disabled={!latestOwnerCode?.code}><Copy className="mr-2 h-4 w-4" />Copy</Button>
-            <Button onClick={() => setViewCodeOpen(false)} className="bg-slate-900 hover:bg-slate-800">Done</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
