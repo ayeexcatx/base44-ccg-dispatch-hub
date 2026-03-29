@@ -137,22 +137,7 @@
         "data.app_role": "admin"
       }
     },
-    "update": {
-      "user_condition": {
-        "data.app_role": "admin"
-      }
-    },
     "delete": {
-      "user_condition": {
-        "data.app_role": "admin"
-      }
-    },
-    "read": {
-      "user_condition": {
-        "data.app_role": "admin"
-      }
-    },
-    "write": {
       "user_condition": {
         "data.app_role": "admin"
       }
