@@ -63,10 +63,10 @@ export default function AccessCodeLogin() {
       userUpdatePayload.company_id = match.company_id || null;
       userUpdatePayload.driver_id = null;
       userUpdatePayload.app_display_name = match.label || null;
-      // Fetch company name via service-role to bypass RLS
+      // Fetch company name from the Company record
       if (match.company_id) {
-        const res = await base44.functions.invoke('lookupCompanyName', { company_id: match.company_id });
-        userUpdatePayload.company_name = res?.data?.company_name || null;
+        const ownerCompanies = await base44.entities.Company.filter({ id: match.company_id }, '-created_date', 1);
+        userUpdatePayload.company_name = ownerCompanies?.[0]?.name || null;
       }
     }
 
@@ -88,9 +88,8 @@ export default function AccessCodeLogin() {
       userUpdatePayload.app_display_name = driverName || match.label || null;
 
       if (derivedCompanyId) {
-        // Fetch company name via service-role to bypass RLS
-        const res = await base44.functions.invoke('lookupCompanyName', { company_id: derivedCompanyId });
-        userUpdatePayload.company_name = res?.data?.company_name || null;
+        const driverCompanies = await base44.entities.Company.filter({ id: derivedCompanyId }, '-created_date', 1);
+        userUpdatePayload.company_name = driverCompanies?.[0]?.name || null;
       }
     }
 
