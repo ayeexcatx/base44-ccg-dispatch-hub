@@ -272,30 +272,6 @@
         "data.app_role": "admin"
       }
     },
-    "read": {
-      "$or": [
-        {
-          "user_condition": {
-            "data.app_role": "admin"
-          }
-        },
-        {
-          "data.company_id": "{{user.data.company_id}}"
-        }
-      ]
-    },
-    "update": {
-      "$or": [
-        {
-          "user_condition": {
-            "data.app_role": "admin"
-          }
-        },
-        {
-          "data.company_id": "{{user.data.company_id}}"
-        }
-      ]
-    },
     "delete": {
       "user_condition": {
         "data.app_role": "admin"
