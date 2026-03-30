@@ -29,6 +29,10 @@
       "type": "string",
       "description": "Associated company ID"
     },
+    "company_name": {
+      "type": "string",
+      "description": "Readable display name of the associated company (display-only convenience field; company_id is the source of truth)"
+    },
     "allowed_trucks": {
       "type": "array",
       "items": {
