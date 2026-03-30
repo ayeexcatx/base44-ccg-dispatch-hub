@@ -48,14 +48,8 @@ export function getOwnerNotificationRequiredTrucks({ notification, dispatch = nu
 
   if (!ownerAllowedTrucks?.length) return fallbackRequired.length ? fallbackRequired : dispatchTrucks;
 
-  const normalizeTruck = (truck) => String(truck || '').trim();
-  const allowedSet = new Set(ownerAllowedTrucks.map(normalizeTruck).filter(Boolean));
-  const scopedDispatchTrucks = dispatchTrucks.filter((truck) => allowedSet.has(normalizeTruck(truck)));
-
-  if (scopedDispatchTrucks.length > 0) return scopedDispatchTrucks;
-  if (fallbackRequired.length > 0) return fallbackRequired;
-
-  return scopedDispatchTrucks;
+  const allowedSet = new Set(ownerAllowedTrucks);
+  return dispatchTrucks.filter((truck) => allowedSet.has(truck));
 }
 
 export function getOwnerNotificationActionStatus({
