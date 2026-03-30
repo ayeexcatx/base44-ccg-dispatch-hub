@@ -274,7 +274,6 @@ export default function DispatchDetailDrawer({
   onConfirm, onTimeEntry, onOwnerTruckUpdate, companyName: _companyName, open, onClose
 }) {
   const { currentAppIdentity } = useAuth();
-  const jobNumberBadgeClassName = 'bg-black px-2 py-0.5 text-[11px] font-semibold text-white hover:bg-black';
   const [draftTimeEntries, setDraftTimeEntries] = useState({});
   const [isSavingAll, setIsSavingAll] = useState(false);
   const drawerScrollRef = React.useRef(null);
@@ -925,8 +924,6 @@ export default function DispatchDetailDrawer({
           <div ref={screenshotSectionRef} className="space-y-6 bg-white">
             <DispatchDrawerIdentitySection
               dispatch={dispatch}
-              hasAdditional={hasAdditional}
-              jobNumberBadgeClassName={jobNumberBadgeClassName}
               isAdmin={isAdmin}
               isOwner={isOwner}
               visibleTrucks={visibleTrucks}
