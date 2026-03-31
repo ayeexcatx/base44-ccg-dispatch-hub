@@ -118,7 +118,7 @@ export default function DispatchDrawerTutorial({ isOwner, drawerOpen }) {
           size="sm"
           variant="default"
           onClick={openTutorialWelcome}
-          className="absolute bottom-4 right-4 z-20 h-9 rounded-full border border-blue-700 bg-blue-600 px-3 text-xs text-white shadow-md hover:bg-blue-700 focus-visible:ring-blue-500 sm:bottom-5 sm:right-5"
+          className="fixed bottom-5 right-4 z-50 h-9 rounded-full border border-blue-700 bg-blue-600 px-3 text-xs text-white shadow-md hover:bg-blue-700 focus-visible:ring-blue-500 sm:bottom-6 sm:right-5"
           data-tour="dispatch-tutorial-trigger"
         >
           <CircleHelp className="mr-1 h-3.5 w-3.5" />
