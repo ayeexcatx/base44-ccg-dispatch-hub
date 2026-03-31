@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Copy, Plus, Trash2 } from 'lucide-react';
 
 const UPDATE_MESSAGE_MAX_LENGTH = 100;
@@ -15,8 +16,9 @@ export default function DispatchForm({ dispatch, dispatches = [], companies, onS
     start_time: '', start_location: '', instructions: 'Deliver material to / from',
     notes: '', toll_status: '', trucks_assigned: [],
     status: 'Scheduled', additional_assignments: [],
-    amendment_history: [], canceled_reason: ''
+    amendment_history: [], canceled_reason: '', truck_overrides: []
   });
+  const [useStaggeredOverrides, setUseStaggeredOverrides] = useState(false);
   const [showUpdateNotifyChoice, setShowUpdateNotifyChoice] = useState(false);
   const [showUpdateMessagePrompt, setShowUpdateMessagePrompt] = useState(false);
   const [updateMessage, setUpdateMessage] = useState('');
@@ -46,8 +48,10 @@ export default function DispatchForm({ dispatch, dispatches = [], companies, onS
         status: dispatch.status || 'Scheduled',
         additional_assignments: dispatch.additional_assignments || [],
         amendment_history: dispatch.amendment_history || [],
-        canceled_reason: dispatch.canceled_reason || ''
+        canceled_reason: dispatch.canceled_reason || '',
+        truck_overrides: Array.isArray(dispatch.truck_overrides) ? dispatch.truck_overrides : []
       });
+      setUseStaggeredOverrides(Array.isArray(dispatch.truck_overrides) && dispatch.truck_overrides.length > 0);
     }
   }, [dispatch]);
 
@@ -219,13 +223,44 @@ export default function DispatchForm({ dispatch, dispatches = [], companies, onS
 
   const toggleTruck = (t) => {
     if (unavailableTrucks.has(t)) return;
-    setForm((prev) => ({
-      ...prev,
-      trucks_assigned: prev.trucks_assigned.includes(t) ?
-      prev.trucks_assigned.filter((x) => x !== t) :
-      [...prev.trucks_assigned, t]
-    }));
+    setForm((prev) => {
+      const nextTrucks = prev.trucks_assigned.includes(t)
+        ? prev.trucks_assigned.filter((x) => x !== t)
+        : [...prev.trucks_assigned, t];
+
+      const nextOverrideSet = new Set(nextTrucks);
+      const nextOverrides = (prev.truck_overrides || []).filter((entry) => nextOverrideSet.has(String(entry?.truck_number || '').trim()));
+
+      return {
+        ...prev,
+        trucks_assigned: nextTrucks,
+        truck_overrides: nextOverrides
+      };
+    });
   };
+
+  const upsertTruckOverrideField = (truckNumber, field, value) => {
+    setForm((prev) => {
+      const overrides = Array.isArray(prev.truck_overrides) ? [...prev.truck_overrides] : [];
+      const index = overrides.findIndex((entry) => String(entry?.truck_number || '').trim() === truckNumber);
+      const current = index >= 0 ? overrides[index] : { truck_number: truckNumber, start_time: '', start_location: '', instructions: '', notes: '' };
+      const next = { ...current, [field]: value };
+
+      if (index >= 0) {
+        overrides[index] = next;
+      } else {
+        overrides.push(next);
+      }
+
+      return {
+        ...prev,
+        truck_overrides: overrides
+      };
+    });
+  };
+
+  const getTruckOverride = (truckNumber) => (form.truck_overrides || [])
+  .find((entry) => String(entry?.truck_number || '').trim() === truckNumber) || null;
 
   const addAssignment = () => {
     setForm((prev) => ({
@@ -342,6 +377,20 @@ export default function DispatchForm({ dispatch, dispatches = [], companies, onS
 
     // Ensure date is stored as plain YYYY-MM-DD string (no Date conversion)
     finalForm.date = form.date;
+    finalForm.truck_overrides = useStaggeredOverrides
+      ? (Array.isArray(form.truck_overrides) ? form.truck_overrides : [])
+        .map((entry) => ({
+          truck_number: String(entry?.truck_number || '').trim(),
+          start_time: String(entry?.start_time || '').trim(),
+          start_location: String(entry?.start_location || '').trim(),
+          instructions: String(entry?.instructions || '').trim(),
+          notes: String(entry?.notes || '').trim(),
+        }))
+        .filter((entry) =>
+          finalForm.trucks_assigned.includes(entry.truck_number) &&
+          (entry.start_time || entry.start_location || entry.instructions || entry.notes)
+        )
+      : [];
 
     const isEdit = !!dispatch && !dispatch._isCopy;
     const statusChanged = isEdit ? dispatch.status !== finalForm.status : true;
@@ -365,7 +414,7 @@ export default function DispatchForm({ dispatch, dispatches = [], companies, onS
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <Label>Company *</Label>
-          <Select value={form.company_id} onValueChange={(v) => setForm({ ...form, company_id: v, trucks_assigned: [] })}>
+          <Select value={form.company_id} onValueChange={(v) => setForm({ ...form, company_id: v, trucks_assigned: [], truck_overrides: [] })}>
             <SelectTrigger><SelectValue placeholder="Select company" /></SelectTrigger>
             <SelectContent>
               {companies.filter((c) => c.status === 'active').map((c) =>
@@ -526,6 +575,45 @@ export default function DispatchForm({ dispatch, dispatches = [], companies, onS
           {form.company_id && availableTrucks.length === 0 &&
           <span className="text-xs text-slate-400">No trucks on this company</span>
           }
+        </div>
+        <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-3">
+          <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+            <Checkbox checked={useStaggeredOverrides} onCheckedChange={(checked) => setUseStaggeredOverrides(Boolean(checked))} />
+            Use staggered truck times/details
+          </label>
+          {useStaggeredOverrides && (
+            <div className="mt-3 space-y-3">
+              {(form.trucks_assigned || []).map((truckNumber) => {
+                const override = getTruckOverride(truckNumber);
+                return (
+                  <div key={truckNumber} className="rounded-md border border-slate-200 bg-white p-3">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{truckNumber}</p>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <div>
+                        <Label className="text-xs">Start Time Override</Label>
+                        <Input type="time" value={override?.start_time || ''} onChange={(e) => upsertTruckOverrideField(truckNumber, 'start_time', e.target.value)} />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Start Location Override</Label>
+                        <Input value={override?.start_location || ''} onChange={(e) => upsertTruckOverrideField(truckNumber, 'start_location', e.target.value)} placeholder="Optional" />
+                      </div>
+                    </div>
+                    <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <div>
+                        <Label className="text-xs">Instructions Override</Label>
+                        <Textarea rows={2} value={override?.instructions || ''} onChange={(e) => upsertTruckOverrideField(truckNumber, 'instructions', e.target.value)} placeholder="Optional" />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Notes Override</Label>
+                        <Textarea rows={2} value={override?.notes || ''} onChange={(e) => upsertTruckOverrideField(truckNumber, 'notes', e.target.value)} placeholder="Optional" />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {(form.trucks_assigned || []).length === 0 && <p className="text-xs text-slate-500">Select trucks first to configure optional overrides.</p>}
+            </div>
+          )}
         </div>
       </div>
 

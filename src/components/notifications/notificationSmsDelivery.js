@@ -1,6 +1,7 @@
 import { base44 } from '@/api/base44Client';
 import { formatDispatchDateTimeLine } from '@/components/notifications/dispatchDateTimeFormat';
 import { getCompanyOwnerSmsState, getDriverSmsState } from '@/lib/sms';
+import { getEffectiveTruckStartTime } from '@/lib/dispatchTruckOverrides';
 
 const SMS_PROVIDER = 'signalwire';
 const SMS_BRAND_PREFIX = 'CCG Transit:';
@@ -41,7 +42,10 @@ async function resolveDispatchDateTimeLine(notification) {
   try {
     const records = await base44.entities.Dispatch.filter({ id: dispatchId }, '-created_date', 1);
     const dispatch = records?.[0] || null;
-    return formatDispatchDateTimeLine(dispatch);
+    const normalizedTrucks = [...new Set((notification?.required_trucks || []).filter(Boolean))];
+    const effectiveTimes = [...new Set(normalizedTrucks.map((truckNumber) => getEffectiveTruckStartTime(dispatch, truckNumber)).filter(Boolean))];
+    const driverStartTime = effectiveTimes.length === 1 ? effectiveTimes[0] : null;
+    return formatDispatchDateTimeLine(dispatch, 'at', driverStartTime);
   } catch (error) {
     console.error('SMS debug: failed resolving dispatch for SMS format', {
       notificationId: notification?.id || null,

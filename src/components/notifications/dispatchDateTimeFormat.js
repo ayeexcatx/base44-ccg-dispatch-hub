@@ -28,12 +28,12 @@ export function formatStartTimeToAmPm(startTime) {
   return `${hour12}:${minute} ${period}`;
 }
 
-export function formatDispatchDateTimeLine(dispatch, atToken = 'at') {
+export function formatDispatchDateTimeLine(dispatch, atToken = 'at', startTimeOverride = null) {
   const parsedDate = dispatch?.date ? parseISO(dispatch.date) : null;
   if (!parsedDate || !isValid(parsedDate)) return '';
 
   const dateText = format(parsedDate, 'EEE MM-dd-yyyy').toUpperCase();
-  const timeText = formatStartTimeToAmPm(dispatch?.start_time);
+  const timeText = formatStartTimeToAmPm(startTimeOverride ?? dispatch?.start_time);
 
   if (!timeText) return dateText;
   return `${dateText} ${atToken} ${timeText}`;

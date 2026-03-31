@@ -21,6 +21,14 @@ function getOwnerDisplayName(session) {
   return session.label || session.name || session.code || 'Company owner';
 }
 
+function filterOverridesForTrucks(dispatch, trucks = []) {
+  const truckSet = new Set((trucks || []).map((truck) => String(truck || '').trim()).filter(Boolean));
+  if (!truckSet.size) return [];
+
+  return (Array.isArray(dispatch?.truck_overrides) ? dispatch.truck_overrides : [])
+    .filter((entry) => truckSet.has(String(entry?.truck_number || '').trim()));
+}
+
 /**
  * Orchestrates owner truck replacement and swap behavior for a dispatch.
  * Keeps existing mutation ordering and side effects intact.
@@ -111,6 +119,7 @@ export async function runOwnerTruckEditMutation({
 
     const updatedDispatch = await base44.entities.Dispatch.update(dispatch.id, {
       trucks_assigned: normalizedNext,
+      truck_overrides: filterOverridesForTrucks(dispatch, normalizedNext),
       admin_activity_log: [
         {
           timestamp: new Date().toISOString(),
@@ -126,6 +135,7 @@ export async function runOwnerTruckEditMutation({
 
     const updatedConflictingDispatch = await base44.entities.Dispatch.update(conflictingDispatch.id, {
       trucks_assigned: dedupConflicting,
+      truck_overrides: filterOverridesForTrucks(conflictingDispatch, dedupConflicting),
       admin_activity_log: [
         {
           timestamp: new Date().toISOString(),
@@ -230,6 +240,7 @@ export async function runOwnerTruckEditMutation({
 
   const updatedDispatch = await base44.entities.Dispatch.update(dispatch.id, {
     trucks_assigned: normalizedNext,
+    truck_overrides: filterOverridesForTrucks(dispatch, normalizedNext),
     admin_activity_log: [
       {
         timestamp: new Date().toISOString(),

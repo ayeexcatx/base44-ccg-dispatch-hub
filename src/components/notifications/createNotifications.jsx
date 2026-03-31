@@ -2,6 +2,7 @@ import { base44 } from '@/api/base44Client';
 import { format, parseISO } from 'date-fns';
 import { formatDispatchDateTimeLine } from '@/components/notifications/dispatchDateTimeFormat';
 import { sendNotificationSmsIfEligible } from '@/components/notifications/notificationSmsDelivery';
+import { getEffectiveTruckStartTime } from '@/lib/dispatchTruckOverrides';
 import {
   buildConfirmedTruckSetForStatus,
   areAllRequiredTrucksConfirmed,
@@ -174,7 +175,11 @@ export async function createDriverDispatchNotification({
   if (!dispatch?.id || !driverAccessCodeId || !title || !message) return;
 
   const normalizedRequiredTrucks = [...new Set((requiredTrucks || []).filter(Boolean))];
-  const fullMessage = `${message}\n${formatDispatchDateTimeLine(dispatch)}`;
+  const effectiveTimes = [...new Set(normalizedRequiredTrucks
+    .map((truckNumber) => getEffectiveTruckStartTime(dispatch, truckNumber))
+    .filter(Boolean))];
+  const driverStartTime = effectiveTimes.length === 1 ? effectiveTimes[0] : null;
+  const fullMessage = `${message}\n${formatDispatchDateTimeLine(dispatch, 'at', driverStartTime)}`;
   const existingNotifications = await base44.entities.Notification.filter({
     recipient_type: 'AccessCode',
     recipient_access_code_id: driverAccessCodeId,

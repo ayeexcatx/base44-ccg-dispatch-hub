@@ -1,5 +1,6 @@
 import React from 'react';
 import { Clock } from 'lucide-react';
+import { getEffectiveTruckStartTime, hasMixedTruckStartTimes } from '@/lib/dispatchTruckOverrides';
 
 function DetailTextRow({ label, value, valueClassName = '' }) {
   if (!value) return null;
@@ -56,13 +57,20 @@ function AssignmentDetailBlock({ assignment, iconSize = 'h-4 w-4', textColor = '
   );
 }
 
-export default function DispatchDrawerAssignmentsSection({ dispatch, hasAdditional, formatTimeToAmPm }) {
+export default function DispatchDrawerAssignmentsSection({ dispatch, hasAdditional, formatTimeToAmPm, visibleTrucks = [] }) {
   if (!(hasAdditional || dispatch.instructions || dispatch.notes || dispatch.toll_status || dispatch.start_time || dispatch.start_location)) {
     return null;
   }
 
   const primary = { ...dispatch, formatTimeToAmPm, contentTextClass: 'text-slate-700', contentExtraClass: 'leading-relaxed' };
   const assignmentTitle = (dispatch.additional_assignments || []).length > 0 ? 'Assignment 1' : 'Assignment';
+  const shouldShowMixedTimes = hasMixedTruckStartTimes(dispatch, visibleTrucks);
+  const truckTimes = shouldShowMixedTimes
+    ? (visibleTrucks || []).map((truckNumber) => ({
+      truckNumber,
+      time: getEffectiveTruckStartTime(dispatch, truckNumber)
+    }))
+    : [];
 
   return (
     <section className="space-y-3">
@@ -72,6 +80,18 @@ export default function DispatchDrawerAssignmentsSection({ dispatch, hasAddition
         </div>
         <div className="mt-2.5 space-y-3">
           <AssignmentDetailBlock assignment={primary} />
+          {shouldShowMixedTimes && truckTimes.length > 0 && (
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-600">Truck Start Times</p>
+              <div className="mt-1 space-y-1">
+                {truckTimes.map((entry) => (
+                  <p key={entry.truckNumber} className="text-xs text-slate-700">
+                    <span className="font-mono">{entry.truckNumber}</span> — {formatTimeToAmPm(entry.time) || '—'}
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

@@ -31,6 +31,7 @@ import AdminDispatchesTabBar from '@/components/admin/admin-dispatches/AdminDisp
 import LiveDispatchBoard from '@/components/admin/admin-dispatches/LiveDispatchBoard';
 import AdminDispatchCard from '@/components/admin/admin-dispatches/AdminDispatchCard';
 import { resolveAdminDisplayNameFromSession } from '@/lib/adminIdentity';
+import { getEffectiveTruckStartTime } from '@/lib/dispatchTruckOverrides';
 
 const STATUS_ORDER = ['Scheduled', 'Dispatch', 'Amended', 'Cancelled'];
 const ACTIVE_LIVE_EXCLUDED_STATUSES = new Set(['Cancelled', 'Scheduled']);
@@ -276,6 +277,8 @@ const getDispatchAssignmentsForTruck = (dispatch, truckNumber) => {
 };
 
 const deriveTruckStartTime = (dispatch, truckNumber) => {
+  const effectiveOverrideTime = formatDispatchTime(getEffectiveTruckStartTime(dispatch, truckNumber));
+  if (effectiveOverrideTime) return effectiveOverrideTime;
   const assignmentsForTruck = getDispatchAssignmentsForTruck(dispatch, truckNumber);
   return assignmentsForTruck[0]?.startTime || formatDispatchTime(dispatch?.start_time);
 };

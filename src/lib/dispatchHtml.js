@@ -1,4 +1,11 @@
 import { format, parseISO } from 'date-fns';
+import {
+  getEffectiveTruckInstructions,
+  getEffectiveTruckNotes,
+  getEffectiveTruckStartLocation,
+  getEffectiveTruckStartTime,
+  hasMixedTruckStartTimes,
+} from '@/lib/dispatchTruckOverrides';
 
 const escapeHtml = (value) => String(value ?? '')
   .replaceAll('&', '&amp;')
@@ -83,6 +90,24 @@ export const buildDispatchHtml = ({
   timeEntries = [],
   driverAssignments = []
 }) => {
+  const visibleTrucks = truckNumber ? [truckNumber] : (Array.isArray(dispatch?.trucks_assigned) ? dispatch.trucks_assigned : []);
+  const showMixedTimes = hasMixedTruckStartTimes(dispatch, visibleTrucks);
+  const truckSpecificStartTimes = showMixedTimes
+    ? visibleTrucks.map((entryTruck) => ({
+      truck: entryTruck,
+      value: getEffectiveTruckStartTime(dispatch, entryTruck) || '—',
+    }))
+    : [];
+
+  const hasTruckLocationDifferences = visibleTrucks.some((entryTruck) =>
+    String(getEffectiveTruckStartLocation(dispatch, entryTruck) || '').trim() !== String(dispatch?.start_location || '').trim()
+  );
+  const hasTruckInstructionDifferences = visibleTrucks.some((entryTruck) =>
+    String(getEffectiveTruckInstructions(dispatch, entryTruck) || '').trim() !== String(dispatch?.instructions || '').trim()
+  );
+  const hasTruckNotesDifferences = visibleTrucks.some((entryTruck) =>
+    String(getEffectiveTruckNotes(dispatch, entryTruck) || '').trim() !== String(dispatch?.notes || '').trim()
+  );
   const assignments = [
     {
       job_number: dispatch?.job_number,
@@ -452,13 +477,24 @@ export const buildDispatchHtml = ({
               <div class="value">${escapeHtml(assignment?.job_number || '—')}</div>
 
               <div class="label">Start Time</div>
-              <div class="value">${escapeHtml(assignment?.start_time || '—')}</div>
+              <div class="value">
+                ${escapeHtml(assignment?.start_time || '—')}
+                ${index === 0 && truckSpecificStartTimes.length > 0 ? `<div style="margin-top:6px">${truckSpecificStartTimes.map((entry) => `<div>${escapeHtml(entry.truck)} — ${escapeHtml(entry.value)}</div>`).join('')}</div>` : ''}
+              </div>
 
               <div class="label">Start Location</div>
               <div class="value">${escapeHtml(assignment?.start_location || '—')}</div>
+              ${index === 0 && hasTruckLocationDifferences ? `
+              <div class="label">Truck Start Locations</div>
+              <div class="value">${visibleTrucks.map((entryTruck) => `${escapeHtml(entryTruck)} — ${escapeHtml(getEffectiveTruckStartLocation(dispatch, entryTruck) || '—')}`).join('<br />')}</div>
+              ` : ''}
 
               <div class="label">Instructions</div>
               <div class="value">${escapeHtml(assignment?.instructions || '—')}</div>
+              ${index === 0 && hasTruckInstructionDifferences ? `
+              <div class="label">Truck Instructions</div>
+              <div class="value">${visibleTrucks.map((entryTruck) => `${escapeHtml(entryTruck)} — ${escapeHtml(getEffectiveTruckInstructions(dispatch, entryTruck) || '—')}`).join('<br />')}</div>
+              ` : ''}
 
               <div class="label">Tolls</div>
               <div class="value">${escapeHtml(assignment?.toll_status || '—')}</div>
@@ -467,6 +503,7 @@ export const buildDispatchHtml = ({
             <div class="notes-box">
               <div class="notes-title">Notes</div>
               <div>${escapeHtml(assignment?.notes || '—')}</div>
+              ${index === 0 && hasTruckNotesDifferences ? `<div style="margin-top:6px">${visibleTrucks.map((entryTruck) => `${escapeHtml(entryTruck)} — ${escapeHtml(getEffectiveTruckNotes(dispatch, entryTruck) || '—')}`).join('<br />')}</div>` : ''}
             </div>
           </div>
         </div>

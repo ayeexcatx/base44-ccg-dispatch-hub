@@ -950,6 +950,7 @@ export default function DispatchDetailDrawer({
                 dispatch={dispatch}
                 hasAdditional={hasAdditional}
                 formatTimeToAmPm={formatTimeToAmPm}
+                visibleTrucks={visibleTrucks}
               />
             </>
           )}
