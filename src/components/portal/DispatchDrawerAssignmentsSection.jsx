@@ -17,7 +17,7 @@ function AssignmentDetailBlock({ assignment, iconSize = 'h-4 w-4', textColor = '
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {assignment.job_number && (
           <div className="rounded-lg border border-slate-200/80 bg-slate-50/70 px-3 py-2 text-sm leading-relaxed text-slate-700">
-            <span className="font-medium text-slate-600">Job Number</span>{' '}
+            <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-600">Job Number</span>{' '}
             <span className="font-semibold text-slate-800">{assignment.job_number}</span>
           </div>
         )}
@@ -67,7 +67,7 @@ export default function DispatchDrawerAssignmentsSection({ dispatch, hasAddition
   return (
     <section className="space-y-3">
       <div data-tour="dispatch-assignment-details" className="rounded-2xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/70 p-3.5 sm:p-4">
-        <div className="mb-2 rounded-md border border-slate-700/60 bg-slate-800/90 px-2.5 py-1">
+        <div className="mb-2 rounded-md border border-slate-700/50 bg-gradient-to-r from-slate-700/85 via-slate-700/65 to-slate-700/15 px-2.5 py-1">
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-100">{assignmentTitle}</p>
         </div>
         <div className="mt-2.5 space-y-3">

@@ -49,36 +49,38 @@ export default function DispatchDrawerIdentitySection({
       </div>
 
       <section className="rounded-2xl border border-slate-200/80 bg-gradient-to-b from-slate-50/80 to-white p-3.5 sm:p-4">
-        <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="mb-3">
           <div>
-            <div className="mb-1 rounded-md border border-slate-700/60 bg-slate-800/90 px-2.5 py-1">
+            <div className="mb-1 rounded-md border border-slate-700/50 bg-gradient-to-r from-slate-700/85 via-slate-700/65 to-slate-700/15 px-2.5 py-1">
               <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-100">Truck Assignments</p>
             </div>
             <p className="text-xs text-slate-500">Current truck coverage and driver visibility</p>
           </div>
-          {isOwner && (
-            <Button
-              type="button"
-              data-screenshot-exclude="true"
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs border-red-300 text-red-700 hover:bg-red-50 hover:text-red-800"
-              data-tour="dispatch-edit-trucks"
-              onClick={onToggleEditingTrucks}
-            >
-              <Pencil className="h-3.5 w-3.5 mr-1" />
-              {isEditingTrucks ? 'Cancel' : 'Edit Trucks'}
-            </Button>
-          )}
         </div>
 
         <div className="space-y-3">
           <div className="rounded-xl border border-slate-200/80 bg-white/90 p-2.5 sm:p-3">
-            <div className="mb-2 flex items-center gap-2 border-b border-slate-100 pb-2">
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-slate-100">
-                <Truck className="h-3.5 w-3.5 text-slate-500" />
+            <div className="mb-2 flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
+              <div className="flex min-w-0 items-center gap-2">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-slate-100">
+                  <Truck className="h-3.5 w-3.5 text-slate-500" />
+                </div>
+                <p className="text-xs font-medium text-slate-600">Assigned Trucks</p>
               </div>
-              <p className="text-xs font-medium text-slate-600">Assigned Trucks</p>
+              {isOwner && (
+                <Button
+                  type="button"
+                  data-screenshot-exclude="true"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs border-red-300 text-red-700 hover:bg-red-50 hover:text-red-800"
+                  data-tour="dispatch-edit-trucks"
+                  onClick={onToggleEditingTrucks}
+                >
+                  <Pencil className="h-3.5 w-3.5 mr-1" />
+                  {isEditingTrucks ? 'Cancel' : 'Edit Trucks'}
+                </Button>
+              )}
             </div>
             {(isAdmin || isOwner) ? (
               <div className="min-w-0 space-y-1.5">
