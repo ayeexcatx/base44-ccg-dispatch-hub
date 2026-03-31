@@ -596,14 +596,28 @@ export default function AdminDispatches() {
     mutationFn: async (id) => {
       await base44.entities.Dispatch.delete(id);
 
-      const [notifications, confirmations] = await Promise.all([
-      base44.entities.Notification.filter({ related_dispatch_id: id }, '-created_date', 1000),
-      base44.entities.Confirmation.filter({ dispatch_id: id }, '-confirmed_at', 1000)]);
+      const deleteRelatedNotifications = async () => {
+        while (true) {
+          const batch = await base44.entities.Notification.filter({ related_dispatch_id: id }, '-created_date', 1000);
+          if (!batch?.length) break;
+          await Promise.all(batch.map((notification) => base44.entities.Notification.delete(notification.id)));
+          if (batch.length < 1000) break;
+        }
+      };
+
+      const deleteRelatedConfirmations = async () => {
+        while (true) {
+          const batch = await base44.entities.Confirmation.filter({ dispatch_id: id }, '-confirmed_at', 1000);
+          if (!batch?.length) break;
+          await Promise.all(batch.map((confirmation) => base44.entities.Confirmation.delete(confirmation.id)));
+          if (batch.length < 1000) break;
+        }
+      };
 
       await Promise.all([
-      ...notifications.map((notification) => base44.entities.Notification.delete(notification.id)),
-      ...confirmations.map((confirmation) => base44.entities.Confirmation.delete(confirmation.id))]
-      );
+        deleteRelatedNotifications(),
+        deleteRelatedConfirmations(),
+      ]);
     },
     onSuccess: async () => {
       await Promise.all([
