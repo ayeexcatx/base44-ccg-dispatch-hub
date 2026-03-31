@@ -145,7 +145,12 @@ export default function Portal() {
     queryKey: ['template-notes'],
     queryFn: () => base44.entities.DispatchTemplateNotes.filter({ active_flag: true }),
   });
-  const { notifications, markDriverDispatchSeenAsync, markDriverRemovalNotificationSeenAsync } = useOwnerNotifications(session);
+  const {
+    notifications,
+    markReadAsync,
+    markDriverDispatchSeenAsync,
+    markDriverRemovalNotificationSeenAsync,
+  } = useOwnerNotifications(session);
 
   const confirmMutation = useMutation({
     mutationFn: (data) => base44.entities.Confirmation.create(data),
@@ -444,6 +449,16 @@ export default function Portal() {
     if (session?.code_type !== 'Driver' || !dispatch?.id) return;
     markDriverDispatchSeenAsync({ dispatch, notificationId: targetNotificationId || null }).catch(() => {});
   };
+
+  useEffect(() => {
+    if (effectiveView !== 'CompanyOwner') return;
+    if (!targetNotification?.id || targetNotification?.read_flag) return;
+    if (targetNotification?.notification_category !== 'driver_dispatch_seen') return;
+    if (!drawerDispatchId || !targetNotification?.related_dispatch_id) return;
+    if (normalizeId(targetNotification.related_dispatch_id) !== normalizeId(drawerDispatchId)) return;
+
+    markReadAsync(targetNotification.id).catch(() => {});
+  }, [drawerDispatchId, effectiveView, markReadAsync, targetNotification]);
 
   useEffect(() => {
     if (!targetDispatchId) {
