@@ -2,7 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import { SessionProvider, useSession } from './components/session/SessionContext';
 import { createPageUrl } from './utils';
 import { Link, useLocation } from 'react-router-dom';
-import { LogOut, Truck, Shield, Building2, Megaphone, TriangleAlert, CalendarDays, Home, CheckCircle2, FileText, UserRound, Bell, Menu } from 'lucide-react';
+import { LogOut, Truck, Shield, Building2, Megaphone, TriangleAlert, CalendarDays, Home, CheckCircle2, FileText, UserRound, Bell, Menu, BookOpenText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -98,10 +98,15 @@ function LayoutInner({ children, currentPageName }) {
       return;
     }
 
+    if (currentPageName === 'Protocols' && !isDriver) {
+      window.location.href = isAdmin ? createPageUrl('AdminDashboard') : createPageUrl('Home');
+      return;
+    }
+
     if ((currentPageName === 'Home' || currentPageName === 'Portal') && isAdmin) {
       window.location.href = createPageUrl('AdminDashboard');
     }
-  }, [session, loading, currentPageName, isAdmin, isOwner]);
+  }, [session, loading, currentPageName, isAdmin, isOwner, isDriver]);
 
   if (loading) {
     return (
@@ -134,6 +139,7 @@ function LayoutInner({ children, currentPageName }) {
     { page: 'Drivers', label: 'Drivers', icon: UserRound, tour: 'drivers-nav', visible: isOwner },
     { page: 'Notifications', label: 'Notifications', icon: Bell, visible: isOwner },
     { page: 'Incidents', label: 'Incidents', icon: TriangleAlert, tour: 'incidents-nav', visible: true },
+    { page: 'Protocols', label: 'Protocols', icon: BookOpenText, visible: isDriver },
   ].filter((item) => item.visible);
 
   const handleWorkspaceChange = (nextKey) => {

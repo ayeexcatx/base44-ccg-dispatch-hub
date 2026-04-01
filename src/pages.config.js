@@ -64,6 +64,7 @@ import Notifications from './pages/Notifications';
 import Portal from './pages/Portal';
 import Drivers from './pages/Drivers';
 import Profile from './pages/Profile';
+import Protocols from './pages/Protocols';
 import __Layout from './Layout.jsx';
 
 
@@ -84,6 +85,7 @@ export const PAGES = {
     "Notifications": Notifications,
     "Portal": Portal,
     "Profile": Profile,
+    "Protocols": Protocols,
 }
 
 export const pagesConfig = {

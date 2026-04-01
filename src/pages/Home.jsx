@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import AnnouncementCard from '@/components/announcements/AnnouncementCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Clock, Sun, Moon, ArrowRight, Megaphone, Truck } from 'lucide-react';
+import { Clock, Sun, Moon, ArrowRight, Megaphone, Truck, BookOpenText } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { getDispatchBucket } from '../components/portal/dispatchBuckets';
 import { createPageUrl } from '@/utils';
@@ -36,6 +36,10 @@ import {
   isAvailabilityRequestUnresolved,
   getLatestAvailabilityUpdateMs,
 } from '@/components/notifications/availabilityRequestNotifications';
+import {
+  driverProtocolAckQueryKey,
+  getDriverProtocolAcknowledgment,
+} from '@/services/driverProtocolAcknowledgmentService';
 
 const dateOnly = (v) => (typeof v === 'string' ? v.slice(0, 10) : v);
 const normalizeId = (value) => normalizeVisibilityId(value);
@@ -208,6 +212,11 @@ export default function Home() {
   const { data: driverAssignments = [] } = useQuery({
     queryKey: ['driver-dispatch-assignments', driverIdentity],
     queryFn: () => listDriverDispatchesForDriver(driverIdentity),
+    enabled: isDriver && !!driverIdentity,
+  });
+  const { data: protocolAcknowledgment = null } = useQuery({
+    queryKey: driverProtocolAckQueryKey(driverIdentity),
+    queryFn: () => getDriverProtocolAcknowledgment(driverIdentity),
     enabled: isDriver && !!driverIdentity,
   });
 
@@ -417,6 +426,24 @@ export default function Home() {
           }}
           onDismiss={() => dismissAvailabilityPromptForNow(activeAvailabilityRequestPrompt.id)}
         />
+      )}
+
+      {isDriver && !protocolAcknowledgment && (
+        <Card className="rounded-2xl border-2 border-amber-300 bg-amber-50 shadow-sm">
+          <CardContent className="p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-amber-900">Requires your attention</p>
+              <p className="text-sm text-amber-800 mt-1">Please review the safety requirements and company policies.</p>
+            </div>
+            <Button
+              onClick={() => navigate(createPageUrl('Protocols'))}
+              className="bg-amber-700 hover:bg-amber-800 text-white"
+            >
+              <BookOpenText className="h-4 w-4 mr-2" />
+              Review Protocols
+            </Button>
+          </CardContent>
+        </Card>
       )}
 
       {/* Announcements */}
