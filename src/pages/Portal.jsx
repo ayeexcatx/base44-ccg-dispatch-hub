@@ -18,7 +18,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Truck } from 'lucide-react';
-import { startOfDay, parseISO } from 'date-fns';
 import { areAllAssignedTrucksTimeComplete } from '@/lib/timeLogs';
 import { getDispatchBucket } from '../components/portal/dispatchBuckets';
 import { sortTemplateNotesForDispatch } from '@/lib/templateNotes';
@@ -32,7 +31,6 @@ import {
   resolveOwnerNotificationIfComplete,
 } from '../components/notifications/createNotifications';
 import { runOwnerTruckEditMutation } from '@/services/ownerTruckEditMutationService';
-import { autoArchiveDispatchAfterTimeLogging } from '@/services/dispatchArchiveMutationService';
 import { useConfirmationsQuery, confirmationsQueryKey } from '../components/notifications/useConfirmationsQuery';
 import { useOwnerNotifications } from '../components/notifications/useOwnerNotifications';
 import { getEffectiveView } from '@/components/session/workspaceUtils';
@@ -176,8 +174,6 @@ export default function Portal() {
     }
   };
 
-  const today = startOfDay(new Date());
-
   const timeEntryMutation = useMutation({
     mutationFn: async ({ dispatch, entries }) => {
       const savedEntries = [];
@@ -208,40 +204,6 @@ export default function Portal() {
           entered_by_type: actorMetadata.actorType || undefined,
         });
         savedEntries.push(created);
-      }
-
-      const dispatchEntries = timeEntries
-        .filter((te) => te.dispatch_id === dispatch.id)
-        .map((te) => {
-          const update = entries.find((entry) => entry.truck === te.truck_number);
-          if (!update) return te;
-          return {
-            ...te,
-            start_time: update.start !== undefined ? update.start : te.start_time,
-            end_time: update.end !== undefined ? update.end : te.end_time,
-          };
-        });
-
-      for (const entry of entries) {
-        if (dispatchEntries.some((te) => te.truck_number === entry.truck)) continue;
-        dispatchEntries.push({
-          dispatch_id: dispatch.id,
-          truck_number: entry.truck,
-          start_time: entry.start,
-          end_time: entry.end,
-        });
-      }
-
-      const allComplete = areAllAssignedTrucksTimeComplete(dispatch, dispatchEntries);
-      const dispatchDate = dispatch.date ? startOfDay(parseISO(dispatch.date)) : null;
-      const isPastOrToday = dispatchDate && dispatchDate <= today;
-      const wasAutoArchived = await autoArchiveDispatchAfterTimeLogging({
-        dispatch,
-        allComplete,
-        isPastOrToday
-      });
-      if (wasAutoArchived) {
-        queryClient.invalidateQueries({ queryKey: ['portal-dispatches', ownerCompanyId] });
       }
 
       return savedEntries;
