@@ -37,6 +37,7 @@ function LayoutInner({ children, currentPageName }) {
     );
     return match?.key || workspaceOptions[0]?.key || '';
   }, [workspaceOptions, effectiveView, activeCompanyId]);
+  const showWorkspaceSwitcher = workspaceOptions.length > 1;
 
   const isAdmin = effectiveView === 'Admin';
   const isOwner = effectiveView === 'CompanyOwner';
@@ -135,6 +136,13 @@ function LayoutInner({ children, currentPageName }) {
     { page: 'Incidents', label: 'Incidents', icon: TriangleAlert, tour: 'incidents-nav', visible: true },
   ].filter((item) => item.visible);
 
+  const handleWorkspaceChange = (nextKey) => {
+    const nextWorkspace = workspaceOptions.find((workspace) => workspace.key === nextKey);
+    if (!nextWorkspace) return;
+    setActiveWorkspace({ activeViewMode: nextWorkspace.mode, activeCompanyId: nextWorkspace.companyId });
+    window.location.href = createPageUrl(nextWorkspace.mode === 'Admin' ? 'AdminDashboard' : 'Home');
+  };
+
   return (
     <TutorialProvider session={session}>
       <AdminDispatchDrawerProvider session={session} isAdmin={isAdmin}>
@@ -156,18 +164,10 @@ function LayoutInner({ children, currentPageName }) {
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                {workspaceOptions.length > 1 && (
+                {showWorkspaceSwitcher && (
                   <div className="hidden sm:flex items-center gap-2">
                     <span className="text-xs text-slate-500">Workspace</span>
-                    <Select
-                      value={selectedWorkspaceKey}
-                      onValueChange={(nextKey) => {
-                        const nextWorkspace = workspaceOptions.find((workspace) => workspace.key === nextKey);
-                        if (!nextWorkspace) return;
-                        setActiveWorkspace({ activeViewMode: nextWorkspace.mode, activeCompanyId: nextWorkspace.companyId });
-                        window.location.href = createPageUrl(nextWorkspace.mode === 'Admin' ? 'AdminDashboard' : 'Home');
-                      }}
-                    >
+                    <Select value={selectedWorkspaceKey} onValueChange={handleWorkspaceChange}>
                       <SelectTrigger className="h-8 min-w-36 text-xs bg-white">
                         <SelectValue placeholder="Workspace" />
                       </SelectTrigger>
@@ -192,6 +192,25 @@ function LayoutInner({ children, currentPageName }) {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      {showWorkspaceSwitcher && (
+                        <>
+                          <div className="px-2 pt-2 pb-1 text-[11px] font-medium text-slate-500">Workspace</div>
+                          <div className="px-2 pb-2">
+                            <Select value={selectedWorkspaceKey} onValueChange={handleWorkspaceChange}>
+                              <SelectTrigger className="h-8 min-w-48 text-xs bg-white">
+                                <SelectValue placeholder="Workspace" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {workspaceOptions.map((workspace) => (
+                                  <SelectItem key={workspace.key} value={workspace.key}>
+                                    {workspace.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </>
+                      )}
                       <DropdownMenuItem asChild>
                         <Link to={createPageUrl('Profile')} className="cursor-pointer">
                           <UserRound className="h-4 w-4" />
