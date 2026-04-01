@@ -1,8 +1,8 @@
 import React from 'react';
-import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Truck } from 'lucide-react';
 import NotificationStatusBadge from './NotificationStatusBadge';
+import { formatAdminNotificationTime } from './notificationTimeFormat';
 
 export default function NotificationBellItem({
   notification,
@@ -47,7 +47,7 @@ export default function NotificationBellItem({
             />
           </div>
           <p className="mt-2 text-xs text-slate-400">
-            {format(new Date(notification.created_date), 'MMM d, h:mm a')}
+            {formatAdminNotificationTime(notification.created_date)}
           </p>
         </div>
       </div>

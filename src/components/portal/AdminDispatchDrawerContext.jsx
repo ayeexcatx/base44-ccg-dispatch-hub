@@ -20,9 +20,19 @@ export function AdminDispatchDrawerProvider({ children, session, isAdmin }) {
   });
 
   const { data: dispatches = [] } = useQuery({
-    queryKey: ['dispatches-admin-overlay'],
+    queryKey: ['dispatches-admin'],
     queryFn: () => base44.entities.Dispatch.list('-date', 500),
     enabled: !!isAdmin,
+  });
+
+  const { data: targetDispatch = null } = useQuery({
+    queryKey: ['dispatch-admin-overlay-target', drawerState.dispatchId],
+    queryFn: async () => {
+      if (!drawerState.dispatchId) return null;
+      const results = await base44.entities.Dispatch.filter({ id: drawerState.dispatchId }, '-created_date', 1);
+      return results?.[0] || null;
+    },
+    enabled: !!isAdmin && !!drawerState.dispatchId,
   });
 
   const { data: companies = [] } = useQuery({
@@ -50,8 +60,13 @@ export function AdminDispatchDrawerProvider({ children, session, isAdmin }) {
   });
 
   const previewDispatch = useMemo(
-    () => (drawerState.dispatchId ? dispatches.find((dispatch) => String(dispatch.id) === String(drawerState.dispatchId)) || null : null),
-    [dispatches, drawerState.dispatchId],
+    () => {
+      if (!drawerState.dispatchId) return null;
+      return targetDispatch
+        || dispatches.find((dispatch) => String(dispatch.id) === String(drawerState.dispatchId))
+        || null;
+    },
+    [dispatches, drawerState.dispatchId, targetDispatch],
   );
 
   const companyMap = useMemo(
@@ -62,7 +77,12 @@ export function AdminDispatchDrawerProvider({ children, session, isAdmin }) {
   const openAdminDispatchDrawer = useCallback(async ({ dispatchId, notificationId = '' } = {}) => {
     if (!isAdmin || !dispatchId) return;
 
-    setDrawerState({ open: true, dispatchId: String(dispatchId), notificationId: notificationId ? String(notificationId) : '' });
+    const normalizedDispatchId = String(dispatchId);
+
+    queryClient.invalidateQueries({ queryKey: ['dispatches-admin'] });
+    queryClient.invalidateQueries({ queryKey: ['dispatch-admin-overlay-target', normalizedDispatchId] });
+
+    setDrawerState({ open: true, dispatchId: normalizedDispatchId, notificationId: notificationId ? String(notificationId) : '' });
 
     if (notificationId) {
       try {
