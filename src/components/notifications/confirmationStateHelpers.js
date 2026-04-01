@@ -7,11 +7,22 @@ export function parseStatusFromDispatchStatusKey(dispatchStatusKey) {
   return parts.length >= 2 ? parts[1] : '';
 }
 
+function normalizeTruckNumber(truck) {
+  return String(truck || '').trim();
+}
+
 /**
  * Return unique truthy truck numbers while preserving first-seen order.
  */
 export function uniqueTruckNumbers(trucks = []) {
-  return [...new Set((trucks || []).filter(Boolean))];
+  const seen = new Set();
+  return (trucks || []).reduce((result, truck) => {
+    const normalizedTruck = normalizeTruckNumber(truck);
+    if (!normalizedTruck || seen.has(normalizedTruck)) return result;
+    seen.add(normalizedTruck);
+    result.push(normalizedTruck);
+    return result;
+  }, []);
 }
 
 /**
@@ -22,14 +33,16 @@ export function buildConfirmedTruckSetForStatus({
   dispatchId,
   status,
 }) {
+  const normalizedDispatchId = String(dispatchId || '').trim();
+  const normalizedStatus = String(status || '').trim();
   return new Set(
     (confirmations || [])
       .filter((confirmation) => (
-        confirmation.dispatch_id === dispatchId &&
-        confirmation.confirmation_type === status &&
-        confirmation?.truck_number
+        String(confirmation.dispatch_id || '').trim() === normalizedDispatchId &&
+        String(confirmation.confirmation_type || '').trim() === normalizedStatus &&
+        normalizeTruckNumber(confirmation?.truck_number)
       ))
-      .map((confirmation) => confirmation.truck_number)
+      .map((confirmation) => normalizeTruckNumber(confirmation.truck_number))
   );
 }
 
@@ -70,7 +83,7 @@ export function deriveConfirmationCoverage(requiredTrucks = [], confirmedTruckSe
  * Determine whether all required trucks are present in the confirmed set.
  */
 export function areAllRequiredTrucksConfirmed(requiredTrucks = [], confirmedTruckSet = new Set()) {
-  return (requiredTrucks || []).every((truck) => confirmedTruckSet.has(truck));
+  return (requiredTrucks || []).every((truck) => confirmedTruckSet.has(normalizeTruckNumber(truck)));
 }
 
 /**
@@ -88,10 +101,10 @@ export function reconcileRequiredTruckList({
   dispatchTrucks = [],
   ownerAllowedTrucks = [],
 }) {
-  const currentDispatchTrucks = new Set(dispatchTrucks || []);
-  const allowedTrucks = new Set(ownerAllowedTrucks || []);
+  const currentDispatchTrucks = new Set((dispatchTrucks || []).map(normalizeTruckNumber).filter(Boolean));
+  const allowedTrucks = new Set((ownerAllowedTrucks || []).map(normalizeTruckNumber).filter(Boolean));
 
   return (existingRequired || []).filter((truck) =>
-    currentDispatchTrucks.has(truck) && allowedTrucks.has(truck)
+    currentDispatchTrucks.has(normalizeTruckNumber(truck)) && allowedTrucks.has(normalizeTruckNumber(truck))
   );
 }

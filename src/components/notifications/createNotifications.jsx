@@ -140,12 +140,16 @@ function areAssignedTruckListsEqual(previousAssignments = [], nextAssignments = 
 }
 
 function getCompanyScopedDispatchTrucks(dispatch = {}, company = null) {
-  const dispatchTrucks = Array.isArray(dispatch?.trucks_assigned) ? dispatch.trucks_assigned : [];
-  const companyTrucks = Array.isArray(company?.trucks) ? company.trucks : [];
+  const dispatchTrucks = Array.isArray(dispatch?.trucks_assigned)
+    ? dispatch.trucks_assigned.map((truck) => String(truck || '').trim()).filter(Boolean)
+    : [];
+  const companyTrucks = Array.isArray(company?.trucks)
+    ? company.trucks.map((truck) => String(truck || '').trim()).filter(Boolean)
+    : [];
 
-  if (!companyTrucks.length) return [...new Set(dispatchTrucks.filter(Boolean))];
+  if (!companyTrucks.length) return [...new Set(dispatchTrucks)];
 
-  const companyTruckSet = new Set(companyTrucks.filter(Boolean));
+  const companyTruckSet = new Set(companyTrucks);
   return [...new Set(dispatchTrucks.filter((truck) => companyTruckSet.has(truck)))];
 }
 
