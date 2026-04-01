@@ -43,7 +43,7 @@ export default function Notifications() {
   const notificationScopeCompanyId = isOwner ? ownerWorkspaceCompanyId : activeCompanyId;
   const { notifications, unreadCount, isLoading, markReadAsync, markAllRead, markAllReadPending } = useOwnerNotifications(session);
 
-  const { data: confirmations = [] } = useConfirmationsQuery(isOwner);
+  const { data: confirmations = [] } = useConfirmationsQuery(isOwner, notificationScopeCompanyId);
 
   const { data: dispatches = [] } = useQuery({
     queryKey: ['portal-dispatches', notificationScopeCompanyId],

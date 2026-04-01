@@ -91,7 +91,7 @@ export function useOwnerNotifications(session) {
     enabled: isDriver && !!driverIdentity,
   });
 
-  const { data: confirmations = [] } = useConfirmationsQuery(isOwner);
+  const { data: confirmations = [] } = useConfirmationsQuery(isOwner, notificationScopeCompanyId);
   const { data: ownerCompany = null } = useQuery({
     queryKey: ['owner-company-notification-scope', notificationScopeCompanyId],
     queryFn: async () => {

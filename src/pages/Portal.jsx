@@ -120,7 +120,7 @@ export default function Portal() {
     queryFn: () => base44.entities.Company.list(),
   });
 
-  const { data: confirmations = [] } = useConfirmationsQuery(true);
+  const { data: confirmations = [] } = useConfirmationsQuery(true, effectiveView === 'CompanyOwner' ? ownerCompanyId : null);
   const [swapConfirmationState, setSwapConfirmationState] = useState({
     open: false,
     incomingTruck: '',

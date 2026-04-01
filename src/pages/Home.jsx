@@ -202,7 +202,7 @@ export default function Home() {
   // Shared notifications hook — same query key as bell + notifications page
   const { notifications, unreadCount, markReadAsync } = useOwnerNotifications(session);
 
-  const { data: confirmations = [] } = useConfirmationsQuery(isOwner);
+  const { data: confirmations = [] } = useConfirmationsQuery(isOwner, ownerWorkspaceCompanyId);
 
 
   const { data: driverAssignments = [] } = useQuery({

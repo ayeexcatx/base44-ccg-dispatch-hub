@@ -79,7 +79,7 @@ export default function NotificationBell({ session }) {
     })
   );
 
-  const { data: confirmations = [] } = useConfirmationsQuery(isOwner);
+  const { data: confirmations = [] } = useConfirmationsQuery(isOwner, notificationScopeCompanyId);
   const { data: ownerCompany = null } = useQuery({
     queryKey: ['owner-company-notification-scope', notificationScopeCompanyId],
     queryFn: async () => {
