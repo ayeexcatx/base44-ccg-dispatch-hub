@@ -17,6 +17,8 @@ import { format } from 'date-fns';
 import { calculateCompanyScore, SCORING_EVENT_TYPES, SCORING_PERIODS } from '@/lib/companyScoring';
 import { getCompanySmsContact, getDriverSmsState } from '@/lib/sms';
 import { validateAdminAccessCode } from '@/lib/adminAccessCodeValidation';
+import { reviewCompanyProfileChangeRequest } from '@/services/companyProfileChangeReviewService';
+import { toast } from 'sonner';
 
 const CONTACT_TYPE_OPTIONS = ['Office', 'Cell', 'Email', 'Fax', 'Other'];
 const PHONE_CONTACT_TYPES = ['Office', 'Cell', 'Fax'];
@@ -127,8 +129,6 @@ const InfoValueCard = ({ label, value, icon: Icon, tone = 'neutral', badge }) =>
   </div>
 );
 
-
-const hasOwn = (obj, key) => Object.prototype.hasOwnProperty.call(obj || {}, key);
 
 const renderContactMethodsList = (contactMethods = [], fallbackText = '') => {
   if (Array.isArray(contactMethods) && contactMethods.some((method) => method?.value)) {
@@ -375,31 +375,15 @@ export default function AdminCompanies() {
   });
 
   const reviewProfileChangeMutation = useMutation({
-    mutationFn: async ({ company, action }) => {
-      const pending = company?.pending_profile_change;
-      if (!pending) return company;
-      if (action === 'approve') {
-        const reviewTimestamp = new Date().toISOString();
-        const approvedPayload = {
-          pending_profile_change: { ...pending, status: 'Approved', reviewed_at: reviewTimestamp },
-        };
-
-        if (hasOwn(pending, 'requested_name')) approvedPayload.name = pending.requested_name;
-        if (hasOwn(pending, 'requested_address')) approvedPayload.address = pending.requested_address;
-        if (hasOwn(pending, 'requested_contact_methods')) approvedPayload.contact_methods = pending.requested_contact_methods;
-        if (hasOwn(pending, 'requested_contact_info')) approvedPayload.contact_info = pending.requested_contact_info;
-
-        const approvedCompany = await base44.entities.Company.update(company.id, approvedPayload);
-        await base44.entities.Company.update(company.id, { pending_profile_change: null });
-        return approvedCompany;
-      }
-      return base44.entities.Company.update(company.id, {
-        pending_profile_change: { ...pending, status: 'Rejected', reviewed_at: new Date().toISOString() },
-      });
-    },
-    onSuccess: () => {
+    mutationFn: ({ company, action }) => reviewCompanyProfileChangeRequest({ company, action }),
+    onSuccess: (updatedCompany, { action }) => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       queryClient.invalidateQueries({ queryKey: ['access-codes'] });
+      setSelectedCompanyDetail((prev) => (prev?.id === updatedCompany?.id ? updatedCompany : prev));
+      toast.success(action === 'approve' ? 'Profile change approved' : 'Profile change rejected');
+    },
+    onError: (error) => {
+      toast.error(error?.message || 'Unable to review company profile request');
     },
   });
 
