@@ -57,6 +57,22 @@ export function formatOwnerDispatchMessage(message) {
   return [dateTimeLine, detailParts.join(' • ')].filter(Boolean).join('\n');
 }
 
+function formatDriverSeenMessage(message) {
+  if (typeof message !== 'string') return message;
+
+  const [dateTimeLine, detailsLine, ...restLines] = message.split('\n');
+  if (!detailsLine) return message;
+
+  const detailParts = detailsLine
+    .split(' • ')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .filter((part) => !/^Trucks?:\s*/i.test(part))
+    .filter((part) => !/^\d+\s+trucks?\s+seen$/i.test(part));
+
+  return [dateTimeLine, detailParts.join(' • '), ...restLines].filter(Boolean).join('\n');
+}
+
 export function getNotificationDisplay(notification, dispatch = null) {
   const isAdminHeadlineNotification = new Set([
     'admin_dispatch_all_confirmed',
@@ -71,6 +87,14 @@ export function getNotificationDisplay(notification, dispatch = null) {
       title: 'Your dispatch has been updated',
       message: messageParts.join('\n'),
       isOwnerDispatchStatus: true,
+    };
+  }
+
+  if (notification?.notification_category === 'driver_dispatch_seen') {
+    return {
+      title: notification?.title,
+      message: formatDriverSeenMessage(notification?.message),
+      isOwnerDispatchStatus: false,
     };
   }
 
