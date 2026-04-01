@@ -26,8 +26,11 @@ export default function DispatchDriverAssignmentsSection({
   onCancelDispatch,
   sendMutationPending,
   cancelMutationPending,
+  dispatchStatus,
 }) {
   if (trucksAssigned.length === 0 || !shouldShowDriverAssignmentControls) return null;
+  const normalizedDispatchStatus = String(dispatchStatus || '').trim().toLowerCase();
+  const isDispatchCanceled = normalizedDispatchStatus === 'cancelled' || normalizedDispatchStatus === 'canceled';
 
   return (
     <section data-screenshot-exclude="true" data-tour="dispatch-driver-assignments" className="rounded-xl border border-slate-200 bg-white p-3 sm:p-3.5 space-y-2">
@@ -46,6 +49,7 @@ export default function DispatchDriverAssignmentsSection({
         const status = STATUS_LABELS[String(row?.delivery_status || 'staged').toLowerCase()] || 'Staged';
         const canSend = row?.id && row?.active_flag !== false && !row?.is_visible_to_driver;
         const canCancel = row?.id && row?.active_flag !== false && row?.is_visible_to_driver;
+        const isDispatchCanceledAndDriverAlreadyAutoCanceled = isDispatchCanceled && canCancel;
 
         return (
           <div key={`driver-${truckNumber}`} className="grid grid-cols-[70px,1fr] items-start gap-2 border-t pt-2 first:border-t-0 first:pt-0">
@@ -76,7 +80,14 @@ export default function DispatchDriverAssignmentsSection({
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] text-slate-500">Status: {status}</span>
                   {canSend && <Button type="button" size="sm" className="h-7 text-xs" onClick={() => onSendDispatch(truckNumber)}>Send</Button>}
-                  {canCancel && <Button type="button" size="sm" variant="outline" className="h-7 text-xs border-amber-300 text-amber-700 hover:bg-amber-50" onClick={() => onCancelDispatch(truckNumber)}>Cancel</Button>}
+                  {canCancel && !isDispatchCanceledAndDriverAlreadyAutoCanceled && (
+                    <Button type="button" size="sm" variant="outline" className="h-7 text-xs border-amber-300 text-amber-700 hover:bg-amber-50" onClick={() => onCancelDispatch(truckNumber)}>Cancel</Button>
+                  )}
+                  {isDispatchCanceledAndDriverAlreadyAutoCanceled && (
+                    <Button type="button" size="sm" variant="outline" disabled className="h-7 text-xs border-slate-200 text-slate-500">
+                      Already canceled
+                    </Button>
+                  )}
                   {row?.last_seen_at && <span className="text-[11px] text-emerald-700">Seen</span>}
                 </div>
                 {driverAssignmentErrors[truckNumber] && (

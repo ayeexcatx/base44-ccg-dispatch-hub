@@ -64,6 +64,7 @@ export default function DispatchDriverConfirmationSection({
           onCancelDispatch={onCancelDispatch}
           sendMutationPending={sendMutationPending}
           cancelMutationPending={cancelMutationPending}
+          dispatchStatus={dispatch?.status}
         />
       )}
 
