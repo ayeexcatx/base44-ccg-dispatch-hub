@@ -959,11 +959,13 @@ export default function DispatchDetailDrawer({
             </>
           )}
 
-          <DispatchDrawerTemplateNotesSection
-            boxNotes={boxNotes}
-            generalNotes={generalNotes}
-            NOTE_DISPLAY_WIDTH={NOTE_DISPLAY_WIDTH}
-          />
+          {dispatch.status !== 'Scheduled' && (
+            <DispatchDrawerTemplateNotesSection
+              boxNotes={boxNotes}
+              generalNotes={generalNotes}
+              NOTE_DISPLAY_WIDTH={NOTE_DISPLAY_WIDTH}
+            />
+          )}
           </div>
 
           {/* Actions */}
