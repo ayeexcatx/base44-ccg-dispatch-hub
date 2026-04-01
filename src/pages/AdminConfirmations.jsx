@@ -68,6 +68,13 @@ function formatStandardDateTime(value) {
 
 function formatDispatchDate(value) {
   if (!value) return '—';
+  if (typeof value === 'string') {
+    const dateOnlyMatch = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (dateOnlyMatch) {
+      const [, year, month, day] = dateOnlyMatch;
+      return `${month}-${day}-${year}`;
+    }
+  }
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return value;
   return format(parsed, 'MM-dd-yyyy');
