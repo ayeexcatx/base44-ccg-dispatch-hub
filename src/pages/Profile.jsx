@@ -20,6 +20,7 @@ import DriverProfileSmsCard from '@/components/profile/DriverProfileSmsCard';
 import { CompanyOwnerProfileOverview, CompanyOwnerSmsCard } from '@/components/profile/CompanyOwnerProfileSections';
 import SmsConsentDisclosure from '@/components/profile/SmsConsentDisclosure';
 import { getEffectiveView } from '@/components/session/workspaceUtils';
+import { getSmsRules } from '@/lib/smsConfig';
 import { resolveAdminDisplayName, resolveProfileName } from '@/lib/adminIdentity';
 import { resolveCompanyOwnerCompanyId } from '@/services/currentAppIdentityService';
 
@@ -27,6 +28,8 @@ const CONTACT_TYPE_OPTIONS = ['Office', 'Cell', 'Email', 'Fax', 'Other'];
 
 async function sendProfileSmsConfirmation(phone, message) {
   if (!phone) return;
+  const smsRules = await getSmsRules();
+  if (!smsRules.opt_out_confirmation_sms) return;
   try {
     await base44.functions.invoke('sendNotificationSms/entry', { phone, message });
   } catch (error) {
@@ -278,7 +281,6 @@ function AdminProfile({ session }) {
           {!adminAccessCode && (
             <p className="text-sm text-amber-700">No active Admin access-code config was found. Name remains per-user, but shared admin SMS settings cannot be saved until an active Admin code exists.</p>
           )}
-          {!adminSmsState.deliveryActive && <p className="text-sm text-slate-500">Admin SMS delivery is not enabled yet. Saving this preference does not change current notification behavior.</p>}
         </CardContent>
       </Card>
 

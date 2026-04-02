@@ -57,6 +57,7 @@ import AdminConfirmations from './pages/AdminConfirmations';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminDispatches from './pages/AdminDispatches';
 import AdminTemplateNotes from './pages/AdminTemplateNotes';
+import AdminSmsCenter from './pages/AdminSmsCenter';
 import Availability from './pages/Availability';
 import Home from './pages/Home';
 import Incidents from './pages/Incidents';
@@ -78,6 +79,7 @@ export const PAGES = {
     "AdminDashboard": AdminDashboard,
     "AdminDispatches": AdminDispatches,
     "AdminTemplateNotes": AdminTemplateNotes,
+    "AdminSmsCenter": AdminSmsCenter,
     "Availability": Availability,
     "Drivers": Drivers,
     "Home": Home,

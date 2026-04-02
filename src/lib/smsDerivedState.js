@@ -41,12 +41,13 @@ export function getCompanyOwnerEffectiveSmsState({ accessCode, normalizedPhone }
 }
 
 /**
- * Admin profile stores preference, while product delivery remains inactive currently.
+ * Admin SMS is product-active and governed by in-app settings and shared admin config.
  */
 export function getAdminSmsProductState(accessCode) {
   return {
     optedIn: accessCode?.sms_enabled === true,
     optedOut: Boolean(accessCode?.sms_opted_out_at),
-    deliveryActive: false,
+    hasValidPhone: hasUsSmsPhone(accessCode?.sms_phone || ''),
+    deliveryActive: true,
   };
 }

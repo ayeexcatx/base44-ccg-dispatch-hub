@@ -1,7 +1,9 @@
 import { base44 } from '@/api/base44Client';
 import { formatDispatchDateTimeLine } from '@/components/notifications/dispatchDateTimeFormat';
-import { getCompanyOwnerSmsState, getDriverSmsState } from '@/lib/sms';
+import { getAdminSmsProductState, getCompanyOwnerSmsState, getDriverSmsState } from '@/lib/sms';
 import { getEffectiveTruckStartTime } from '@/lib/dispatchTruckOverrides';
+import { normalizeUsSmsPhone } from '@/lib/smsPhone';
+import { getSmsRules, resolveEffectiveSharedAdminAccessCode, resolveSmsRuleKeyForNotification } from '@/lib/smsConfig';
 
 const SMS_PROVIDER = 'signalwire';
 const SMS_BRAND_PREFIX = 'CCG Transit:';
@@ -122,7 +124,7 @@ async function resolveSmsEligibility(recipient) {
   if (recipient.sms_opted_out_at) {
     return {
       smsEnabled: false,
-      smsPhone: normalizeText(recipient.sms_phone),
+      smsPhone: normalizeUsSmsPhone(recipient.sms_phone),
       skipReason: 'sms_opted_out',
     };
   }
@@ -150,10 +152,11 @@ async function resolveSmsEligibility(recipient) {
   }
 
   if (recipient.code_type === 'Admin') {
+    const adminState = getAdminSmsProductState(recipient);
     return {
-      smsEnabled: recipient.sms_enabled === true,
-      smsPhone: normalizeText(recipient.sms_phone),
-      skipReason: recipient.sms_enabled === true ? null : 'sms_disabled',
+      smsEnabled: adminState.optedIn && !adminState.optedOut && adminState.hasValidPhone,
+      smsPhone: normalizeUsSmsPhone(recipient.sms_phone),
+      skipReason: adminState.optedOut ? 'sms_opted_out' : !adminState.optedIn ? 'sms_disabled' : !adminState.hasValidPhone ? 'missing_sms_phone' : null,
     };
   }
 
@@ -164,7 +167,26 @@ async function resolveSmsEligibility(recipient) {
   };
 }
 
+
+async function evaluateRuleEligibility(notification, recipient) {
+  const smsRules = await getSmsRules();
+  const ruleKey = resolveSmsRuleKeyForNotification(notification, recipient);
+
+  if (!ruleKey) {
+    return { allowed: true, ruleKey: null };
+  }
+
+  return {
+    allowed: smsRules[ruleKey] !== false,
+    ruleKey,
+  };
+}
+
 async function resolveRecipientAccessCode(notification) {
+  if (notification?.recipient_type === 'Admin') {
+    return resolveEffectiveSharedAdminAccessCode();
+  }
+
   const recipientId = notification?.recipient_access_code_id || notification?.recipient_id;
   if (!recipientId) return null;
 
@@ -184,7 +206,7 @@ export async function sendNotificationSmsIfEligible(notification) {
       title: notification.title || null,
     });
 
-    if (notification.recipient_type !== 'AccessCode') {
+    if (!['AccessCode', 'Admin'].includes(notification.recipient_type)) {
       console.log('SMS debug exit: recipient not AccessCode', {
         notificationId: notification.id,
         recipientType: notification.recipient_type,
@@ -198,7 +220,7 @@ export async function sendNotificationSmsIfEligible(notification) {
         phone: null,
         message: notification.message || null,
         status: 'skipped',
-        skipReason: 'recipient_not_access_code',
+        skipReason: 'recipient_not_supported',
       });
       return;
     }
@@ -217,7 +239,20 @@ export async function sendNotificationSmsIfEligible(notification) {
         phone: null,
         message: notification.message || null,
         status: 'skipped',
-        skipReason: 'recipient_access_code_not_found',
+        skipReason: notification.recipient_type === 'Admin' ? 'shared_admin_config_not_found' : 'recipient_access_code_not_found',
+      });
+      return;
+    }
+
+    const { allowed, ruleKey } = await evaluateRuleEligibility(notification, recipient);
+    if (!allowed) {
+      await createSmsLog({
+        notification,
+        recipient,
+        phone: null,
+        message: notification.message || null,
+        status: 'skipped',
+        skipReason: `rule_disabled:${ruleKey}` ,
       });
       return;
     }
