@@ -1,4 +1,4 @@
-import { createClient } from 'npm:@base44/sdk@0.8.20';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
 type SignalWireInboundPayload = {
   MessageSid?: string;
@@ -83,9 +83,9 @@ function xmlResponse(message?: string | null): Response {
   });
 }
 
-async function createInboundLog(base44: ReturnType<typeof createClient>, payload: Record<string, unknown>) {
+async function createInboundLog(base44: ReturnType<typeof createClientFromRequest>, payload: Record<string, unknown>) {
   try {
-    await base44.entities.General.create(payload);
+    await base44.asServiceRole.entities.General.create(payload);
     return true;
   } catch (error) {
     console.error('signalwireSmsInboundWebhook: failed to create sms_inbound_log', error);
@@ -105,10 +105,7 @@ Deno.serve(async (req: Request) => {
 
     const providerMessageId = pickPayloadValue(payload, ['MessageSid', 'SmsSid', 'message_sid', 'sms_sid']) || null;
 
-    const base44 = createClient({
-      appId: Deno.env.get('BASE44_APP_ID') || '',
-      apiKey: Deno.env.get('BASE44_SERVICE_ROLE_KEY') || '',
-    });
+    const base44 = createClientFromRequest(req);
 
     const normalizedFrom = normalizePhoneForMatch(from);
     console.log('signalwireSmsInboundWebhook inbound received', {
@@ -120,7 +117,7 @@ Deno.serve(async (req: Request) => {
       providerMessageId,
     });
 
-    const candidates = await base44.entities.AccessCode.filter({
+    const candidates = await base44.asServiceRole.entities.AccessCode.filter({
       sms_phone: from,
     }, '-created_date', 5);
 
@@ -128,18 +125,18 @@ Deno.serve(async (req: Request) => {
 
     if (!accessCode && normalizedFrom) {
       const plusOne = `+${normalizedFrom}`;
-      const altCandidates = await base44.entities.AccessCode.filter({ sms_phone: plusOne }, '-created_date', 5);
+      const altCandidates = await base44.asServiceRole.entities.AccessCode.filter({ sms_phone: plusOne }, '-created_date', 5);
       accessCode = altCandidates?.[0] || null;
     }
 
     if (!accessCode && normalizedFrom) {
       const local10 = normalizedFrom.length === 11 && normalizedFrom.startsWith('1') ? normalizedFrom.slice(1) : normalizedFrom;
-      const hyphenCandidates = await base44.entities.AccessCode.filter({ sms_phone: local10 }, '-created_date', 5);
+      const hyphenCandidates = await base44.asServiceRole.entities.AccessCode.filter({ sms_phone: local10 }, '-created_date', 5);
       accessCode = hyphenCandidates?.[0] || null;
     }
 
     if (!accessCode && normalizedFrom) {
-      const normalizedCandidates = await base44.entities.AccessCode.filter({}, '-created_date', 500);
+      const normalizedCandidates = await base44.asServiceRole.entities.AccessCode.filter({}, '-created_date', 500);
       accessCode = (normalizedCandidates || []).find((candidate: any) =>
         normalizePhoneForMatch(String(candidate?.sms_phone || '')) === normalizedFrom
       ) || null;
@@ -161,7 +158,7 @@ Deno.serve(async (req: Request) => {
     if (!accessCode) {
       action = 'unknown_sender';
     } else if (STOP_KEYWORDS.has(keyword)) {
-      await base44.entities.AccessCode.update(accessCode.id, {
+      await base44.asServiceRole.entities.AccessCode.update(accessCode.id, {
         sms_enabled: false,
         sms_opted_out_at: new Date().toISOString(),
       });

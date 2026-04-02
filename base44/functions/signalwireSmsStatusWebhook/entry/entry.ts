@@ -1,4 +1,4 @@
-import { createClient } from 'npm:@base44/sdk@0.8.20';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
 type SignalWireWebhookPayload = {
   MessageSid?: string;
@@ -73,12 +73,9 @@ Deno.serve(async (req: Request) => {
 
     const normalizedStatus = normalizeStatus(messageStatus);
 
-    const base44 = createClient({
-      appId: Deno.env.get('BASE44_APP_ID') || '',
-      apiKey: Deno.env.get('BASE44_SERVICE_ROLE_KEY') || '',
-    });
+    const base44 = createClientFromRequest(req);
 
-    const existingLogs = await base44.entities.General.filter({
+    const existingLogs = await base44.asServiceRole.entities.General.filter({
       record_type: 'sms_log',
       provider_message_id: messageSid,
     }, '-created_date', 1);
@@ -113,7 +110,7 @@ Deno.serve(async (req: Request) => {
       updateData.error_message = buildErrorMessage(payload);
     }
 
-    await base44.entities.General.update(existingLog.id, updateData);
+    await base44.asServiceRole.entities.General.update(existingLog.id, updateData);
 
     return new Response(JSON.stringify({
       ok: true,
