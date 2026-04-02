@@ -1,5 +1,5 @@
 import { getAdminSmsProductState, getCompanyOwnerEffectiveSmsState, getDriverEffectiveSmsState } from '@/lib/smsDerivedState';
-import { hasUsSmsPhone } from '@/lib/smsPhone';
+import { hasUsSmsPhone, normalizeUsSmsPhone } from '@/lib/smsPhone';
 
 export const PHONE_CONTACT_TYPES = ['Office', 'Cell', 'Fax'];
 
@@ -16,17 +16,7 @@ export function formatPhoneNumber(value) {
 }
 
 export function normalizeSmsPhone(value) {
-  const rawDigits = String(value || '').replace(/\D/g, '');
-  const tenDigitNumber = rawDigits.length === 11 && rawDigits.startsWith('1')
-    ? rawDigits.slice(1)
-    : rawDigits;
-
-  if (tenDigitNumber.length !== 10) {
-    const trimmed = String(value || '').trim();
-    return trimmed.startsWith('+') ? trimmed : trimmed;
-  }
-
-  return `+1${tenDigitNumber}`;
+  return normalizeUsSmsPhone(value);
 }
 
 export function normalizeContactMethods(company) {

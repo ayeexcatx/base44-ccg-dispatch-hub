@@ -1,4 +1,6 @@
 import { base44 } from '@/api/base44Client';
+import { normalizeUsSmsPhone } from '@/lib/smsPhone';
+import { getSmsRules } from '@/lib/smsConfig';
 
 const SMS_PROVIDER = 'signalwire';
 
@@ -86,10 +88,6 @@ async function logWelcomeSmsFailure({ accessCodeId, phone, errorMessage }) {
   });
 }
 
-function looksLikeUsSmsPhone(value) {
-  const digits = String(value || '').replace(/\D/g, '');
-  return digits.length === 10 || (digits.length === 11 && digits.startsWith('1'));
-}
 
 async function updateIntroSentTimestampIfMissing(accessCode, sentAt) {
   if (accessCode?.sms_intro_sent_at) return;
@@ -118,13 +116,14 @@ export async function sendSmsWelcomeIfNeeded({ accessCodeId, consentGiven }) {
     return;
   }
 
-  const phone = normalizeText(accessCode.sms_phone);
+  const phone = normalizeUsSmsPhone(accessCode.sms_phone);
   if (!phone) {
     await logWelcomeSkip({ accessCodeId: accessCode.id, phone: null, skipReason: 'intro_missing_phone' });
     return;
   }
-  if (!looksLikeUsSmsPhone(phone)) {
-    await logWelcomeSkip({ accessCodeId: accessCode.id, phone, skipReason: 'intro_invalid_phone' });
+  const smsRules = await getSmsRules();
+  if (!smsRules.welcome_sms) {
+    await logWelcomeSkip({ accessCodeId: accessCode.id, phone, skipReason: 'intro_rule_disabled' });
     return;
   }
 
