@@ -4,7 +4,7 @@ import { getSmsRules } from '@/lib/smsConfig';
 
 const SMS_PROVIDER = 'signalwire';
 
-export const SMS_WELCOME_MESSAGE = 'CCG Transit: You are subscribed to receive work-related dispatch and operational text notifications. Message frequency varies. Msg & data rates may apply. Reply STOP to opt out. Reply HELP for help. Support: alex@ccgnj.com';
+export const SMS_WELCOME_MESSAGE = 'CCG Transit: You are now subscribed to receive text notifications. Message frequency varies. Msg & data rates may apply. Reply STOP to opt out. Reply HELP for help. For questions, email Support at: alex@ccgnj.com';
 
 function normalizeText(value) {
   return typeof value === 'string' ? value.trim() : '';
