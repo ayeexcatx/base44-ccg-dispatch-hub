@@ -30,10 +30,9 @@ const HELP_KEYWORDS = new Set(['HELP', 'SUPPORT']);
 const START_KEYWORDS = new Set(['START', 'YES', 'SUBSCRIBE']);
 
 const MESSAGES = {
-  stop: 'CCG Transit: You have been unsubscribed from SMS notifications and will no longer receive text messages. Reply START to resubscribe.',
+  stop: 'CCG Transit: You have been unsubscribed from SMS notifications and will no longer receive text messages. To re-enable SMS, log into the app and update your Profile settings.',
   help: 'CCG Transit: You are receiving work-related dispatch and operational text notifications. For help, contact alex@ccgnj.com. Reply STOP to opt out.',
-  start: 'CCG Transit: SMS notifications have been re-enabled for your account. Message frequency varies. Reply STOP to opt out.',
-  startDenied: 'CCG Transit: We could not re-enable SMS because consent is not on file for this number. Contact alex@ccgnj.com for assistance.',
+  resubscribeBlocked: 'CCG Transit: To re-enable SMS notifications, please log into the app and enable SMS in your Profile settings.',
 };
 
 function normalizeSpaceUrl(value: string): string {
@@ -77,11 +76,6 @@ function normalizeKeyword(value: string): string {
   const text = String(value || '').trim().toUpperCase();
   if (!text) return '';
   return text.split(/\s+/)[0] || '';
-}
-
-function hasUsSmsPhone(value: string): boolean {
-  const digits = String(value || '').replace(/\D/g, '');
-  return digits.length === 10 || (digits.length === 11 && digits.startsWith('1'));
 }
 
 function parseInboundPayload(req: Request, contentType: string): Promise<SignalWireInboundPayload> {
@@ -206,20 +200,8 @@ Deno.serve(async (req: Request) => {
       action = 'help';
       responseMessage = MESSAGES.help;
     } else if (START_KEYWORDS.has(keyword)) {
-      const accessCodePhone = String(accessCode.sms_phone || '').trim();
-      const canResubscribe = accessCode.sms_consent_given === true && hasUsSmsPhone(accessCodePhone);
-      if (canResubscribe) {
-        await base44.entities.AccessCode.update(accessCode.id, {
-          sms_enabled: true,
-          sms_opted_out_at: null,
-        });
-
-        action = 'resubscribe';
-        responseMessage = MESSAGES.start;
-      } else {
-        action = 'resubscribe_denied_missing_consent';
-        responseMessage = MESSAGES.startDenied;
-      }
+      action = 'resubscribe_blocked';
+      responseMessage = MESSAGES.resubscribeBlocked;
     } else {
       action = 'unsupported_keyword';
     }
