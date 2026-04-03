@@ -91,18 +91,26 @@ function ContactMethodEditor({ methods, setMethods, smsIndex, setSmsIndex, readO
         const canUseForSms = isPhoneType && hasUsSmsPhone(normalizeSmsPhone(method.value));
         return (
           <div key={`contact-method-${index}`} className="rounded-lg border border-slate-200 p-3 bg-white space-y-2">
-            <div className="flex items-center justify-between gap-3">
-              <Input value={method.name || ''} readOnly={readOnly} placeholder="Contact name" onChange={(e) => updateMethod(index, 'name', e.target.value)} />
+    <div className="flex items-center justify-between gap-3">
+      <Input
+        className="w-44 shrink-0"
+        value={method.name || ''}
+        readOnly={readOnly}
+        placeholder="Contact name"
+        onChange={(e) => updateMethod(index, 'name', e.target.value)}
+      />
               <Select value={method.type} disabled={readOnly} onValueChange={(value) => updateMethod(index, 'type', value)}>
-                <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-32 shrink-0"><SelectValue /></SelectTrigger>
                 <SelectContent>{CONTACT_TYPE_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent>
               </Select>
+              <Input value={method.value} readOnly={readOnly} placeholder={isPhoneType ? '(555) 123-4567' : 'Enter value'} onChange={(e) => updateMethod(index, 'value', e.target.value)} />
+            </div>
+            <div className="flex justify-end">
               <label className={`flex items-center gap-2 text-xs ${readOnly ? 'text-slate-400' : 'text-slate-600'}`}>
                 <input type="radio" disabled={readOnly || !canUseForSms} checked={smsIndex === index} onChange={() => setSmsIndex(index)} />
                 Use for SMS
               </label>
             </div>
-            <Input value={method.value} readOnly={readOnly} placeholder={isPhoneType ? '(555) 123-4567' : 'Enter value'} onChange={(e) => updateMethod(index, 'value', e.target.value)} />
             {smsIndex === index && (
               <p className="text-xs text-emerald-700">This contact is used for company owner SMS notifications.</p>
             )}
