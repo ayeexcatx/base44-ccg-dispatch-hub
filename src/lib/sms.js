@@ -98,6 +98,8 @@ export function buildCompanyProfileRequestPayload({ form, currentCompany }) {
       value: (method?.value || '').trim(),
     }))
     .filter((method) => method.value);
+  const firstNamedContact =
+    cleanedContactMethods.find((method) => String(method.name || '').trim())?.name?.trim() || '';
 
   return {
     requested_name: form.name.trim(),
@@ -110,6 +112,9 @@ export function buildCompanyProfileRequestPayload({ form, currentCompany }) {
     current_additional_contact_name: currentCompany?.additional_contact_name || '',
     current_contact_methods: normalizeContactMethods(currentCompany),
     current_contact_info: currentCompany?.contact_info || '',
+    current_additional_contact_name: currentCompany?.additional_contact_name || '',
+    requested_additional_contact_name:
+      firstNamedContact || currentCompany?.additional_contact_name || '',
     status: 'Pending',
     requested_at: new Date().toISOString(),
   };
