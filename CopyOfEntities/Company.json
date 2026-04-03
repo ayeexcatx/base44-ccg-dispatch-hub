@@ -10,12 +10,20 @@
       "type": "string",
       "description": "Company address (supports multiple lines such as street, city, state, zip)"
     },
+    "additional_contact_name": {
+      "type": "string",
+      "description": "Company-level additional contact person name"
+    },
     "contact_methods": {
       "type": "array",
       "description": "List of company contact methods",
       "items": {
         "type": "object",
         "properties": {
+          "name": {
+            "type": "string",
+            "description": "Contact person name for this contact method"
+          },
           "type": {
             "type": "string",
             "enum": [
@@ -68,11 +76,17 @@
         "requested_address": {
           "type": "string"
         },
+        "requested_additional_contact_name": {
+          "type": "string"
+        },
         "requested_contact_methods": {
           "type": "array",
           "items": {
             "type": "object",
             "properties": {
+              "name": {
+                "type": "string"
+              },
               "type": {
                 "type": "string"
               },
@@ -91,11 +105,17 @@
         "current_address": {
           "type": "string"
         },
+        "current_additional_contact_name": {
+          "type": "string"
+        },
         "current_contact_methods": {
           "type": "array",
           "items": {
             "type": "object",
             "properties": {
+              "name": {
+                "type": "string"
+              },
               "type": {
                 "type": "string"
               },

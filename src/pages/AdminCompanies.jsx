@@ -25,15 +25,17 @@ const CONTACT_TYPE_OPTIONS = ['Office', 'Cell', 'Email', 'Fax', 'Other'];
 const PHONE_CONTACT_TYPES = ['Office', 'Cell', 'Fax'];
 
 const normalizeContactMethods = (company) => {
+  const fallbackContactName = company?.additional_contact_name || '';
   if (Array.isArray(company?.contact_methods) && company.contact_methods.length > 0) {
     return company.contact_methods.map((method) => ({
+      name: method?.name || fallbackContactName || '',
       type: CONTACT_TYPE_OPTIONS.includes(method?.type) ? method.type : 'Other',
       value: method?.value || '',
     }));
   }
 
-  if (company?.contact_info) return [{ type: 'Other', value: company.contact_info }];
-  return [{ type: 'Office', value: '' }];
+  if (company?.contact_info) return [{ name: fallbackContactName, type: 'Other', value: company.contact_info }];
+  return [{ name: '', type: 'Office', value: '' }];
 };
 
 const initialEventForm = {
@@ -172,12 +174,14 @@ const SubsectionBlock = ({ title, icon: Icon, description, children, className =
 };
 
 
-const renderContactMethodsList = (contactMethods = [], fallbackText = '') => {
+const renderContactMethodsList = (contactMethods = [], fallbackText = '', fallbackContactName = '') => {
   if (Array.isArray(contactMethods) && contactMethods.some((method) => method?.value)) {
     return (
       <div className="space-y-1">
         {contactMethods.filter((method) => method?.value).map((method, index) => (
-          <p key={`contact-method-${index}`}><span className="font-medium text-slate-700">{method.type || 'Other'}:</span> {method.value}</p>
+          <p key={`contact-method-${index}`}>
+            <span className="font-medium text-slate-700">{(method?.name || (index === 0 ? fallbackContactName : '')) ? `${method?.name || (index === 0 ? fallbackContactName : '')} | ` : ''}{method.type || 'Other'}:</span> {method.value}
+          </p>
         ))}
       </div>
     );
@@ -383,7 +387,7 @@ export default function AdminCompanies() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [pageTab, setPageTab] = useState('company-info');
-  const [form, setForm] = useState({ name: '', address: '', contact_methods: [{ type: 'Office', value: '' }], trucks: [], status: 'active' });
+  const [form, setForm] = useState({ name: '', address: '', contact_methods: [{ name: '', type: 'Office', value: '' }], trucks: [], status: 'active' });
   const [truckInput, setTruckInput] = useState('');
   const [periodKey, setPeriodKey] = useState('last30');
   const [selectedScoringCompany, setSelectedScoringCompany] = useState(null);
@@ -516,7 +520,7 @@ export default function AdminCompanies() {
 
   const openNew = () => {
     setEditing(null);
-    setForm({ name: '', address: '', contact_methods: [{ type: 'Office', value: '' }], trucks: [], status: 'active' });
+    setForm({ name: '', address: '', contact_methods: [{ name: '', type: 'Office', value: '' }], trucks: [], status: 'active' });
     setTruckInput('');
     setOpen(true);
   };
@@ -543,13 +547,17 @@ export default function AdminCompanies() {
   const handleSave = () => {
     if (!form.name.trim()) return;
     const cleanedContactMethods = (form.contact_methods || [])
-      .map((method) => ({ type: CONTACT_TYPE_OPTIONS.includes(method?.type) ? method.type : 'Other', value: (method?.value || '').trim() }))
+      .map((method) => ({
+        name: (method?.name || '').trim(),
+        type: CONTACT_TYPE_OPTIONS.includes(method?.type) ? method.type : 'Other',
+        value: (method?.value || '').trim(),
+      }))
       .filter((method) => method.value);
 
     saveMutation.mutate({
       ...form,
       contact_methods: cleanedContactMethods,
-      contact_info: cleanedContactMethods.map((method) => `${method.type}: ${method.value}`).join(' • '),
+      contact_info: cleanedContactMethods.map((method) => `${method.name ? `${method.name} | ` : ''}${method.type}: ${method.value}`).join(' • '),
     });
   };
 
@@ -728,6 +736,7 @@ export default function AdminCompanies() {
                   const isPhoneType = PHONE_CONTACT_TYPES.includes(method.type);
                   return (
                     <div key={`contact-method-${index}`} className="flex gap-2 items-start">
+                      <Input className="w-44 shrink-0" value={method.name || ''} placeholder="Contact name" onChange={(e) => updateContactMethod(index, 'name', e.target.value)} />
                       <Select value={method.type} onValueChange={(v) => updateContactMethod(index, 'type', v)}>
                         <SelectTrigger className="w-32 shrink-0"><SelectValue /></SelectTrigger>
                         <SelectContent>{CONTACT_TYPE_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent>
@@ -737,7 +746,7 @@ export default function AdminCompanies() {
                     </div>
                   );
                 })}
-                <Button type="button" variant="outline" size="sm" onClick={() => setForm((prev) => ({ ...prev, contact_methods: [...prev.contact_methods, { type: 'Office', value: '' }] }))}><Plus className="h-3.5 w-3.5 mr-1" />Add Contact</Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => setForm((prev) => ({ ...prev, contact_methods: [...prev.contact_methods, { name: '', type: 'Office', value: '' }] }))}><Plus className="h-3.5 w-3.5 mr-1" />Add Contact</Button>
               </div>
             </div>
             <div><Label>Status</Label><Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="active">Active</SelectItem><SelectItem value="inactive">Inactive</SelectItem></SelectContent></Select></div>
@@ -786,7 +795,7 @@ export default function AdminCompanies() {
                   </div>
                   <div className="rounded-xl bg-slate-50/80 p-3.5 shadow-sm ring-1 ring-slate-200/70 sm:col-span-2">
                     <p className="text-[11px] uppercase tracking-wide text-slate-500 mb-2">Contact methods</p>
-                    <div className="text-sm text-slate-900">{renderContactMethodsList(selectedCompanyDetail.contact_methods, formatDisplayValue(selectedCompanyDetail.contact_info))}</div>
+                    <div className="text-sm text-slate-900">{renderContactMethodsList(selectedCompanyDetail.contact_methods, formatDisplayValue(selectedCompanyDetail.contact_info), selectedCompanyDetail.additional_contact_name || '')}</div>
                   </div>
                   <div className="rounded-xl bg-slate-50/80 p-3.5 shadow-sm ring-1 ring-slate-200/70 sm:col-span-2">
                     <p className="text-[11px] uppercase tracking-wide text-slate-500 mb-2">Trucks</p>
@@ -913,11 +922,19 @@ export default function AdminCompanies() {
                         <div className="grid sm:grid-cols-2 gap-3">
                           <div>
                             <p className="font-medium text-slate-700 mb-1">Current</p>
-                            {renderContactMethodsList(selectedCompanyDetail.pending_profile_change.current_contact_methods, selectedCompanyDetail.pending_profile_change.current_contact_info || selectedCompanyDetail.contact_info || '—')}
+                            {renderContactMethodsList(
+                              selectedCompanyDetail.pending_profile_change.current_contact_methods,
+                              selectedCompanyDetail.pending_profile_change.current_contact_info || selectedCompanyDetail.contact_info || '—',
+                              selectedCompanyDetail.pending_profile_change.current_additional_contact_name || selectedCompanyDetail.additional_contact_name || '',
+                            )}
                           </div>
                           <div>
                             <p className="font-medium text-slate-700 mb-1">Requested</p>
-                            {renderContactMethodsList(selectedCompanyDetail.pending_profile_change.requested_contact_methods, selectedCompanyDetail.pending_profile_change.requested_contact_info || '—')}
+                            {renderContactMethodsList(
+                              selectedCompanyDetail.pending_profile_change.requested_contact_methods,
+                              selectedCompanyDetail.pending_profile_change.requested_contact_info || '—',
+                              selectedCompanyDetail.pending_profile_change.requested_additional_contact_name || '',
+                            )}
                           </div>
                         </div>
                       </div>

@@ -7,6 +7,7 @@ function buildApprovedCompanyPayload(pendingProfileChange) {
 
   if (hasOwn(pendingProfileChange, 'requested_name')) payload.name = pendingProfileChange.requested_name;
   if (hasOwn(pendingProfileChange, 'requested_address')) payload.address = pendingProfileChange.requested_address;
+  if (hasOwn(pendingProfileChange, 'requested_additional_contact_name')) payload.additional_contact_name = pendingProfileChange.requested_additional_contact_name;
   if (hasOwn(pendingProfileChange, 'requested_contact_methods')) payload.contact_methods = pendingProfileChange.requested_contact_methods;
   if (hasOwn(pendingProfileChange, 'requested_contact_info')) payload.contact_info = pendingProfileChange.requested_contact_info;
 

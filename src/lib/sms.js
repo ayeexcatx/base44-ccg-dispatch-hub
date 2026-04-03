@@ -20,15 +20,17 @@ export function normalizeSmsPhone(value) {
 }
 
 export function normalizeContactMethods(company) {
+  const fallbackContactName = company?.additional_contact_name || '';
   if (Array.isArray(company?.contact_methods) && company.contact_methods.length > 0) {
     return company.contact_methods.map((method) => ({
+      name: method?.name || fallbackContactName || '',
       type: method?.type || 'Other',
       value: method?.value || '',
     }));
   }
 
-  if (company?.contact_info) return [{ type: 'Other', value: company.contact_info }];
-  return [{ type: 'Office', value: '' }];
+  if (company?.contact_info) return [{ name: fallbackContactName, type: 'Other', value: company.contact_info }];
+  return [{ name: '', type: 'Office', value: '' }];
 }
 
 export function getCompanySmsContact(company) {
@@ -90,18 +92,27 @@ export { getAdminSmsProductState, hasUsSmsPhone };
 
 export function buildCompanyProfileRequestPayload({ form, currentCompany }) {
   const cleanedContactMethods = (form.contact_methods || [])
-    .map((method) => ({ type: method?.type || 'Other', value: (method?.value || '').trim() }))
+    .map((method) => ({
+      name: (method?.name || '').trim(),
+      type: method?.type || 'Other',
+      value: (method?.value || '').trim(),
+    }))
     .filter((method) => method.value);
+  const firstNamedContact =
+    cleanedContactMethods.find((method) => String(method.name || '').trim())?.name?.trim() || '';
 
   return {
     requested_name: form.name.trim(),
     requested_address: form.address.trim(),
     requested_contact_methods: cleanedContactMethods,
-    requested_contact_info: cleanedContactMethods.map((method) => `${method.type}: ${method.value}`).join(' • '),
+    requested_contact_info: cleanedContactMethods.map((method) => `${method.name ? `${method.name} | ` : ''}${method.type}: ${method.value}`).join(' • '),
     current_name: currentCompany?.name || '',
     current_address: currentCompany?.address || '',
     current_contact_methods: normalizeContactMethods(currentCompany),
     current_contact_info: currentCompany?.contact_info || '',
+    current_additional_contact_name: currentCompany?.additional_contact_name || '',
+    requested_additional_contact_name:
+      firstNamedContact || currentCompany?.additional_contact_name || '',
     status: 'Pending',
     requested_at: new Date().toISOString(),
   };

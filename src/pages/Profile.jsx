@@ -91,17 +91,20 @@ function ContactMethodEditor({ methods, setMethods, smsIndex, setSmsIndex, readO
         const canUseForSms = isPhoneType && hasUsSmsPhone(normalizeSmsPhone(method.value));
         return (
           <div key={`contact-method-${index}`} className="rounded-lg border border-slate-200 p-3 bg-white space-y-2">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <Input className="w-44 shrink-0" value={method.name || ''} readOnly={readOnly} placeholder="Contact name" onChange={(e) => updateMethod(index, 'name', e.target.value)} />
               <Select value={method.type} disabled={readOnly} onValueChange={(value) => updateMethod(index, 'type', value)}>
-                <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-32 shrink-0"><SelectValue /></SelectTrigger>
                 <SelectContent>{CONTACT_TYPE_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent>
               </Select>
+              <Input value={method.value} readOnly={readOnly} placeholder={isPhoneType ? '(555) 123-4567' : 'Enter value'} onChange={(e) => updateMethod(index, 'value', e.target.value)} />
+            </div>
+            <div className="flex justify-end">
               <label className={`flex items-center gap-2 text-xs ${readOnly ? 'text-slate-400' : 'text-slate-600'}`}>
                 <input type="radio" disabled={readOnly || !canUseForSms} checked={smsIndex === index} onChange={() => setSmsIndex(index)} />
                 Use for SMS
               </label>
             </div>
-            <Input value={method.value} readOnly={readOnly} placeholder={isPhoneType ? '(555) 123-4567' : 'Enter value'} onChange={(e) => updateMethod(index, 'value', e.target.value)} />
             {smsIndex === index && (
               <p className="text-xs text-emerald-700">This contact is used for company owner SMS notifications.</p>
             )}
@@ -412,7 +415,7 @@ function CompanyOwnerProfile({ session }) {
   const profileCompanyId = ownerWorkspaceCompanyId ?? null;
   const queryClient = useQueryClient();
   const [editOpen, setEditOpen] = useState(false);
-  const [form, setForm] = useState({ name: '', address: '', contact_methods: [{ type: 'Office', value: '' }] });
+  const [form, setForm] = useState({ name: '', address: '', contact_methods: [{ name: '', type: 'Office', value: '' }] });
   const [smsIndex, setSmsIndex] = useState(0);
 
   const { data: companies = [] } = useQuery({
@@ -539,8 +542,13 @@ function CompanyOwnerProfile({ session }) {
             <div>
               <Label>Contact info</Label>
               <p className="text-xs text-slate-500 mb-2">Select which phone contact should be used for company owner SMS.</p>
+              <div className="mb-2 grid grid-cols-[11rem_8rem_minmax(0,1fr)] gap-3 text-xs font-medium uppercase tracking-wide text-slate-500">
+                <span>Contact Name</span>
+                <span>Contact Type</span>
+                <span>Contact Value</span>
+              </div>
               <ContactMethodEditor methods={form.contact_methods} setMethods={(updater) => setForm((prev) => ({ ...prev, contact_methods: typeof updater === 'function' ? updater(prev.contact_methods) : updater }))} smsIndex={smsIndex} setSmsIndex={setSmsIndex} />
-              <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => setForm((prev) => ({ ...prev, contact_methods: [...prev.contact_methods, { type: 'Office', value: '' }] }))}>Add Contact</Button>
+              <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => setForm((prev) => ({ ...prev, contact_methods: [...prev.contact_methods, { name: '', type: 'Office', value: '' }] }))}>Add Contact</Button>
             </div>
           </div>
           <DialogFooter>

@@ -49,7 +49,9 @@ export function CompanyOwnerProfileOverview({
               <div className="mt-2 space-y-1.5 text-sm text-slate-700">
                 {contactSummary.length > 0
                   ? contactSummary.map((method, index) => (
-                    <p key={`owner-contact-${index}`}><span className="font-medium text-slate-900">{method.type}:</span> {method.value}</p>
+                    <p key={`owner-contact-${index}`}>
+                      <span className="font-medium text-slate-900">{method.name ? `${method.name} | ` : ''}{method.type}:</span> {method.value}
+                    </p>
                   ))
                   : <p>—</p>}
               </div>
