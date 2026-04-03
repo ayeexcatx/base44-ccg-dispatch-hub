@@ -413,7 +413,11 @@ function CompanyOwnerProfile({ session }) {
   const profileCompanyId = ownerWorkspaceCompanyId ?? null;
   const queryClient = useQueryClient();
   const [editOpen, setEditOpen] = useState(false);
-  const [form, setForm] = useState({ name: '', address: '', contact_methods: [{ name: '', type: 'Office', value: '' }] });
+  const [form, setForm] = useState({
+    name: '',
+    address: '',
+    contact_methods: [{ name: '', type: 'Office', value: '' }]
+  });
   const [smsIndex, setSmsIndex] = useState(0);
 
   const { data: companies = [] } = useQuery({
@@ -442,6 +446,7 @@ function CompanyOwnerProfile({ session }) {
     setForm({
       name: company.name || '',
       address: company.address || '',
+      additional_contact_name: company.additional_contact_name || '',
       contact_methods: normalizeContactMethods(company),
     });
     setSmsIndex(Number.isInteger(company.sms_contact_method_index) ? company.sms_contact_method_index : 0);
@@ -537,6 +542,10 @@ function CompanyOwnerProfile({ session }) {
           <div className="space-y-4">
             <div><Label>Company name</Label><Input value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} /></div>
             <div><Label>Address</Label><Textarea rows={3} value={form.address} onChange={(e) => setForm((prev) => ({ ...prev, address: e.target.value }))} /></div>
+            <div>
+              <Label>Additional Contact Name</Label>
+              <Input value={form.additional_contact_name} onChange={(e) => setForm((prev) => ({ ...prev, additional_contact_name: e.target.value }))} />
+            </div>
             <div>
               <Label>Contact info</Label>
               <p className="text-xs text-slate-500 mb-2">Select which phone contact should be used for company owner SMS.</p>
