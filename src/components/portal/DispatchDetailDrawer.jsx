@@ -979,9 +979,9 @@ export default function DispatchDetailDrawer({
                         <Settings2 className="h-3.5 w-3.5 text-slate-500" />
                         Operations Panel
                       </p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        Internal workflow controls for owner/admin use. These tools are not part of the formal dispatch record.
-                      </p>
+                      <p className="text-slate-50 mt-1 text-xs">Internal workflow controls for owner/admin use. These tools are not part of the formal dispatch record.
+
+                  </p>
                     </div>
 
                     <DispatchDriverConfirmationSection
