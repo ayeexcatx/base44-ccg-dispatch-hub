@@ -135,7 +135,7 @@ export default function AvailabilitySummaryBoxes({ companyId = null, includeAllC
 
       if (resolved.status !== STATUS_AVAILABLE) return { ...box, rowLabel: `${dayLabel} — ${box.shift} Shift`, value: 'Unavailable' };
       if (normalizeCount(resolved.available_truck_count)) return { ...box, rowLabel: `${dayLabel} — ${box.shift} Shift`, value: String(normalizeCount(resolved.available_truck_count)) };
-      return { ...box, rowLabel: `${dayLabel} — ${box.shift} Shift`, value: 'Available' };
+      return { ...box, rowLabel: `${dayLabel} — ${box.shift} Shift`, value: '0' };
     }
 
     return { ...box, rowLabel: `${dayLabel} — ${box.shift} Shift`, value: String(ownerRow.total) };
