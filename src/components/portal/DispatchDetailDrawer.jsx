@@ -9,8 +9,8 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import {
-  canCompanyOwnerViewAssignmentsAndTimeLogs,
-} from './statusConfig';
+  canCompanyOwnerViewAssignmentsAndTimeLogs } from
+'./statusConfig';
 import { filterTemplateNotesForDispatch, NOTE_DISPLAY_WIDTH, NOTE_TYPES, normalizeTemplateNote } from '@/lib/templateNotes';
 import { calculateWorkedHours, formatTime24h, formatWorkedHours } from '@/lib/timeLogs';
 import { toast } from 'sonner';
@@ -36,11 +36,11 @@ let openDispatchDrawerCount = 0;
 
 function getActivityActorName(session) {
   const candidates = [
-    session?.label,
-    session?.access_code_label,
-    session?.name,
-    session?.access_code_name,
-  ];
+  session?.label,
+  session?.access_code_label,
+  session?.name,
+  session?.access_code_name];
+
 
   const resolved = candidates.find((value) => String(value || '').trim());
   return resolved ? String(resolved).trim() : 'Company Owner';
@@ -65,7 +65,7 @@ function buildDriverAssignmentActivityEntries({ session, truckNumber, previousAs
       actor_id: session?.id,
       actor_name: actorName,
       action: 'owner_assigned_driver',
-      message: `${actorName} assigned driver ${nextDriverName} to Truck ${truckNumber}`,
+      message: `${actorName} assigned driver ${nextDriverName} to Truck ${truckNumber}`
     }];
   }
 
@@ -76,7 +76,7 @@ function buildDriverAssignmentActivityEntries({ session, truckNumber, previousAs
       actor_id: session?.id,
       actor_name: actorName,
       action: 'owner_removed_driver',
-      message: `${actorName} removed driver ${previousDriverName} from Truck ${truckNumber}`,
+      message: `${actorName} removed driver ${previousDriverName} from Truck ${truckNumber}`
     }];
   }
 
@@ -86,7 +86,7 @@ function buildDriverAssignmentActivityEntries({ session, truckNumber, previousAs
     actor_id: session?.id,
     actor_name: actorName,
     action: 'owner_changed_driver',
-    message: `${actorName} changed driver from ${previousDriverName} to ${nextDriverName} on Truck ${truckNumber}`,
+    message: `${actorName} changed driver from ${previousDriverName} to ${nextDriverName} on Truck ${truckNumber}`
   }];
 }
 
@@ -95,12 +95,12 @@ async function appendDispatchActivityEntries(dispatch, entries = []) {
 
   try {
     const latestDispatch = await base44.entities.Dispatch.filter({ id: dispatch.id }, '-created_date', 1);
-    const currentLog = Array.isArray(latestDispatch?.[0]?.admin_activity_log)
-      ? latestDispatch[0].admin_activity_log
-      : (Array.isArray(dispatch.admin_activity_log) ? dispatch.admin_activity_log : []);
+    const currentLog = Array.isArray(latestDispatch?.[0]?.admin_activity_log) ?
+    latestDispatch[0].admin_activity_log :
+    Array.isArray(dispatch.admin_activity_log) ? dispatch.admin_activity_log : [];
 
     await base44.entities.Dispatch.update(dispatch.id, {
-      admin_activity_log: [...entries, ...currentLog],
+      admin_activity_log: [...entries, ...currentLog]
     });
   } catch (error) {
     console.error('Failed to append dispatch activity entries for driver assignment changes:', error);
@@ -112,7 +112,7 @@ function announceDispatchDrawerState() {
   const isOpen = openDispatchDrawerCount > 0;
   window.__dispatchDetailDrawerOpen = isOpen;
   window.dispatchEvent(new CustomEvent('dispatch-detail-drawer-state', {
-    detail: { open: isOpen },
+    detail: { open: isOpen }
   }));
 }
 
@@ -148,15 +148,15 @@ function formatTimeToAmPm(value) {
 function getEntryActorLabel(entry) {
   if (!entry) return '';
   const preferred = [
-    entry.confirmed_by_name,
-    entry.entered_by_name,
-    entry.driver_name,
-    entry.user_label,
-    entry.access_code_label,
-    entry.access_code_name,
-    entry.label,
-    entry.name,
-  ];
+  entry.confirmed_by_name,
+  entry.entered_by_name,
+  entry.driver_name,
+  entry.user_label,
+  entry.access_code_label,
+  entry.access_code_name,
+  entry.label,
+  entry.name];
+
   const explicit = preferred.find((value) => String(value || '').trim());
   if (explicit) return String(explicit).trim();
 
@@ -179,10 +179,10 @@ function TruckTimeRow({
   onChangeDraft,
   onCopyToAll,
   isFirstRow,
-  showActor = false,
+  showActor = false
 }) {
   const existing = timeEntries.find((te) =>
-    te.dispatch_id === dispatch.id && te.truck_number === truck
+  te.dispatch_id === dispatch.id && te.truck_number === truck
   );
   const start = draft?.start ?? existing?.start_time ?? '';
   const end = draft?.end ?? existing?.end_time ?? '';
@@ -196,24 +196,24 @@ function TruckTimeRow({
           <span className="font-mono font-medium">{truck}</span>
         </div>
         <span className="text-right">
-          {existing ? (
-            <span className="text-slate-500">
+          {existing ?
+          <span className="text-slate-500">
               {formatTime24h(existing.start_time) || '—'} → {formatTime24h(existing.end_time) || '—'}
-              {workedHours != null && (
-                <span className="block text-[11px] text-slate-400">Total: {formatWorkedHours(workedHours)} hrs</span>
-              )}
-              {showActor && (
-                <span className="block text-[11px] text-slate-400">
+              {workedHours != null &&
+            <span className="block text-[11px] text-slate-400">Total: {formatWorkedHours(workedHours)} hrs</span>
+            }
+              {showActor &&
+            <span className="block text-[11px] text-slate-400">
                   {formatLogTimestampWithActor('Entered', existing.updated_date || existing.created_date, getEntryActorLabel(existing) || 'Unknown')}
                 </span>
-              )}
-            </span>
-          ) : (
-            <span className="text-slate-400 italic">No time logged</span>
-          )}
+            }
+            </span> :
+
+          <span className="text-slate-400 italic">No time logged</span>
+          }
         </span>
-      </div>
-    );
+      </div>);
+
   }
 
   return (
@@ -223,14 +223,14 @@ function TruckTimeRow({
           <Truck className="h-3.5 w-3.5 text-slate-500" />
         </div>
         <span className="text-sm font-semibold text-slate-800">{truck}</span>
-        {existing && (
-          <div className="ml-auto text-right text-[11px] text-slate-500">
+        {existing &&
+        <div className="ml-auto text-right text-[11px] text-slate-500">
             <span className="font-medium">Saved: {formatTime24h(existing.start_time) || '—'} → {formatTime24h(existing.end_time) || '—'}</span>
-            {workedHours != null && (
-              <span className="mt-0.5 block text-[10px] uppercase tracking-wide text-slate-400">Total: {formatWorkedHours(workedHours)} hrs</span>
-            )}
+            {workedHours != null &&
+          <span className="mt-0.5 block text-[10px] uppercase tracking-wide text-slate-400">Total: {formatWorkedHours(workedHours)} hrs</span>
+          }
           </div>
-        )}
+        }
       </div>
       <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-end">
         <div>
@@ -238,34 +238,34 @@ function TruckTimeRow({
           <Input
             type="time"
             value={start}
-            onChange={e => onChangeDraft(truck, 'start', e.target.value)}
-            className="h-9 text-sm"
-          />
+            onChange={(e) => onChangeDraft(truck, 'start', e.target.value)}
+            className="h-9 text-sm" />
+          
         </div>
-        {isFirstRow && (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-9 px-3 text-xs font-medium text-slate-600 sm:self-end"
-            disabled={!start && !end}
-            onClick={() => onCopyToAll(start, end)}
-          >
+        {isFirstRow &&
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="h-9 px-3 text-xs font-medium text-slate-600 sm:self-end"
+          disabled={!start && !end}
+          onClick={() => onCopyToAll(start, end)}>
+          
             Copy to all
           </Button>
-        )}
+        }
         <div>
           <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-slate-600">Check-out</p>
           <Input
             type="time"
             value={end}
-            onChange={e => onChangeDraft(truck, 'end', e.target.value)}
-            className="h-9 text-sm"
-          />
+            onChange={(e) => onChangeDraft(truck, 'end', e.target.value)}
+            className="h-9 text-sm" />
+          
         </div>
       </div>
-    </div>
-  );
+    </div>);
+
 }
 
 export default function DispatchDetailDrawer({
@@ -327,15 +327,15 @@ export default function DispatchDetailDrawer({
   const isDriverUser = effectiveView === 'Driver';
   const driverIdentity = useMemo(
     () => resolveDriverIdentity({ currentAppIdentity, session }),
-    [currentAppIdentity, session],
+    [currentAppIdentity, session]
   );
   const activeOwnerCompanyId = useMemo(
     () => getActiveCompanyId(session),
-    [session],
+    [session]
   );
   const ownerCompanyId = useMemo(
     () => activeOwnerCompanyId || resolveCompanyOwnerCompanyId({ currentAppIdentity, session }),
-    [activeOwnerCompanyId, currentAppIdentity, session],
+    [activeOwnerCompanyId, currentAppIdentity, session]
   );
 
   const { data: ownerCompanyRecord = null } = useQuery({
@@ -344,13 +344,13 @@ export default function DispatchDetailDrawer({
       const companies = await base44.entities.Company.filter({ id: ownerCompanyId }, '-created_date', 1);
       return companies?.[0] || null;
     },
-    enabled: open && isOwner && !!ownerCompanyId,
+    enabled: open && isOwner && !!ownerCompanyId
   });
 
   const { data: companyDrivers = [] } = useQuery({
     queryKey: ['drivers', dispatch?.company_id],
     queryFn: () => base44.entities.Driver.filter({ company_id: dispatch.company_id }, '-driver_name', 500),
-    enabled: open && isOwner && !!dispatch?.company_id,
+    enabled: open && isOwner && !!dispatch?.company_id
   });
 
   const eligibleDrivers = useMemo(
@@ -358,13 +358,13 @@ export default function DispatchDetailDrawer({
       const isActive = driver.active_flag !== false && (driver.status || 'Active') === 'Active';
       return isActive && driver.access_code_status === 'Created';
     }),
-    [companyDrivers],
+    [companyDrivers]
   );
 
   const { data: driverAssignments = [], refetch: refetchDriverAssignments } = useQuery({
     queryKey: ['driver-dispatch-assignments', dispatch?.id],
     queryFn: () => base44.entities.DriverDispatch.filter({ dispatch_id: dispatch.id }, '-created_date', 500),
-    enabled: open && (isOwner || isAdmin) && !!dispatch?.id,
+    enabled: open && (isOwner || isAdmin) && !!dispatch?.id
   });
 
 
@@ -372,7 +372,7 @@ export default function DispatchDetailDrawer({
   const { data: currentDriverAssignments = [] } = useQuery({
     queryKey: ['driver-dispatch-assignments', dispatch?.id, driverIdentity],
     queryFn: async () => (await listDriverDispatchesForDriver(driverIdentity)).filter((entry) => String(entry.dispatch_id) === String(dispatch.id)),
-    enabled: open && isDriverUser && !!dispatch?.id && !!driverIdentity,
+    enabled: open && isDriverUser && !!dispatch?.id && !!driverIdentity
   });
 
   useEffect(() => {
@@ -394,24 +394,24 @@ export default function DispatchDetailDrawer({
       const sameShiftDispatches = await base44.entities.Dispatch.filter({
         company_id: dispatch.company_id,
         date: dispatch.date,
-        shift_time: dispatch.shift_time,
+        shift_time: dispatch.shift_time
       }, '-created_date', 500);
 
-      const conflictingDispatches = (sameShiftDispatches || []).filter((candidate) => (
-        candidate?.id
-        && candidate.id !== dispatch.id
-        && candidate.status !== 'Cancelled'
-      ));
+      const conflictingDispatches = (sameShiftDispatches || []).filter((candidate) =>
+      candidate?.id &&
+      candidate.id !== dispatch.id &&
+      candidate.status !== 'Cancelled'
+      );
 
       if (!conflictingDispatches.length) return {};
 
       const dispatchIds = new Set(conflictingDispatches.map((candidate) => candidate.id));
       const assignmentsByDispatch = await Promise.all(
         conflictingDispatches.map((candidate) =>
-          base44.entities.DriverDispatch.filter({
-            dispatch_id: candidate.id,
-            active_flag: true,
-          }, '-created_date', 200)
+        base44.entities.DriverDispatch.filter({
+          dispatch_id: candidate.id,
+          active_flag: true
+        }, '-created_date', 200)
         )
       );
 
@@ -420,7 +420,7 @@ export default function DispatchDetailDrawer({
         if (!map[assignment.driver_id]) map[assignment.driver_id] = assignment;
         return map;
       }, {});
-    },
+    }
   });
 
   const assignDriverMutation = useMutation({
@@ -432,25 +432,25 @@ export default function DispatchDetailDrawer({
       const sameShiftDispatches = await base44.entities.Dispatch.filter({
         company_id: dispatch.company_id,
         date: dispatch.date,
-        shift_time: dispatch.shift_time,
+        shift_time: dispatch.shift_time
       }, '-created_date', 500);
 
-      const conflictingDispatchIds = new Set((sameShiftDispatches || [])
-        .filter((candidate) => (
-          candidate?.id
-          && candidate.id !== dispatch.id
-          && candidate.status !== 'Cancelled'
-        ))
-        .map((candidate) => candidate.id));
+      const conflictingDispatchIds = new Set((sameShiftDispatches || []).
+      filter((candidate) =>
+      candidate?.id &&
+      candidate.id !== dispatch.id &&
+      candidate.status !== 'Cancelled'
+      ).
+      map((candidate) => candidate.id));
 
       if (conflictingDispatchIds.size > 0) {
         const driverActiveAssignments = await base44.entities.DriverDispatch.filter({
           driver_id: driverId,
-          active_flag: true,
+          active_flag: true
         }, '-created_date', 500);
 
         const hasConflict = (driverActiveAssignments || []).some((assignment) =>
-          conflictingDispatchIds.has(assignment.dispatch_id)
+        conflictingDispatchIds.has(assignment.dispatch_id)
         );
 
         if (hasConflict) {
@@ -466,13 +466,13 @@ export default function DispatchDetailDrawer({
         driver,
         session,
         buildActivityEntries: ({ truckNumber: nextTruckNumber, previousAssignment, nextAssignment }) =>
-          buildDriverAssignmentActivityEntries({
-            session,
-            truckNumber: nextTruckNumber,
-            previousAssignment,
-            nextAssignment,
-          }),
-        appendActivityEntries: appendDispatchActivityEntries,
+        buildDriverAssignmentActivityEntries({
+          session,
+          truckNumber: nextTruckNumber,
+          previousAssignment,
+          nextAssignment
+        }),
+        appendActivityEntries: appendDispatchActivityEntries
       });
 
       return savedAssignment;
@@ -486,7 +486,7 @@ export default function DispatchDetailDrawer({
     },
     onError: (error) => {
       toast.error(error?.message || 'Unable to save driver assignment.');
-    },
+    }
   });
 
   const sendDriverDispatchMutation = useMutation({
@@ -501,7 +501,7 @@ export default function DispatchDetailDrawer({
       queryClient.invalidateQueries({ queryKey: ['driver-dispatch-assignments', driverIdentity] });
       toast.success('Dispatch sent to driver.');
     },
-    onError: (error) => toast.error(error?.message || 'Unable to send dispatch.'),
+    onError: (error) => toast.error(error?.message || 'Unable to send dispatch.')
   });
 
   const cancelDriverDispatchMutation = useMutation({
@@ -512,7 +512,7 @@ export default function DispatchDetailDrawer({
       queryClient.invalidateQueries({ queryKey: ['driver-dispatch-assignments', driverIdentity] });
       toast.success('Driver dispatch cancelled.');
     },
-    onError: (error) => toast.error(error?.message || 'Unable to cancel driver dispatch.'),
+    onError: (error) => toast.error(error?.message || 'Unable to cancel driver dispatch.')
   });
 
   const handleSendDriverDispatch = async (truckNumber) => sendDriverDispatchMutation.mutateAsync(truckNumber);
@@ -528,7 +528,7 @@ export default function DispatchDetailDrawer({
         dispatch,
         driverAssignments,
         truckNumber,
-        session,
+        session
       });
       if (!removed) return;
       await refetchDriverAssignments();
@@ -552,38 +552,38 @@ export default function DispatchDetailDrawer({
   if (!dispatch) return null;
 
   const activeDriverDispatches = driverAssignments.filter((entry) => entry?.active_flag !== false);
-  const driverAssignedTrucks = currentDriverAssignments
-    .filter((entry) => entry?.active_flag !== false)
-    .map((entry) => entry.truck_number)
-    .filter(Boolean);
+  const driverAssignedTrucks = currentDriverAssignments.
+  filter((entry) => entry?.active_flag !== false).
+  map((entry) => entry.truck_number).
+  filter(Boolean);
 
   const visibleTrucks = getVisibleTrucksForDispatch(session, dispatch, {
-    driverAssignedTrucks,
+    driverAssignedTrucks
   });
-  const activeAssignmentsByTruck = (isOwner || isAdmin ? activeDriverDispatches : currentDriverAssignments)
-    .filter((entry) => entry?.active_flag !== false && entry?.truck_number)
-    .reduce((map, entry) => {
-      map[entry.truck_number] = entry;
-      return map;
-    }, {});
+  const activeAssignmentsByTruck = (isOwner || isAdmin ? activeDriverDispatches : currentDriverAssignments).
+  filter((entry) => entry?.active_flag !== false && entry?.truck_number).
+  reduce((map, entry) => {
+    map[entry.truck_number] = entry;
+    return map;
+  }, {});
 
   const hasTruckSeenStatus = (truckNumber) => Boolean(activeAssignmentsByTruck[truckNumber]?.last_seen_at);
-  const latestDriverDispatchByTruck = driverAssignments
-    .filter((entry) => entry?.truck_number)
-    .sort((a, b) => new Date(b.updated_date || b.cancelled_at || b.sent_at || b.created_date || 0) - new Date(a.updated_date || a.cancelled_at || a.sent_at || a.created_date || 0))
-    .reduce((map, entry) => {
-      if (!map[entry.truck_number]) map[entry.truck_number] = entry;
-      return map;
-    }, {});
+  const latestDriverDispatchByTruck = driverAssignments.
+  filter((entry) => entry?.truck_number).
+  sort((a, b) => new Date(b.updated_date || b.cancelled_at || b.sent_at || b.created_date || 0) - new Date(a.updated_date || a.cancelled_at || a.sent_at || a.created_date || 0)).
+  reduce((map, entry) => {
+    if (!map[entry.truck_number]) map[entry.truck_number] = entry;
+    return map;
+  }, {});
   const driverDispatchByTruck = { ...latestDriverDispatchByTruck, ...activeAssignmentsByTruck };
 
-  const assignedDriverNameByTruck = activeDriverDispatches
-    .filter((entry) => entry?.active_flag !== false)
-    .reduce((map, entry) => {
-      if (!entry?.truck_number || !entry?.driver_name) return map;
-      map[entry.truck_number] = entry.driver_name;
-      return map;
-    }, {});
+  const assignedDriverNameByTruck = activeDriverDispatches.
+  filter((entry) => entry?.active_flag !== false).
+  reduce((map, entry) => {
+    if (!entry?.truck_number || !entry?.driver_name) return map;
+    map[entry.truck_number] = entry.driver_name;
+    return map;
+  }, {});
 
   const eligibleDriverNameById = eligibleDrivers.reduce((map, driver) => {
     if (!driver?.id || !driver?.driver_name) return map;
@@ -613,40 +613,40 @@ export default function DispatchDetailDrawer({
   const currentConfirmedTruckSet = buildConfirmedTruckSetForStatus({
     confirmations,
     dispatchId: dispatch.id,
-    status: currentConfType,
+    status: currentConfType
   });
   const hasAdditional = Array.isArray(dispatch.additional_assignments) && dispatch.additional_assignments.length > 0;
 
   const dispatchScopedTemplateNotes = filterTemplateNotesForDispatch(templateNotes || [], dispatch?.job_number || '');
   const normalizedTemplateNotes = dispatchScopedTemplateNotes.map(normalizeTemplateNote);
-  const boxNotes = normalizedTemplateNotes.filter(n => n.note_type === NOTE_TYPES.BOX);
-  const generalNotes = normalizedTemplateNotes.filter(n => n.note_type !== NOTE_TYPES.BOX);
+  const boxNotes = normalizedTemplateNotes.filter((n) => n.note_type === NOTE_TYPES.BOX);
+  const generalNotes = normalizedTemplateNotes.filter((n) => n.note_type !== NOTE_TYPES.BOX);
 
   const isTruckConfirmedForCurrent = (truck) => currentConfirmedTruckSet.has(truck);
 
   const getTruckCurrentConfirmation = (truck) =>
-    confirmations.find(c =>
-      c.dispatch_id === dispatch.id &&
-      c.truck_number === truck &&
-      c.confirmation_type === currentConfType
-    );
+  confirmations.find((c) =>
+  c.dispatch_id === dispatch.id &&
+  c.truck_number === truck &&
+  c.confirmation_type === currentConfType
+  );
 
   const getTruckPriorConfirmations = (truck) =>
-    confirmations
-      .filter(c =>
-        c.dispatch_id === dispatch.id &&
-        c.truck_number === truck &&
-        c.confirmation_type !== currentConfType
-      )
-      .sort((a, b) => new Date(b.confirmed_at || 0) - new Date(a.confirmed_at || 0));
+  confirmations.
+  filter((c) =>
+  c.dispatch_id === dispatch.id &&
+  c.truck_number === truck &&
+  c.confirmation_type !== currentConfType
+  ).
+  sort((a, b) => new Date(b.confirmed_at || 0) - new Date(a.confirmed_at || 0));
 
   const handleChangeDraft = (truck, field, value) => {
     setDraftTimeEntries((prev) => ({
       ...prev,
       [truck]: {
         ...(prev[truck] || {}),
-        [field]: value,
-      },
+        [field]: value
+      }
     }));
   };
 
@@ -657,22 +657,22 @@ export default function DispatchDetailDrawer({
         next[truck] = {
           ...(next[truck] || {}),
           ...(sourceStart ? { start: sourceStart } : {}),
-          ...(sourceEnd ? { end: sourceEnd } : {}),
+          ...(sourceEnd ? { end: sourceEnd } : {})
         };
       });
       return next;
     });
   };
 
-  const entriesToSave = myTrucks
-    .map((truck) => {
-      const existing = timeEntries.find((te) => te.dispatch_id === dispatch.id && te.truck_number === truck);
-      const start = draftTimeEntries[truck]?.start ?? existing?.start_time ?? '';
-      const end = draftTimeEntries[truck]?.end ?? existing?.end_time ?? '';
-      if (!start && !end) return null;
-      return { truck, start, end };
-    })
-    .filter(Boolean);
+  const entriesToSave = myTrucks.
+  map((truck) => {
+    const existing = timeEntries.find((te) => te.dispatch_id === dispatch.id && te.truck_number === truck);
+    const start = draftTimeEntries[truck]?.start ?? existing?.start_time ?? '';
+    const end = draftTimeEntries[truck]?.end ?? existing?.end_time ?? '';
+    if (!start && !end) return null;
+    return { truck, start, end };
+  }).
+  filter(Boolean);
 
   const hasUnsavedChanges = myTrucks.some((truck) => {
     const draft = draftTimeEntries[truck];
@@ -710,9 +710,9 @@ export default function DispatchDetailDrawer({
   };
 
 
-  const ownerTruckOptions = isOwner
-    ? (Array.isArray(ownerCompanyRecord?.trucks) ? ownerCompanyRecord.trucks : [])
-    : [];
+  const ownerTruckOptions = isOwner ?
+  Array.isArray(ownerCompanyRecord?.trucks) ? ownerCompanyRecord.trucks : [] :
+  [];
   const showOwnerAssignmentsAndTimeLogs = !isOwner || canCompanyOwnerViewAssignmentsAndTimeLogs(dispatch.status);
   const requiredTruckCount = (dispatch?.trucks_assigned || []).filter(Boolean).length;
 
@@ -733,9 +733,9 @@ export default function DispatchDetailDrawer({
 
   const toggleDraftTruck = (truck) => {
     setDraftTrucks((prev) =>
-      prev.includes(truck)
-        ? prev.filter((item) => item !== truck)
-        : [...prev, truck]
+    prev.includes(truck) ?
+    prev.filter((item) => item !== truck) :
+    [...prev, truck]
     );
   };
 
@@ -747,7 +747,7 @@ export default function DispatchDetailDrawer({
     if (nextTrucks.length !== requiredTruckCount) {
       setTruckEditMessage({
         type: 'error',
-        text: `Truck count must remain ${requiredTruckCount}. Replace trucks one-for-one before saving.`,
+        text: `Truck count must remain ${requiredTruckCount}. Replace trucks one-for-one before saving.`
       });
       resetDraftTrucksToCurrentDispatch();
       return;
@@ -762,7 +762,7 @@ export default function DispatchDetailDrawer({
     } catch (error) {
       setTruckEditMessage({
         type: 'error',
-        text: error?.message || 'Unable to update truck assignments.',
+        text: error?.message || 'Unable to update truck assignments.'
       });
       resetDraftTrucksToCurrentDispatch();
     } finally {
@@ -778,9 +778,9 @@ export default function DispatchDetailDrawer({
   })();
 
   // Safe date display: use parseISO to avoid timezone shift on YYYY-MM-DD strings
-  const displayDate = dispatch.date
-    ? format(parseISO(dispatch.date), 'EEE, MMM d, yyyy')
-    : '';
+  const displayDate = dispatch.date ?
+  format(parseISO(dispatch.date), 'EEE, MMM d, yyyy') :
+  '';
 
 
   const handleReportIncident = () => {
@@ -856,7 +856,7 @@ export default function DispatchDetailDrawer({
         scrollX: 0,
         scrollY: 0,
         windowWidth: screenshotRoot.scrollWidth,
-        windowHeight: screenshotRoot.scrollHeight,
+        windowHeight: screenshotRoot.scrollHeight
       });
 
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
@@ -866,10 +866,10 @@ export default function DispatchDetailDrawer({
       const fileName = `dispatch-${fileNameDate}.png`;
       const file = new File([blob], fileName, { type: 'image/png' });
 
-      const canShareFile = typeof navigator !== 'undefined'
-        && typeof navigator.share === 'function'
-        && typeof navigator.canShare === 'function'
-        && navigator.canShare({ files: [file] });
+      const canShareFile = typeof navigator !== 'undefined' &&
+      typeof navigator.share === 'function' &&
+      typeof navigator.canShare === 'function' &&
+      navigator.canShare({ files: [file] });
 
       if (canShareFile) {
         await navigator.share({ files: [file], title: 'Dispatch Screenshot' });
@@ -896,13 +896,13 @@ export default function DispatchDetailDrawer({
   };
 
   return (
-    <Sheet open={open} onOpenChange={(v) => { if (!v) handleDrawerClose(); }}>
+    <Sheet open={open} onOpenChange={(v) => {if (!v) handleDrawerClose();}}>
       <SheetContent
         ref={drawerScrollRef}
         side="right"
         className="w-full sm:max-w-lg overflow-y-auto p-0"
-        data-tutorial-scroll="drawer"
-      >
+        data-tutorial-scroll="drawer">
+        
         <DispatchDrawerTopBar
           dispatch={dispatch}
           session={session}
@@ -916,8 +916,8 @@ export default function DispatchDetailDrawer({
           isEditingTrucks={isEditingTrucks}
           onReportIncident={handleReportIncident}
           onScreenshotDispatch={handleScreenshotDispatch}
-          onAdminEditDispatch={() => onAdminEditDispatch?.(dispatch)}
-        />
+          onAdminEditDispatch={() => onAdminEditDispatch?.(dispatch)} />
+        
 
         <div className="px-5 py-5 space-y-6">
           <div ref={screenshotSectionRef} className="space-y-6 bg-white">
@@ -944,40 +944,40 @@ export default function DispatchDetailDrawer({
               truckEditMessage={truckEditMessage}
               hasTruckDraftChanges={hasTruckDraftChanges}
               isSavingTrucks={isSavingTrucks}
-              onSaveTrucks={handleSaveTrucks}
-            />
+              onSaveTrucks={handleSaveTrucks} />
+            
 
-          {dispatch.status !== 'Scheduled' && (
+          {dispatch.status !== 'Scheduled' &&
             <>
               <DispatchDrawerStatusReasonBox dispatch={dispatch} />
               <DispatchDrawerAssignmentsSection
                 dispatch={dispatch}
                 hasAdditional={hasAdditional}
                 formatTimeToAmPm={formatTimeToAmPm}
-                visibleTrucks={visibleTrucks}
-              />
+                visibleTrucks={visibleTrucks} />
+              
             </>
-          )}
+            }
 
-          {dispatch.status !== 'Scheduled' && (
+          {dispatch.status !== 'Scheduled' &&
             <DispatchDrawerTemplateNotesSection
               boxNotes={boxNotes}
               generalNotes={generalNotes}
-              NOTE_DISPLAY_WIDTH={NOTE_DISPLAY_WIDTH}
-            />
-          )}
+              NOTE_DISPLAY_WIDTH={NOTE_DISPLAY_WIDTH} />
+
+            }
           </div>
 
           {/* Actions */}
-          {(isOwner || isAdmin || isDriverUser) && (
-            <div className="space-y-4 pt-2">
-              {(isOwner || isAdmin) && (
-                <div className="pt-2 border-t-2 border-slate-200">
-                  <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3.5 sm:p-4 space-y-3.5">
+          {(isOwner || isAdmin || isDriverUser) &&
+          <div className="space-y-4 pt-2">
+              {(isOwner || isAdmin) &&
+            <div className="pt-2 border-t-2 border-slate-200">
+                  <section className="bg-slate-700 p-3.5 rounded-2xl border border-slate-200 sm:p-4 space-y-3.5">
                     <div className="rounded-xl border border-slate-200 bg-white/70 px-3 py-2.5">
                       <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-700">
                         <Settings2 className="h-3.5 w-3.5 text-slate-500" />
-                        Operations Panel for Owners Only
+                        Operations Panel
                       </p>
                       <p className="mt-1 text-xs text-slate-500">
                         Internal workflow controls for owner/admin use. These tools are not part of the formal dispatch record.
@@ -985,72 +985,72 @@ export default function DispatchDetailDrawer({
                     </div>
 
                     <DispatchDriverConfirmationSection
-                      isOwner={isOwner}
-                      isAdmin={isAdmin}
-                      showOwnerAssignmentsAndTimeLogs={showOwnerAssignmentsAndTimeLogs}
-                      myTrucks={myTrucks}
-                      currentConfType={currentConfType}
-                      isTruckConfirmedForCurrent={isTruckConfirmedForCurrent}
-                      getTruckCurrentConfirmation={getTruckCurrentConfirmation}
-                      getTruckPriorConfirmations={getTruckPriorConfirmations}
-                      handleConfirmTruck={handleConfirmTruck}
-                      formatLogTimestampWithActor={formatLogTimestampWithActor}
-                      getEntryActorLabel={getEntryActorLabel}
-                      dispatch={dispatch}
-                      eligibleDrivers={eligibleDrivers}
-                      selectedDriverByTruck={selectedDriverByTruck}
-                      handleDriverSelection={handleDriverSelection}
-                      assignDriverMutation={assignDriverMutation}
-                      unassignedDriverValue={UNASSIGNED_DRIVER_VALUE}
-                      conflictingDriverAssignmentsById={conflictingDriverAssignmentsById}
-                      driverAssignmentErrors={driverAssignmentErrors}
-                      confirmations={confirmations}
-                      shouldShowDriverAssignmentControls={shouldShowDriverAssignmentControls}
-                      driverDispatchByTruck={driverDispatchByTruck}
-                      onSendDispatch={handleSendDriverDispatch}
-                      onCancelDispatch={handleCancelDriverDispatch}
-                      sendMutationPending={sendDriverDispatchMutation.isPending}
-                      cancelMutationPending={cancelDriverDispatchMutation.isPending}
-                    />
+                  isOwner={isOwner}
+                  isAdmin={isAdmin}
+                  showOwnerAssignmentsAndTimeLogs={showOwnerAssignmentsAndTimeLogs}
+                  myTrucks={myTrucks}
+                  currentConfType={currentConfType}
+                  isTruckConfirmedForCurrent={isTruckConfirmedForCurrent}
+                  getTruckCurrentConfirmation={getTruckCurrentConfirmation}
+                  getTruckPriorConfirmations={getTruckPriorConfirmations}
+                  handleConfirmTruck={handleConfirmTruck}
+                  formatLogTimestampWithActor={formatLogTimestampWithActor}
+                  getEntryActorLabel={getEntryActorLabel}
+                  dispatch={dispatch}
+                  eligibleDrivers={eligibleDrivers}
+                  selectedDriverByTruck={selectedDriverByTruck}
+                  handleDriverSelection={handleDriverSelection}
+                  assignDriverMutation={assignDriverMutation}
+                  unassignedDriverValue={UNASSIGNED_DRIVER_VALUE}
+                  conflictingDriverAssignmentsById={conflictingDriverAssignmentsById}
+                  driverAssignmentErrors={driverAssignmentErrors}
+                  confirmations={confirmations}
+                  shouldShowDriverAssignmentControls={shouldShowDriverAssignmentControls}
+                  driverDispatchByTruck={driverDispatchByTruck}
+                  onSendDispatch={handleSendDriverDispatch}
+                  onCancelDispatch={handleCancelDriverDispatch}
+                  sendMutationPending={sendDriverDispatchMutation.isPending}
+                  cancelMutationPending={cancelDriverDispatchMutation.isPending} />
+                
 
-                    {!isDriverUser && (
-                      <DispatchTimeLogSection
-                        isOwner={isOwner}
-                        isDriverUser={isDriverUser}
-                        isAdmin={isAdmin}
-                        showOwnerAssignmentsAndTimeLogs={showOwnerAssignmentsAndTimeLogs}
-                        dispatchStatus={dispatch.status}
-                        myTrucks={myTrucks}
-                        visibleTrucks={visibleTrucks}
-                        assignedTrucks={dispatch.trucks_assigned || []}
-                        timeLogSectionRef={timeLogSectionRef}
-                        draftTimeEntries={draftTimeEntries}
-                        timeEntries={timeEntries}
-                        dispatch={dispatch}
-                        onChangeDraft={handleChangeDraft}
-                        onCopyToAll={handleCopyToAll}
-                        onSaveAll={handleSaveAll}
-                        hasUnsavedChanges={hasUnsavedChanges}
-                        isSavingAll={isSavingAll}
-                        entriesToSave={entriesToSave}
-                        TruckTimeRow={TruckTimeRow}
-                      />
-                    )}
+                    {!isDriverUser &&
+                <DispatchTimeLogSection
+                  isOwner={isOwner}
+                  isDriverUser={isDriverUser}
+                  isAdmin={isAdmin}
+                  showOwnerAssignmentsAndTimeLogs={showOwnerAssignmentsAndTimeLogs}
+                  dispatchStatus={dispatch.status}
+                  myTrucks={myTrucks}
+                  visibleTrucks={visibleTrucks}
+                  assignedTrucks={dispatch.trucks_assigned || []}
+                  timeLogSectionRef={timeLogSectionRef}
+                  draftTimeEntries={draftTimeEntries}
+                  timeEntries={timeEntries}
+                  dispatch={dispatch}
+                  onChangeDraft={handleChangeDraft}
+                  onCopyToAll={handleCopyToAll}
+                  onSaveAll={handleSaveAll}
+                  hasUnsavedChanges={hasUnsavedChanges}
+                  isSavingAll={isSavingAll}
+                  entriesToSave={entriesToSave}
+                  TruckTimeRow={TruckTimeRow} />
+
+                }
                   </section>
                 </div>
-              )}
+            }
 
               {/* Activity — Admin */}
-              {isAdmin && (
-                <DispatchActivityLogSection
-                  activityLog={dispatch.admin_activity_log}
-                  formatActivityTimestamp={formatActivityTimestamp}
-                />
-              )}
+              {isAdmin &&
+            <DispatchActivityLogSection
+              activityLog={dispatch.admin_activity_log}
+              formatActivityTimestamp={formatActivityTimestamp} />
+
+            }
             </div>
-          )}
+          }
         </div>
       </SheetContent>
-    </Sheet>
-  );
+    </Sheet>);
+
 }
