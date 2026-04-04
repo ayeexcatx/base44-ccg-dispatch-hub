@@ -39,7 +39,7 @@ export default function DispatchTimeLogSection({
             </p>
           </div>
           <p className="mb-3 text-xs text-slate-500">
-            Please enter the time your truck checked in and checked out for this dispatch below. If you have drivers, drivers do not have access to this section. You must enter the times given to you by your driver or drivers.
+            Please enter the time your truck checked in/out for this dispatch below. Drivers do not have access to this section. You must enter the times given to you by your drivers.
           </p>
           <div className="space-y-2.5">
             {myTrucks.map((truck) => (
