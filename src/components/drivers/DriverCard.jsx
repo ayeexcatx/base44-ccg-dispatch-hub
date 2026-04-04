@@ -27,6 +27,22 @@ function DriverActionButtons({ desktop = false, onEdit, onDelete, onRequestCode,
   );
 }
 
+function DriverBottomControls({ status, onEdit, onDelete }) {
+  return (
+    <div className="flex items-center justify-center gap-2.5 pt-1">
+      <Button variant="ghost" size="icon" onClick={onEdit} className="h-9 w-9 rounded-full">
+        <Pencil className="h-4 w-4" />
+      </Button>
+      <Badge variant={status === 'Active' ? 'default' : 'secondary'} className="px-2.5 py-1 text-xs">
+        {status}
+      </Badge>
+      <Button variant="ghost" size="icon" onClick={onDelete} className="h-9 w-9 rounded-full text-red-500 hover:text-red-600">
+        <Trash2 className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+}
+
 function DriverSmsGuidance({ ownerSmsEnabled, desktop = false }) {
   if (ownerSmsEnabled) {
     if (desktop) {
@@ -95,16 +111,16 @@ export default function DriverCard({ driver, driverAccessCode, onEdit, onDelete,
               <p className="min-w-0 flex-1 text-base font-semibold leading-tight text-slate-900 break-words">
                 {driver.driver_name || 'Unnamed driver'}
               </p>
-              <Badge variant={status === 'Active' ? 'default' : 'secondary'} className="shrink-0">{status}</Badge>
-            </div>
-            <div className="flex flex-wrap items-center gap-1.5">
-              <DriverActionButtons
-                onEdit={onEdit}
-                onDelete={onDelete}
-                onRequestCode={onRequestCode}
-                requestLabel={requestLabel}
-                requestDisabled={requestDisabled}
-              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onRequestCode}
+                disabled={requestDisabled}
+                className="h-9 shrink-0 rounded-full border-red-200 bg-red-600 px-3 text-xs font-medium text-white shadow-sm hover:bg-red-700"
+              >
+                <KeyRound className="mr-1 h-3.5 w-3.5" />
+                {requestLabel}
+              </Button>
             </div>
           </div>
 
@@ -133,6 +149,7 @@ export default function DriverCard({ driver, driverAccessCode, onEdit, onDelete,
 
           <DriverSmsStatus driver={driver} />
           <DriverSmsGuidance ownerSmsEnabled={driver.owner_sms_enabled} />
+          <DriverBottomControls status={status} onEdit={onEdit} onDelete={onDelete} />
         </div>
 
         <div className="hidden items-start justify-between gap-3 sm:flex">
