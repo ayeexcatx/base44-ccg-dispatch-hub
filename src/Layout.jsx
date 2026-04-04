@@ -201,11 +201,11 @@ function LayoutInner({ children, currentPageName }) {
                 {(isAdmin || isOwner || isDriver) && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-500 hover:text-slate-700" aria-label="Open menu">
+                      <Button variant="ghost" size="icon" className="h-11 w-11 text-slate-500 hover:text-slate-700" aria-label="Open menu">
                         <Menu className="h-5 w-5" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="w-56">
                       {showWorkspaceSwitcher && (
                         <>
                           <div className="px-2 pt-2 pb-1 text-[11px] font-medium text-slate-500">Workspace</div>
@@ -225,14 +225,14 @@ function LayoutInner({ children, currentPageName }) {
                           </div>
                         </>
                       )}
-                      <DropdownMenuItem asChild>
+                      <DropdownMenuItem asChild className="py-2.5">
                         <Link to={createPageUrl('Profile')} className="cursor-pointer">
                           <UserRound className="h-4 w-4" />
                           Profile
                         </Link>
                       </DropdownMenuItem>
                       {isAdmin && (
-                        <DropdownMenuItem asChild>
+                        <DropdownMenuItem asChild className="py-2.5">
                           <Link to={createPageUrl('AdminSmsCenter')} className="cursor-pointer">
                             <MessageSquare className="h-4 w-4" />
                             SMS Center
@@ -240,14 +240,14 @@ function LayoutInner({ children, currentPageName }) {
                         </DropdownMenuItem>
                       )}
                       {isAdmin && (
-                        <DropdownMenuItem asChild>
+                        <DropdownMenuItem asChild className="py-2.5">
                           <Link to={createPageUrl('AdminDriverProtocol')} className="cursor-pointer">
                             <BookOpenText className="h-4 w-4" />
                             Driver Protocol
                           </Link>
                         </DropdownMenuItem>
                       )}
-                      <DropdownMenuItem onClick={handleLogout} className="sm:hidden cursor-pointer">
+                      <DropdownMenuItem onClick={handleLogout} className="py-2.5 sm:hidden cursor-pointer">
                         <LogOut className="h-4 w-4" />
                         Log out
                       </DropdownMenuItem>
