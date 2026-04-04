@@ -975,7 +975,7 @@ export default function DispatchDetailDrawer({
             <div className="pt-2 border-t-2 border-slate-200">
                   <section className="bg-stone-400 p-3.5 rounded-2xl border border-slate-200 sm:p-4 space-y-3.5">
                     <div className="bg-stone-600 text-slate-50 px-3 py-2.5 rounded-xl border border-slate-200">
-                      <p className="text-neutral-100 font-semibold uppercase tracking-[0.14em] flex items-center gap-2">OPERATIONS PANEL
+                      <p className="text-neutral-100 mx-5 font-semibold uppercase tracking-[0.14em] flex items-center gap-2">OPERATIONS PANEL
 
 
                   </p>
