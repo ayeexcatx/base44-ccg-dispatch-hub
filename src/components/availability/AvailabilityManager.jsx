@@ -435,7 +435,7 @@ export default function AvailabilityManager({ companyId, canSelectCompany = fals
         </div>
         <div className="overflow-x-auto">
           <div className="min-w-[320px] divide-y divide-slate-200 rounded border border-slate-200">
-            <div className="grid grid-cols-[1.6fr_1fr_1fr] bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">
+            <div className="bg-zinc-50 text-slate-600 px-3 py-2 text-xs font-semibold grid grid-cols-[1.6fr_1fr_1fr]">
               <span>Weekday</span>
               <span className="text-center">Day</span>
               <span className="text-center">Night</span>
