@@ -53,8 +53,8 @@ function DriverSmsGuidance({ ownerSmsEnabled, desktop = false }) {
 
 export default function DriverCard({ driver, onEdit, onDelete, onRequestCode, requestDisabled }) {
   const status = driver.status || (driver.active_flag === false ? 'Inactive' : 'Active');
-  const accessCodeStatus = driver.access_code_status || 'Not Requested';
-  const requestLabel = accessCodeStatus === 'Pending' ? 'Pending' : accessCodeStatus === 'Created' ? 'Created' : 'Request Code';
+  const hasCreatedCode = driver.access_code_status === 'Created' && !!driver.access_code_id;
+  const requestLabel = hasCreatedCode ? 'Created' : 'Create Access Code';
   const smsState = getDriverSmsState(driver);
 
   return (

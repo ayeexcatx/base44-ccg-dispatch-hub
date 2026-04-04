@@ -23,6 +23,13 @@ const defaultForm = {
   status: 'Active',
 };
 
+function generateCode(len = 8) {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let result = '';
+  for (let i = 0; i < len; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+  return result;
+}
+
 async function syncDriverAccessCode(driver) {
   if (!driver?.access_code_id) return;
   const smsState = getDriverSmsState(driver);
@@ -49,6 +56,11 @@ export default function Drivers() {
     queryKey: ['drivers', activeCompanyId],
     queryFn: () => base44.entities.Driver.filter({ company_id: activeCompanyId }, '-created_date', 200),
     enabled: !!activeCompanyId,
+  });
+
+  const { data: companies = [] } = useQuery({
+    queryKey: ['companies'],
+    queryFn: () => base44.entities.Company.list(),
   });
 
   const sortedDrivers = useMemo(
@@ -90,11 +102,30 @@ export default function Drivers() {
     },
   });
 
-  const requestCodeMutation = useMutation({
-    mutationFn: (driver) => base44.entities.Driver.update(driver.id, {
-      access_code_status: 'Pending',
-      requested_by_access_code_id: session?.id,
-    }),
+  const createAccessCodeMutation = useMutation({
+    mutationFn: async (driver) => {
+      const driverSmsState = getDriverSmsState(driver);
+      const company = companies.find((companyRecord) => companyRecord.id === driver.company_id);
+      const created = await base44.entities.AccessCode.create({
+        code: generateCode(),
+        label: driver.driver_name || '',
+        active_flag: true,
+        code_type: 'Driver',
+        company_id: driver.company_id || '',
+        company_name: company?.name || '',
+        driver_id: driver.id,
+        allowed_trucks: [],
+        sms_enabled: driverSmsState.effective,
+        sms_phone: driverSmsState.normalizedPhone || '',
+        available_views: [],
+        linked_company_ids: [],
+      });
+
+      await base44.entities.Driver.update(driver.id, {
+        access_code_id: created.id,
+        access_code_status: 'Created',
+      });
+    },
     onSuccess: invalidate,
   });
 
@@ -159,7 +190,7 @@ export default function Drivers() {
         <div className="grid gap-3">
           {sortedDrivers.map((driver) => {
             const accessCodeStatus = driver.access_code_status || 'Not Requested';
-            const canRequestCode = accessCodeStatus === 'Not Requested';
+            const hasCreatedCode = accessCodeStatus === 'Created' && !!driver.access_code_id;
 
             return (
               <DriverCard
@@ -167,8 +198,8 @@ export default function Drivers() {
                 driver={driver}
                 onEdit={() => openEdit(driver)}
                 onDelete={() => setDriverToDelete(driver)}
-                onRequestCode={() => requestCodeMutation.mutate(driver)}
-                requestDisabled={requestCodeMutation.isPending || !canRequestCode}
+                onRequestCode={() => createAccessCodeMutation.mutate(driver)}
+                requestDisabled={createAccessCodeMutation.isPending || hasCreatedCode}
               />
             );
           })}
