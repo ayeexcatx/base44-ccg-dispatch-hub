@@ -9,7 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Menu, Plus } from 'lucide-react';
+import { Menu, Plus, Share2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { formatPhoneNumber, getDriverSmsState } from '@/lib/sms';
 import DriverCard from '@/components/drivers/DriverCard';
 import DriverGuidanceTabs from '@/components/drivers/DriverGuidanceTabs';
@@ -51,6 +52,8 @@ export default function Drivers() {
   const [errors, setErrors] = useState({});
   const [driverToDelete, setDriverToDelete] = useState(null);
   const [helpLanguage, setHelpLanguage] = useState('en');
+  const appShareMessage =
+    'You have been invited to install the CCG Transit app. Please click on the link below and follow the instructions to install it on your phone or device. Please request the access code from your employer.\n\napp.ccgnj.com';
 
   const { data: drivers = [], isLoading } = useQuery({
     queryKey: ['drivers', activeCompanyId],
@@ -191,6 +194,23 @@ export default function Drivers() {
     });
   };
 
+  const handleShareAppLink = async () => {
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      try {
+        await navigator.share({
+          text: appShareMessage,
+          url: 'https://app.ccgnj.com',
+        });
+        return;
+      } catch (error) {
+        if (error?.name === 'AbortError') return;
+      }
+    }
+
+    await navigator.clipboard.writeText(appShareMessage);
+    toast.success('Invitation message copied');
+  };
+
   if (!isOwner) {
     return <div className="text-sm text-slate-500">Driver management is only available to company owners.</div>;
   }
@@ -198,9 +218,16 @@ export default function Drivers() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div>
+        <div className="space-y-2">
           <h2 className="text-2xl font-semibold text-slate-900">Drivers</h2>
-          <p className="text-sm text-slate-500">Manage driver records and the owner-controlled SMS permission layer.</p>
+          <p className="text-sm text-slate-500">Manage driver records and SMS permissions.</p>
+          <p className="text-sm text-slate-600 max-w-2xl">
+            After you add a driver, you must click on Create Access Code. This will create a unique code to be given to your driver, which they will use after they sign up and log into the app.
+          </p>
+          <p className="text-sm text-slate-600">To share the app with them, use the link below.</p>
+          <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={handleShareAppLink}>
+            <Share2 className="h-4 w-4 mr-1" />Share App Link
+          </Button>
         </div>
         <Button onClick={openCreate} className="w-full bg-slate-900 hover:bg-slate-800 sm:w-auto">
           <Plus className="h-4 w-4 mr-1" />Add Driver
