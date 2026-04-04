@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useSession } from '@/components/session/SessionContext';
 import { Card, CardContent } from '@/components/ui/card';
 import AvailabilityManager from '@/components/availability/AvailabilityManager';
@@ -10,6 +10,7 @@ export default function Availability() {
   const effectiveView = getEffectiveView(session);
   const activeCompanyId = getActiveCompanyId(session);
   const isOwner = effectiveView === 'CompanyOwner';
+  const [activeDate, setActiveDate] = useState(new Date());
 
   if (!isOwner) {
     return (
@@ -24,8 +25,8 @@ export default function Availability() {
 
   return (
     <div className="space-y-4">
-      <AvailabilitySummaryBoxes companyId={activeCompanyId} variant="ownerCompact" />
-      <AvailabilityManager companyId={activeCompanyId} />
+      <AvailabilitySummaryBoxes companyId={activeCompanyId} variant="ownerCompact" referenceDate={activeDate} />
+      <AvailabilityManager companyId={activeCompanyId} activeDate={activeDate} onActiveDateChange={setActiveDate} />
     </div>
   );
 }

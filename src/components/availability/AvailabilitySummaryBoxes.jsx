@@ -13,7 +13,7 @@ import {
   toDateKey,
 } from './availabilityRules';
 
-export default function AvailabilitySummaryBoxes({ companyId = null, includeAllCompanies = false, variant = 'default' }) {
+export default function AvailabilitySummaryBoxes({ companyId = null, includeAllCompanies = false, variant = 'default', referenceDate = null }) {
   const { data: companies = [] } = useQuery({
     queryKey: ['availability-summary-companies', companyId, includeAllCompanies],
     queryFn: () => base44.entities.Company.list(),
@@ -45,7 +45,7 @@ export default function AvailabilitySummaryBoxes({ companyId = null, includeAllC
     const overrideMap = new Map();
     overrides.forEach((o) => overrideMap.set(`${o.company_id}-${o.date}-${o.shift}`, o));
 
-    return getAvailabilitySummaryTargets(new Date()).map((target) => {
+    return getAvailabilitySummaryTargets(referenceDate || new Date()).map((target) => {
       const dateKey = toDateKey(target.date);
       const isOperational = getOperationalShifts(target.date.getDay()).includes(target.shift);
 
@@ -98,7 +98,7 @@ export default function AvailabilitySummaryBoxes({ companyId = null, includeAllC
         rows,
       };
     });
-  }, [companies, companyId, defaults, dispatches, includeAllCompanies, overrides]);
+  }, [companies, companyId, defaults, dispatches, includeAllCompanies, overrides, referenceDate]);
 
   const compactDefaultMap = useMemo(() => {
     const map = new Map();
@@ -114,7 +114,7 @@ export default function AvailabilitySummaryBoxes({ companyId = null, includeAllC
 
   const compactRows = useMemo(() => summaryData.map((box) => {
     const isOperational = getOperationalShifts(box.date.getDay()).includes(box.shift);
-    const dayLabel = box.dateKey === toDateKey(new Date()) ? 'Today' : 'Tomorrow';
+    const dayLabel = box.dateKey === toDateKey(referenceDate || new Date()) ? 'Today' : 'Tomorrow';
     if (!isOperational) {
       return {
         ...box,
@@ -123,23 +123,24 @@ export default function AvailabilitySummaryBoxes({ companyId = null, includeAllC
       };
     }
 
-    const ownerRow = box.rows[0];
-    if (!ownerRow) {
-      const resolved = resolveAvailabilityForCompanyShift({
-        companyId,
-        date: box.date,
-        shift: box.shift,
-        defaultMap: compactDefaultMap,
-        overrideMap: compactOverrideMap,
-      });
+    const resolved = resolveAvailabilityForCompanyShift({
+      companyId,
+      date: box.date,
+      shift: box.shift,
+      defaultMap: compactDefaultMap,
+      overrideMap: compactOverrideMap,
+    });
 
-      if (resolved.status !== STATUS_AVAILABLE) return { ...box, rowLabel: `${dayLabel} — ${box.shift} Shift`, value: 'Unavailable' };
-      if (normalizeCount(resolved.available_truck_count)) return { ...box, rowLabel: `${dayLabel} — ${box.shift} Shift`, value: String(normalizeCount(resolved.available_truck_count)) };
-      return { ...box, rowLabel: `${dayLabel} — ${box.shift} Shift`, value: 'Available' };
+    let value;
+    if (resolved.status !== STATUS_AVAILABLE) {
+      value = 'Unavailable';
+    } else {
+      const count = normalizeCount(resolved.available_truck_count);
+      value = count !== null ? String(count) : '0';
     }
 
-    return { ...box, rowLabel: `${dayLabel} — ${box.shift} Shift`, value: String(ownerRow.total) };
-  }), [summaryData, companyId, compactDefaultMap, compactOverrideMap]);
+    return { ...box, rowLabel: `${dayLabel} — ${box.shift} Shift`, value };
+  }), [summaryData, companyId, compactDefaultMap, compactOverrideMap, referenceDate]);
 
   if (variant === 'ownerCompact') {
     return (
