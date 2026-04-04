@@ -13,7 +13,7 @@ import {
   toDateKey,
 } from './availabilityRules';
 
-export default function AvailabilitySummaryBoxes({ companyId = null, includeAllCompanies = false }) {
+export default function AvailabilitySummaryBoxes({ companyId = null, includeAllCompanies = false, variant = 'default' }) {
   const { data: companies = [] } = useQuery({
     queryKey: ['availability-summary-companies', companyId, includeAllCompanies],
     queryFn: () => base44.entities.Company.list(),
@@ -99,6 +99,70 @@ export default function AvailabilitySummaryBoxes({ companyId = null, includeAllC
       };
     });
   }, [companies, companyId, defaults, dispatches, includeAllCompanies, overrides]);
+
+  const compactDefaultMap = useMemo(() => {
+    const map = new Map();
+    defaults.forEach((d) => map.set(`${d.company_id}-${d.weekday}-${d.shift}`, d));
+    return map;
+  }, [defaults]);
+
+  const compactOverrideMap = useMemo(() => {
+    const map = new Map();
+    overrides.forEach((o) => map.set(`${o.company_id}-${o.date}-${o.shift}`, o));
+    return map;
+  }, [overrides]);
+
+  const compactRows = useMemo(() => summaryData.map((box) => {
+    const isOperational = getOperationalShifts(box.date.getDay()).includes(box.shift);
+    const dayLabel = box.dateKey === toDateKey(new Date()) ? 'Today' : 'Tomorrow';
+    if (!isOperational) {
+      return {
+        ...box,
+        rowLabel: `${dayLabel} — ${box.shift} Shift`,
+        value: 'N/A',
+      };
+    }
+
+    const ownerRow = box.rows[0];
+    if (!ownerRow) {
+      const resolved = resolveAvailabilityForCompanyShift({
+        companyId,
+        date: box.date,
+        shift: box.shift,
+        defaultMap: compactDefaultMap,
+        overrideMap: compactOverrideMap,
+      });
+
+      if (resolved.status !== STATUS_AVAILABLE) return { ...box, rowLabel: `${dayLabel} — ${box.shift} Shift`, value: 'Unavailable' };
+      if (normalizeCount(resolved.available_truck_count)) return { ...box, rowLabel: `${dayLabel} — ${box.shift} Shift`, value: String(normalizeCount(resolved.available_truck_count)) };
+      return { ...box, rowLabel: `${dayLabel} — ${box.shift} Shift`, value: 'Available' };
+    }
+
+    return { ...box, rowLabel: `${dayLabel} — ${box.shift} Shift`, value: String(ownerRow.total) };
+  }), [summaryData, companyId, compactDefaultMap, compactOverrideMap]);
+
+  if (variant === 'ownerCompact') {
+    return (
+      <Card className="overflow-hidden border-slate-200 bg-white shadow-sm">
+        <CardContent className="p-0">
+          <div className="border-b border-slate-200/80 bg-slate-50/80 px-4 py-2.5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Number of trucks available</p>
+          </div>
+          <div className="space-y-1.5 px-4 py-3">
+            {compactRows.map((row, index) => (
+              <React.Fragment key={`${row.label}-${row.dateKey}-${row.shift}`}>
+                {index === 2 && <div className="my-1 border-t border-slate-200/80" />}
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm text-slate-700">{row.rowLabel}</p>
+                  <p className="text-sm font-semibold text-slate-900">{row.value}</p>
+                </div>
+              </React.Fragment>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

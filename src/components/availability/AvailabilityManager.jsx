@@ -568,7 +568,9 @@ export default function AvailabilityManager({ companyId, canSelectCompany = fals
               const shiftState = dateOverrideForm[shift];
               return (
                 <div key={shift} className="space-y-2 rounded border border-slate-200 p-3">
-                    <p className="text-sm font-medium text-slate-700">{shift} Shift</p>
+                    <div className={`-m-3 mb-2 rounded-t px-3 py-2 ${shift === 'Day' ? 'bg-amber-50/70 border-b border-amber-100' : 'bg-indigo-50/70 border-b border-indigo-100'}`}>
+                      <p className={`text-sm font-semibold ${shift === 'Day' ? 'text-amber-900' : 'text-indigo-900'}`}>{shift} Shift</p>
+                    </div>
                     {!shiftState.operational ?
                   <p className="text-xs text-slate-400">N/A (non-operational for this date)</p> :
 
@@ -589,13 +591,13 @@ export default function AvailabilityManager({ companyId, canSelectCompany = fals
 
                         {shiftState.status === STATUS_AVAILABLE &&
                     <div>
-                            <p className="text-xs text-slate-500 mb-1">Available Trucks (optional)</p>
+                            <p className="text-xs text-slate-500 mb-1">Number of trucks available</p>
                             <Input
                         type="number"
                         min="1"
                         value={shiftState.count}
                         onChange={(e) => updateOverrideShiftField(shift, 'count', e.target.value)}
-                        placeholder="Leave blank for general availability" />
+                        placeholder="Enter the number of trucks you have available for this shift" />
 
                           </div>
                     }

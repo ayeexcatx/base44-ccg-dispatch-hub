@@ -24,7 +24,7 @@ export default function Availability() {
 
   return (
     <div className="space-y-4">
-      <AvailabilitySummaryBoxes companyId={activeCompanyId} />
+      <AvailabilitySummaryBoxes companyId={activeCompanyId} variant="ownerCompact" />
       <AvailabilityManager companyId={activeCompanyId} />
     </div>
   );
