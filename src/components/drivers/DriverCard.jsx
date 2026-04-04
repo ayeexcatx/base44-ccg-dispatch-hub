@@ -56,15 +56,15 @@ function DriverAccessCodeRow({ accessCodeValue, revealed, onToggleReveal, onCopy
   if (!accessCodeValue) return null;
 
   return (
-    <div className="flex items-center gap-2 text-sm text-slate-600">
+    <div className="flex items-center gap-1.5 sm:gap-2 text-sm text-slate-600">
       <span className="text-slate-500 shrink-0">{desktop ? 'Access Code:' : 'Access Code'}</span>
-      <code className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold tracking-wider text-slate-800">
+      <code className="min-w-0 rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold tracking-wider text-slate-800">
         {revealed ? accessCodeValue : '••••••••'}
       </code>
-      <Button type="button" variant="ghost" size="icon" onClick={onToggleReveal} className="h-7 w-7 text-slate-500 hover:text-slate-700">
+      <Button type="button" variant="ghost" size="icon" onClick={onToggleReveal} className="h-7 w-7 shrink-0 text-slate-500 hover:text-slate-700">
         {revealed ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
       </Button>
-      <Button type="button" variant="ghost" size="icon" onClick={onCopy} className="h-7 w-7 text-slate-500 hover:text-slate-700">
+      <Button type="button" variant="ghost" size="icon" onClick={onCopy} className="h-7 w-7 shrink-0 text-slate-500 hover:text-slate-700">
         <Copy className="h-3.5 w-3.5" />
       </Button>
     </div>
@@ -90,14 +90,14 @@ export default function DriverCard({ driver, driverAccessCode, onEdit, onDelete,
     <Card className="overflow-hidden border-slate-200 shadow-sm shadow-slate-200/70 sm:shadow-none">
       <CardContent className="p-3.5 sm:p-4">
         <div className="space-y-3 sm:hidden">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <p className="truncate text-base font-semibold text-slate-900">{driver.driver_name || 'Unnamed driver'}</p>
-                <Badge variant={status === 'Active' ? 'default' : 'secondary'} className="shrink-0">{status}</Badge>
-              </div>
+          <div className="space-y-2.5">
+            <div className="flex items-start justify-between gap-3">
+              <p className="min-w-0 flex-1 text-base font-semibold leading-tight text-slate-900 break-words">
+                {driver.driver_name || 'Unnamed driver'}
+              </p>
+              <Badge variant={status === 'Active' ? 'default' : 'secondary'} className="shrink-0">{status}</Badge>
             </div>
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex flex-wrap items-center gap-1.5">
               <DriverActionButtons
                 onEdit={onEdit}
                 onDelete={onDelete}
@@ -119,12 +119,14 @@ export default function DriverCard({ driver, driverAccessCode, onEdit, onDelete,
             </div>
           )}
           {showAccessCodeControls && (
-            <DriverAccessCodeRow
-              accessCodeValue={accessCodeValue}
-              revealed={isCodeVisible}
-              onToggleReveal={() => setIsCodeVisible((prev) => !prev)}
-              onCopy={handleCopyAccessCode}
-            />
+            <div className="rounded-lg border border-slate-200 bg-slate-50/70 px-2.5 py-2">
+              <DriverAccessCodeRow
+                accessCodeValue={accessCodeValue}
+                revealed={isCodeVisible}
+                onToggleReveal={() => setIsCodeVisible((prev) => !prev)}
+                onCopy={handleCopyAccessCode}
+              />
+            </div>
           )}
 
           {driver.notes && <p className="text-sm text-slate-500">{driver.notes}</p>}

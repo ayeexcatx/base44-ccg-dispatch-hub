@@ -216,31 +216,35 @@ export default function Drivers() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="space-y-2">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+        <div className="space-y-3 sm:space-y-2">
           <h2 className="text-2xl font-semibold text-slate-900">Drivers</h2>
           <p className="text-sm text-slate-500">Manage driver records and SMS permissions.</p>
-          <p className="text-sm text-slate-600 max-w-2xl">
+          <p className="max-w-2xl text-sm text-slate-600">
             After you add a driver, you must click on Create Access Code. This will create a unique code to be given to your driver, which they will use after they sign up and log into the app.
           </p>
-          <p className="text-sm text-slate-600">To share the app with them, use the link below.</p>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={handleShareAppLink}>
-              <Share2 className="h-4 w-4 mr-1" />Share App Link
-            </Button>
-            <a
-              href="https://app.ccgnj.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline text-sm"
-            >
-              or go to app.ccgnj.com
-            </a>
+          <div className="space-y-2 pt-1">
+            <p className="text-sm text-slate-600">To share the app with them, use the link below.</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={handleShareAppLink}>
+                <Share2 className="h-4 w-4 mr-1" />Share App Link
+              </Button>
+              <a
+                href="https://app.ccgnj.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline text-sm"
+              >
+                or go to app.ccgnj.com
+              </a>
+            </div>
           </div>
         </div>
-        <Button onClick={openCreate} className="w-full bg-slate-900 hover:bg-slate-800 sm:w-auto">
-          <Plus className="h-4 w-4 mr-1" />Add Driver
-        </Button>
+        <div className="pt-1 sm:pt-0">
+          <Button onClick={openCreate} className="w-full bg-slate-900 hover:bg-slate-800 sm:w-auto">
+            <Plus className="h-4 w-4 mr-1" />Add Driver
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
