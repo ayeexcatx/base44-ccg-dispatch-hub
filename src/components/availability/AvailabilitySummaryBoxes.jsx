@@ -151,7 +151,7 @@ export default function AvailabilitySummaryBoxes({ companyId = null, includeAllC
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Availability Snapshot</p>
             <p className="mt-1 text-sm font-semibold leading-tight text-slate-900">Number of trucks available</p>
           </div>
-          <div className="bg-blue-100 px-4 py-3 space-y-2">
+          <div className="bg-blue-200 px-4 py-3 space-y-2">
             {compactRows.map((row, index) =>
             <React.Fragment key={`${row.label}-${row.dateKey}-${row.shift}`}>
                 {index === 2 && <div className="my-1.5 border-t border-dashed border-slate-200/90" />}
