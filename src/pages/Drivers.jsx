@@ -220,7 +220,7 @@ export default function Drivers() {
         <div className="space-y-3 sm:space-y-2">
           <h2 className="text-2xl font-semibold text-slate-900">Drivers</h2>
           <p className="text-sm text-slate-500">Manage driver records and SMS permissions.</p>
-          <p className="text-slate-600 text-sm text-left max-w-2xl">After you add a driver, you must click on Create Access Code. This will create a unique code to be given to your driver, which they will use after they sign up and log into the app.
+          <p className="text-slate-600 text-xs text-left max-w-2xl">After you add a driver, you must click on Create Access Code. This will create a unique code to be given to your driver, which they will use after they sign up and log into the app.
 
           </p>
           <div className="space-y-2 pt-1">
