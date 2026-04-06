@@ -102,7 +102,7 @@ export const companyOwnerTutorialSteps = {
       title: 'Availability: Daily Controls',
       description:
         'This section allows you to actively select the number of trucks you have available for each shift.',
-      warningText: 'We recommend you visit this section daily or weekly to update the amount of trucks you have available for every upcoming shift.',
+      warningText: 'We recommend you visit this section daily or weekly to update the amount of trucks you have available for every upcoming shift. The number of trucks available MUST be entered, even if its just a (1).',
     },
     {
       id: 'drivers-page',
@@ -111,7 +111,7 @@ export const companyOwnerTutorialSteps = {
       title: 'Drivers Page',
       description:
         'Use this page to add drivers and enter their information.',
-      warningText: 'Please read the instructions about the driver portal at the bottom of the page in full. Once you add a driver, you will need to request a password for them.',
+      warningText: 'Please read the instructions about the driver portal at the bottom of the page in full. Once you add a driver, you will need to create an Access Code for them.',
     },
     {
       id: 'incidents-page',
@@ -179,7 +179,7 @@ export const companyOwnerTutorialSteps = {
       target: '[data-tour="availability-controls"]',
       title: 'Disponibilidade: Controlo Diário',
       description: 'Esta secção permite-lhe selecionar ativamente o número de camiões que tem disponíveis para cada turno.',
-      warningText: 'Recomendamos que visite esta secção diariamente ou semanalmente para atualizar a quantidade de camiões disponíveis para cada turno futuro.',
+      warningText: 'Recomendamos que visite esta secção diariamente ou semanalmente para atualizar a quantidade de camiões disponíveis para cada turno futuro. O número de camiões disponíveis deve ser inserido, mesmo que seja apenas (1).',
     },
     {
       id: 'drivers-page',
@@ -187,7 +187,7 @@ export const companyOwnerTutorialSteps = {
       target: '[data-tour="drivers-nav"]',
       title: 'Página de Motoristas',
       description: 'Utilize esta página para adicionar motoristas e inserir as suas informações.',
-      warningText: 'Por favor, leia as instruções sobre o portal dos motoristas no final da página na íntegra. Depois de adicionar um motorista, será necessário solicitar uma palavra-passe para ele.',
+      warningText: 'Por favor, leia as instruções sobre o portal dos motoristas no final da página na íntegra. Depois de adicionar um motorista, será necessário criar um "Access Code" para ele.',
     },
     {
       id: 'incidents-page',
@@ -240,13 +240,13 @@ export const dispatchDrawerTutorialSteps = {
       title: 'Confirm Receipt',
       description:
         'Click here to confirm receipt of the dispatch.',
-      warningText: 'You must confirm any time you receive: a new dispatch, a new schedule, an amendment, a cancellation, or another important update.',
+      warningText: 'You must confirm any time you receive: a new schedule, dispatch, amendment, and/or cancellation.',
     },
     {
       id: 'driver-assignments',
       target: '[data-tour="dispatch-driver-assignments"]',
       title: 'Driver Assignments',
-      description: 'After confirming receipt, use this dropdown menu to assign drivers to your dispatch.',
+      description: 'After confirming receipt, use this dropdown menu to assign/unassign drivers to your dispatch.',
       warningText: 'Please familiarize yourself with the instructions on the Drivers page before using this feature.',
     },
     {
@@ -255,7 +255,7 @@ export const dispatchDrawerTutorialSteps = {
       tooltipPlacement: 'top',
       title: 'Time Log',
       description:
-        'This is where you enter the check-in and check-out times for yourself or your drivers. The time log is for informational purposes only.',
+        'This is where you (or your drivers) enter the check-in and check-out times for yourself or your drivers. The time log is for informational purposes only.',
     },
   ],
   [DISPATCH_DRAWER_TUTORIAL_LANGUAGE.PORTUGUESE]: [
@@ -301,7 +301,7 @@ export const dispatchDrawerTutorialSteps = {
       id: 'driver-assignments',
       target: '[data-tour="dispatch-driver-assignments"]',
       title: 'Atribuições de Motoristas',
-      description: 'Depois de confirmar a receção, utilize este menu suspenso para atribuir motoristas ao seu despacho.',
+      description: 'Depois de confirmar a receção, utilize este menu suspenso para atribuir/remover motoristas ao seu despacho.',
       warningText: 'Por favor, familiarize-se com as instruções na página de Motoristas antes de usar esta funcionalidade.',
     },
     {
@@ -309,7 +309,7 @@ export const dispatchDrawerTutorialSteps = {
       target: '[data-tour="dispatch-time-log"]',
       tooltipPlacement: 'top',
       title: 'Registo de Horas',
-      description: 'Aqui pode inserir as horas de entrada e saída, suas ou dos seus motoristas. O registo de horas é apenas para fins informativos.',
+      description: 'Aqui pode inserir (ou seus drivers) as horas de check in/check out, suas ou dos seus motoristas. O registo de horas é apenas para fins informativos.',
     },
   ],
 };
