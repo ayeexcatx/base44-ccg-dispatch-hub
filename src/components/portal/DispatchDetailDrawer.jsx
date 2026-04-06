@@ -685,7 +685,7 @@ export default function DispatchDetailDrawer({
   const handleCopyToAll = (sourceStart, sourceEnd) => {
     setDraftTimeEntries((prev) => {
       const next = { ...prev };
-      myTrucks.forEach((truck) => {
+      timeLogEditableTrucks.forEach((truck) => {
         next[truck] = {
           ...(next[truck] || {}),
           ...(sourceStart ? { start: sourceStart } : {}),
@@ -696,7 +696,15 @@ export default function DispatchDetailDrawer({
     });
   };
 
-  const entriesToSave = myTrucks.
+  const timeLogEditableTrucks = isOwner ?
+  myTrucks :
+  isDriverUser ?
+  visibleTrucks :
+  isAdmin ?
+  dispatch.trucks_assigned || [] :
+  [];
+
+  const entriesToSave = timeLogEditableTrucks.
   map((truck) => {
     const existing = timeEntries.find((te) => te.dispatch_id === dispatch.id && te.truck_number === truck);
     const start = draftTimeEntries[truck]?.start ?? existing?.start_time ?? '';
@@ -706,7 +714,7 @@ export default function DispatchDetailDrawer({
   }).
   filter(Boolean);
 
-  const hasUnsavedChanges = myTrucks.some((truck) => {
+  const hasUnsavedChanges = timeLogEditableTrucks.some((truck) => {
     const draft = draftTimeEntries[truck];
     if (!draft) return false;
     const existing = timeEntries.find((te) => te.dispatch_id === dispatch.id && te.truck_number === truck);
@@ -1004,7 +1012,7 @@ export default function DispatchDetailDrawer({
           {/* Actions */}
           {(isOwner || isAdmin || isDriverUser) &&
           <div className="space-y-4 pt-2">
-              {(isOwner || isAdmin) &&
+              {(isOwner || isAdmin || isDriverUser) &&
             <div className="pt-2 border-t-2 border-slate-200">
                   <section className="bg-stone-400 p-3.5 rounded-2xl border border-slate-200 sm:p-4 space-y-3.5">
                     <div className="bg-stone-600 text-slate-50 px-3 py-2.5 rounded-xl border border-slate-200">
@@ -1012,11 +1020,12 @@ export default function DispatchDetailDrawer({
 
 
                   </p>
-                      <p className="text-slate-50 mt-1 text-xs">Internal workflow controls for owner/admin use. These tools are not part of the formal dispatch record.
+                      <p className="text-slate-50 mt-1 text-xs">Internal workflow controls for dispatch operations. These tools are not part of the formal dispatch record.
 
                   </p>
                     </div>
 
+                    {(isOwner || isAdmin) &&
                     <DispatchDriverConfirmationSection
                   isOwner={isOwner}
                   isAdmin={isAdmin}
@@ -1044,17 +1053,13 @@ export default function DispatchDetailDrawer({
                   onCancelDispatch={handleCancelDriverDispatch}
                   sendMutationPending={sendDriverDispatchMutation.isPending}
                   cancelMutationPending={cancelDriverDispatchMutation.isPending} />
+                    }
                 
 
                     <DispatchTimeLogSection
-                  isOwner={isOwner}
-                  isDriverUser={isDriverUser}
-                  isAdmin={isAdmin}
                   showOwnerAssignmentsAndTimeLogs={showOwnerAssignmentsAndTimeLogs}
                   dispatchStatus={dispatch.status}
-                  myTrucks={myTrucks}
-                  visibleTrucks={visibleTrucks}
-                  assignedTrucks={dispatch.trucks_assigned || []}
+                  editableTrucks={timeLogEditableTrucks}
                   timeLogSectionRef={timeLogSectionRef}
                   draftTimeEntries={draftTimeEntries}
                   timeEntries={timeEntries}
