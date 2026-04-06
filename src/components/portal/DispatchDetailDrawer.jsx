@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Settings2, Truck } from 'lucide-react';
+import { Truck } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
 import { createPageUrl } from '@/utils';
@@ -121,7 +121,15 @@ function formatActivityTimestamp(value) {
   if (!value) return '';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
-  return format(date, 'MMM d, yyyy h:mm a');
+  return date.toLocaleString('en-US', {
+    timeZone: 'America/New_York',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
 }
 function formatTimeToAmPm(value) {
   if (!value) return '';
@@ -166,8 +174,17 @@ function getEntryActorLabel(entry) {
 
 function formatLogTimestampWithActor(prefix, timestamp, actorLabel) {
   if (!timestamp) return '';
-  const base = `${prefix} ${format(new Date(timestamp), 'MMM d, h:mm a')}`;
-  return actorLabel ? `${base} by ${actorLabel}` : base;
+  const parsed = new Date(timestamp);
+  if (Number.isNaN(parsed.getTime())) return '';
+  const formattedTimestamp = parsed.toLocaleString('en-US', {
+    timeZone: 'America/New_York',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
+  return actorLabel ? `${prefix} by ${actorLabel} at ${formattedTimestamp}` : `${prefix} at ${formattedTimestamp}`;
 }
 
 function TruckTimeRow({
@@ -179,7 +196,9 @@ function TruckTimeRow({
   onChangeDraft,
   onCopyToAll,
   isFirstRow,
-  showActor = false
+  showActor = false,
+  isEditing = true,
+  onEdit
 }) {
   const existing = timeEntries.find((te) =>
   te.dispatch_id === dispatch.id && te.truck_number === truck
@@ -188,7 +207,7 @@ function TruckTimeRow({
   const end = draft?.end ?? existing?.end_time ?? '';
   const workedHours = calculateWorkedHours(existing?.start_time, existing?.end_time);
 
-  if (readOnly) {
+  if (readOnly || !isEditing) {
     return (
       <div className="flex items-center justify-between text-xs text-slate-600 bg-slate-50 rounded px-3 py-2">
         <div className="flex items-center gap-2">
@@ -204,7 +223,13 @@ function TruckTimeRow({
             }
               {showActor &&
             <span className="block text-[11px] text-slate-400">
-                  {formatLogTimestampWithActor('Entered', existing.updated_date || existing.created_date, getEntryActorLabel(existing) || 'Unknown')}
+                  {formatLogTimestampWithActor(
+                'Entered',
+                existing.last_updated_at || existing.updated_date || existing.created_date,
+                existing.last_updated_by_name ||
+                getEntryActorLabel(existing) ||
+                'Unknown'
+              )}
                 </span>
             }
             </span> :
@@ -212,6 +237,11 @@ function TruckTimeRow({
           <span className="text-slate-400 italic">No time logged</span>
           }
         </span>
+        {!readOnly && onEdit &&
+        <Button type="button" size="sm" variant="outline" className="ml-3 h-7 px-2 text-[11px]" onClick={onEdit}>
+            Edit
+          </Button>
+        }
       </div>);
 
   }
@@ -275,6 +305,7 @@ export default function DispatchDetailDrawer({
   const { currentAppIdentity } = useAuth();
   const [draftTimeEntries, setDraftTimeEntries] = useState({});
   const [isSavingAll, setIsSavingAll] = useState(false);
+  const [isEditingTimeLogs, setIsEditingTimeLogs] = useState(true);
   const drawerScrollRef = React.useRef(null);
   const timeLogSectionRef = React.useRef(null);
   const [isEditingTrucks, setIsEditingTrucks] = useState(false);
@@ -289,6 +320,7 @@ export default function DispatchDetailDrawer({
 
   useEffect(() => {
     setDraftTimeEntries({});
+    setIsEditingTimeLogs(true);
   }, [dispatch?.id]);
 
   useEffect(() => {
@@ -693,6 +725,7 @@ export default function DispatchDetailDrawer({
     try {
       await onTimeEntry(dispatch, entriesToSave);
       setDraftTimeEntries({});
+      setIsEditingTimeLogs(false);
       requestAnimationFrame(() => {
         if (typeof previousScrollTop === 'number' && drawerScrollRef.current) {
           drawerScrollRef.current.scrollTop = previousScrollTop;
@@ -1013,8 +1046,7 @@ export default function DispatchDetailDrawer({
                   cancelMutationPending={cancelDriverDispatchMutation.isPending} />
                 
 
-                    {!isDriverUser &&
-                <DispatchTimeLogSection
+                    <DispatchTimeLogSection
                   isOwner={isOwner}
                   isDriverUser={isDriverUser}
                   isAdmin={isAdmin}
@@ -1030,12 +1062,12 @@ export default function DispatchDetailDrawer({
                   onChangeDraft={handleChangeDraft}
                   onCopyToAll={handleCopyToAll}
                   onSaveAll={handleSaveAll}
+                  isEditingTimeLogs={isEditingTimeLogs}
+                  onEditTimeLogs={() => setIsEditingTimeLogs(true)}
                   hasUnsavedChanges={hasUnsavedChanges}
                   isSavingAll={isSavingAll}
                   entriesToSave={entriesToSave}
                   TruckTimeRow={TruckTimeRow} />
-
-                }
                   </section>
                 </div>
             }

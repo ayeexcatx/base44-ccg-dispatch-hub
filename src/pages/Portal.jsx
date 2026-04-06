@@ -179,8 +179,9 @@ export default function Portal() {
       const savedEntries = [];
 
       for (const { truck, start, end } of entries) {
+        const nowIso = new Date().toISOString();
         const existing = timeEntries.find(te =>
-          te.dispatch_id === dispatch.id && te.truck_number === truck && te.access_code_id === session.id
+          te.dispatch_id === dispatch.id && te.truck_number === truck
         );
 
         if (existing) {
@@ -189,6 +190,9 @@ export default function Portal() {
             end_time: end !== undefined ? end : existing.end_time,
             entered_by_name: existing.entered_by_name || actorMetadata.actorName || undefined,
             entered_by_type: existing.entered_by_type || actorMetadata.actorType || undefined,
+            last_updated_at: nowIso,
+            last_updated_by_name: actorMetadata.actorName || undefined,
+            last_updated_by_type: actorMetadata.actorType || undefined,
           });
           savedEntries.push(updated);
           continue;
@@ -202,6 +206,9 @@ export default function Portal() {
           end_time: end,
           entered_by_name: actorMetadata.actorName || undefined,
           entered_by_type: actorMetadata.actorType || undefined,
+          last_updated_at: nowIso,
+          last_updated_by_name: actorMetadata.actorName || undefined,
+          last_updated_by_type: actorMetadata.actorType || undefined,
         });
         savedEntries.push(created);
       }
