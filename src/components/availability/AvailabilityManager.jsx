@@ -85,7 +85,10 @@ export default function AvailabilityManager({ companyId, canSelectCompany = fals
       if (existing) return base44.entities.CompanyAvailabilityDefault.update(existing.id, payload);
       return base44.entities.CompanyAvailabilityDefault.create(payload);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['company-availability-defaults', selectedCompanyId] })
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['company-availability-defaults', selectedCompanyId] });
+      queryClient.invalidateQueries({ queryKey: ['availability-summary-defaults'] });
+    }
   });
 
   const upsertOverrideMutation = useMutation({
@@ -94,7 +97,10 @@ export default function AvailabilityManager({ companyId, canSelectCompany = fals
       if (existing) return base44.entities.CompanyAvailabilityOverride.update(existing.id, payload);
       return base44.entities.CompanyAvailabilityOverride.create(payload);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['company-availability-overrides', selectedCompanyId] })
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['company-availability-overrides', selectedCompanyId] });
+      queryClient.invalidateQueries({ queryKey: ['availability-summary-overrides'] });
+    }
   });
 
   const clearOverrideMutation = useMutation({
@@ -102,7 +108,10 @@ export default function AvailabilityManager({ companyId, canSelectCompany = fals
       const existing = overrides.find((item) => item.date === date && item.shift === shift);
       if (existing) await base44.entities.CompanyAvailabilityOverride.delete(existing.id);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['company-availability-overrides', selectedCompanyId] })
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['company-availability-overrides', selectedCompanyId] });
+      queryClient.invalidateQueries({ queryKey: ['availability-summary-overrides'] });
+    }
   });
 
 
@@ -465,6 +474,8 @@ export default function AvailabilityManager({ companyId, canSelectCompany = fals
           <h2 className="text-2xl font-semibold text-slate-900">Availability</h2>
           <p className="text-slate-500 text-sm font-medium text-left">Select how many trucks you have available for each shift.</p>
           <p className="text-slate-500 text-sm font-medium">Anything entered here will override any of your defaults (just for that specific day/shift only).</p> 
+          <p className="text-red-600 text-sm font-bold">The correct way to fill this out is to select the date, then enter the number of trucks you have available for that shift.</p>
+          <p className="text-red-600 text-sm font-bold italic">Owner-operators: You must still enter 1 for each shift you are available.</p>
         </div>
         <div className="flex items-center gap-2">
           {VIEW_MODES.map((mode) =>
