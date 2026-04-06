@@ -3,14 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Clock3, Save } from 'lucide-react';
 
 export default function DispatchTimeLogSection({
-  isOwner,
-  isDriverUser,
-  isAdmin,
   showOwnerAssignmentsAndTimeLogs,
   dispatchStatus,
-  myTrucks,
-  visibleTrucks,
-  assignedTrucks,
+  editableTrucks,
   timeLogSectionRef,
   draftTimeEntries,
   timeEntries,
@@ -25,14 +20,7 @@ export default function DispatchTimeLogSection({
   entriesToSave,
   TruckTimeRow,
 }) {
-  const editableTrucks = isOwner
-    ? myTrucks
-    : isDriverUser
-      ? visibleTrucks
-      : isAdmin
-        ? assignedTrucks
-        : [];
-  const canShowTimeLog = editableTrucks.length > 0 && dispatchStatus !== 'Cancelled' && (isOwner ? showOwnerAssignmentsAndTimeLogs : true);
+  const canShowTimeLog = editableTrucks.length > 0 && dispatchStatus !== 'Cancelled' && showOwnerAssignmentsAndTimeLogs;
 
   return (
     <>
