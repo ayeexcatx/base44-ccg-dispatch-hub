@@ -632,7 +632,7 @@ export default function AdminCompanies() {
             <div className="text-center py-16 text-slate-500 text-sm">No companies yet</div>
           ) : (
             <div className="grid gap-4">
-              {companies.map((c) => (
+              {sortedCompanies.map((c) => (
                 <Card key={c.id} className="group relative cursor-pointer overflow-hidden border border-slate-200/90 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg" onClick={() => setSelectedCompanyDetailId(c.id)}>
                   <div className="absolute inset-y-0 left-0 w-1 bg-slate-900/75 transition-colors group-hover:bg-slate-900" />
                   <CardContent className="p-5 sm:p-6">
