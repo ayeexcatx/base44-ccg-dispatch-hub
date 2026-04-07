@@ -62,7 +62,6 @@ export function AdminDispatchDrawerProvider({ children, session, isAdmin }) {
 
   const adminTimeEntryMutation = useMutation({
     mutationFn: async ({ dispatch, entries }) => {
-      const normalizedDispatchId = String(dispatch?.id ?? '');
       const actorName = session?.label || session?.name || session?.code || '';
       const actorType = session?.code_type || 'Admin';
       const savedEntries = [];
@@ -70,7 +69,7 @@ export function AdminDispatchDrawerProvider({ children, session, isAdmin }) {
       for (const { truck, start, end } of entries) {
         const nowIso = new Date().toISOString();
         const existing = drawerTimeEntries.find((entry) =>
-          String(entry.dispatch_id ?? '') === normalizedDispatchId && entry.truck_number === truck
+          entry.dispatch_id === dispatch.id && entry.truck_number === truck
         );
 
         if (existing) {
@@ -105,10 +104,9 @@ export function AdminDispatchDrawerProvider({ children, session, isAdmin }) {
       return savedEntries;
     },
     onSuccess: (_, variables) => {
-      const normalizedDispatchId = String(variables?.dispatch?.id ?? '');
       queryClient.invalidateQueries({ queryKey: ['time-entries-admin'] });
       queryClient.invalidateQueries({ queryKey: ['time-entries'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-overlay-time-entries', normalizedDispatchId] });
+      queryClient.invalidateQueries({ queryKey: ['admin-overlay-time-entries', variables.dispatch.id] });
       queryClient.invalidateQueries({ queryKey: ['dispatches-admin'] });
     },
     onError: () => {

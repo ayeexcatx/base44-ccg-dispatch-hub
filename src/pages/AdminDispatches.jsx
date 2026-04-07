@@ -484,7 +484,6 @@ export default function AdminDispatches() {
 
   const timeEntryMutation = useMutation({
     mutationFn: async ({ dispatch, entries }) => {
-      const normalizedDispatchId = String(dispatch?.id ?? '');
       const actorName = session?.label || session?.name || session?.code || '';
       const actorType = session?.code_type || 'Admin';
       const savedEntries = [];
@@ -492,7 +491,7 @@ export default function AdminDispatches() {
       for (const { truck, start, end } of entries) {
         const nowIso = new Date().toISOString();
         const existing = drawerTimeEntries.find((entry) =>
-          String(entry.dispatch_id ?? '') === normalizedDispatchId && entry.truck_number === truck
+          entry.dispatch_id === dispatch.id && entry.truck_number === truck
         );
 
         if (existing) {
