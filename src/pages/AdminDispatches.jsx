@@ -482,61 +482,6 @@ export default function AdminDispatches() {
     queryFn: () => base44.entities.DispatchTemplateNotes.filter({ active_flag: true }, 'priority', 50)
   });
 
-  const timeEntryMutation = useMutation({
-    mutationFn: async ({ dispatch, entries }) => {
-      const actorName = session?.label || session?.name || session?.code || '';
-      const actorType = session?.code_type || 'Admin';
-      const savedEntries = [];
-
-      for (const { truck, start, end } of entries) {
-        const nowIso = new Date().toISOString();
-        const existing = drawerTimeEntries.find((entry) =>
-          entry.dispatch_id === dispatch.id && entry.truck_number === truck
-        );
-
-        if (existing) {
-          const updated = await base44.entities.TimeEntry.update(existing.id, {
-            start_time: start !== undefined ? start : existing.start_time,
-            end_time: end !== undefined ? end : existing.end_time,
-            entered_by_name: existing.entered_by_name || actorName || undefined,
-            entered_by_type: existing.entered_by_type || actorType || undefined,
-            last_updated_at: nowIso,
-            last_updated_by_name: actorName || undefined,
-            last_updated_by_type: actorType || undefined
-          });
-          savedEntries.push(updated);
-          continue;
-        }
-
-        const created = await base44.entities.TimeEntry.create({
-          dispatch_id: dispatch.id,
-          access_code_id: session?.id,
-          truck_number: truck,
-          start_time: start,
-          end_time: end,
-          entered_by_name: actorName || undefined,
-          entered_by_type: actorType || undefined,
-          last_updated_at: nowIso,
-          last_updated_by_name: actorName || undefined,
-          last_updated_by_type: actorType || undefined
-        });
-        savedEntries.push(created);
-      }
-
-      return savedEntries;
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['time-entries-admin'] });
-      queryClient.invalidateQueries({ queryKey: ['time-entries'] });
-      queryClient.invalidateQueries({ queryKey: ['dispatches-admin'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-overlay-time-entries', variables.dispatch.id] });
-      openDrawer(variables.dispatch);
-    },
-    onError: () => {
-      toast.error('Failed to save time logs. Please retry.');
-    }
-  });
-
   const getSessionLockName = () => {
     if (!session) return 'Admin session';
     return session.label || session.code || session.name || `Admin ${session.id || 'session'}`;
@@ -1263,7 +1208,7 @@ export default function AdminDispatches() {
         timeEntries={drawerTimeEntries}
         templateNotes={templateNotes}
         onConfirm={() => {}}
-        onTimeEntry={(dispatch, entries) => timeEntryMutation.mutateAsync({ dispatch, entries })}
+        onTimeEntry={() => {}}
         onAdminEditDispatch={handleAdminDrawerEdit}
         companyName={previewDispatch ? companyMap[previewDispatch.company_id] : ''} />
 
