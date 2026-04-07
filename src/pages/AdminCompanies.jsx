@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import DeleteConfirmationDialog from '@/components/admin/DeleteConfirmationDialog';
-import { Building2, Plus, Pencil, Trash2, X, TrendingUp, TrendingDown, Minus, ShieldCheck, ShieldAlert, MessageSquare, Smartphone, UserRound, KeyRound, Clock3, Truck, ChevronRight, Briefcase } from 'lucide-react';
+import { Building2, Plus, Pencil, Trash2, X, TrendingUp, TrendingDown, Minus, ShieldAlert, MessageSquare, Smartphone, UserRound, Truck, ChevronRight, Briefcase } from 'lucide-react';
 import { format } from 'date-fns';
 import { calculateCompanyScore, SCORING_EVENT_TYPES, SCORING_PERIODS } from '@/lib/companyScoring';
 import { formatPhoneNumber, getCompanySmsContact, getDriverSmsState } from '@/lib/sms';
@@ -92,83 +92,100 @@ const getInitials = (value = '') => {
   return parts.map((part) => part[0]?.toUpperCase() || '').join('');
 };
 
-const SECTION_WRAPPER_CLASS = 'relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm';
-const INFO_CARD_TONE = {
-  neutral: 'text-slate-900',
-  success: 'text-emerald-700',
-  warning: 'text-amber-700',
-  danger: 'text-rose-700',
-};
-const MUTED_VALUE_SET = new Set([
-  'Not available',
-  'Not recorded',
-  'No',
-  'SMS Off',
-  'No SMS phone selected',
-  '—',
-]);
+const SECTION_WRAPPER_CLASS = 'rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-sm';
 
-const DrawerSection = ({ title, icon: Icon = Building2, children }) => (
+const DrawerSection = ({ title, subtitle, icon: Icon = Building2, children }) => (
   <section className={SECTION_WRAPPER_CLASS}>
-    <div className="absolute inset-y-0 left-0 w-1 bg-slate-200/70" />
-    <h3 className="flex items-center gap-2 text-base font-semibold text-slate-900">
-      <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-slate-100 text-slate-600"><Icon className="h-3.5 w-3.5" /></span>
-      {title}
-    </h3>
-    <div className="mt-4">{children}</div>
+    <div className="mb-4 flex items-start justify-between gap-3 border-b border-slate-200/70 pb-3">
+      <div>
+        <h3 className="flex items-center gap-2 text-base font-semibold text-slate-900">
+          <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-slate-100 text-slate-600"><Icon className="h-4 w-4" /></span>
+          {title}
+        </h3>
+        {subtitle && <p className="mt-1 text-xs text-slate-500">{subtitle}</p>}
+      </div>
+    </div>
+    <div className="space-y-3">{children}</div>
   </section>
 );
 
-const InfoValueCard = ({ label, value, icon: Icon, tone = 'neutral', badge }) => (
-  <div className="rounded-xl bg-white p-3.5 shadow-sm ring-1 ring-slate-200/70">
-    <div className="flex items-start justify-between gap-2">
+const KeyValueRow = ({ label, value, className = '' }) => {
+  const displayValue = formatDisplayValue(value);
+  const isMuted = ['Not available', 'Not recorded', 'No', 'SMS Off', 'No SMS phone selected', '—'].includes(displayValue);
+  return (
+    <div className={`flex flex-col gap-1 rounded-lg border border-slate-200/70 bg-slate-50/70 px-3 py-2.5 ${className}`}>
       <p className="text-[11px] uppercase tracking-wide text-slate-500">{label}</p>
-      {Icon && <Icon className="h-4 w-4 text-slate-400" />}
+      <p className={`text-sm ${isMuted ? 'font-medium italic text-slate-500' : 'font-semibold text-slate-900'}`}>{displayValue}</p>
     </div>
-    <div className="mt-2 flex items-center gap-2">
-      <p className={`text-sm font-semibold ${MUTED_VALUE_SET.has(formatDisplayValue(value)) ? 'text-slate-500 font-medium italic' : INFO_CARD_TONE[tone]}`}>{formatDisplayValue(value)}</p>
-      {badge && <Badge variant="outline" className={badge.className}>{badge.label}</Badge>}
-    </div>
+  );
+};
+
+const DriverAuditGroup = ({ title, children }) => (
+  <div className="rounded-xl border border-slate-200/80 bg-white p-3.5">
+    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</p>
+    <div className="grid gap-2 sm:grid-cols-2">{children}</div>
   </div>
 );
 
-const SUBSECTION_ACCENT_STYLES = {
-  blue: {
-    header: 'bg-blue-100 text-blue-800 ring-1 ring-blue-200/90',
-    icon: 'bg-white/90 text-blue-700 ring-blue-200/80',
-  },
-  amber: {
-    header: 'bg-amber-100 text-amber-800 ring-1 ring-amber-200/90',
-    icon: 'bg-white/90 text-amber-700 ring-amber-200/80',
-  },
-  emerald: {
-    header: 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200/90',
-    icon: 'bg-white/90 text-emerald-700 ring-emerald-200/80',
-  },
-  purple: {
-    header: 'bg-purple-100 text-purple-800 ring-1 ring-purple-200/90',
-    icon: 'bg-white/90 text-purple-700 ring-purple-200/80',
-  },
-  neutral: {
-    header: 'bg-slate-100 text-slate-800 ring-1 ring-slate-200/90',
-    icon: 'bg-white text-slate-600 ring-slate-200/80',
-  },
-};
-
-const SubsectionBlock = ({ title, icon: Icon, description, children, className = '', accent = 'neutral' }) => {
-  const accentStyles = SUBSECTION_ACCENT_STYLES[accent] || SUBSECTION_ACCENT_STYLES.neutral;
+const DriverAccordionCard = ({ driver, smsState, driverCode, protocolAck, latestProtocolAck, currentProtocolVersionLabel, isExpanded, onToggle }) => {
+  const consentRecorded = driverCode?.sms_consent_given === true;
   return (
-    <div className={`rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm ${className}`}>
-      <div className="mb-3">
-        <div className={`inline-flex max-w-full items-center gap-2 rounded-xl px-3 py-2 ${accentStyles.header}`}>
-          <span className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md ring-1 ${accentStyles.icon}`}>
-            <Icon className="h-3.5 w-3.5" />
-          </span>
-          <p className="truncate text-sm font-semibold">{title}</p>
+    <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+      <button
+        type="button"
+        className="flex w-full items-center justify-between gap-3 px-3 py-3.5 text-left sm:px-4"
+        onClick={onToggle}
+      >
+        <div className="min-w-0 flex items-center gap-3">
+          <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-700">
+            {getInitials(driver.driver_name)}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-slate-900">{driver.driver_name || 'Unnamed driver'}</p>
+            <p className="truncate text-xs text-slate-500">{driver.phone ? formatPhoneNumber(driver.phone) : 'Not available'}</p>
+            <div className="mt-1 flex flex-wrap items-center gap-1.5">
+              <Badge variant={smsState.effective ? 'default' : 'secondary'} className={smsState.effective ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100' : 'bg-amber-100 text-amber-700 hover:bg-amber-100'}>{smsState.effective ? 'SMS Active' : 'SMS Off'}</Badge>
+              <Badge variant="outline" className="text-[11px]">{driver.access_code_status || 'No access code'}</Badge>
+              <Badge variant="outline" className="text-[11px]">{consentRecorded ? 'Consent recorded' : 'Consent pending'}</Badge>
+            </div>
+          </div>
         </div>
-        {description && <p className="mt-2 text-xs text-slate-500">{description}</p>}
-      </div>
-      {children}
+        <ChevronRight className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+      </button>
+
+      {isExpanded && (
+        <div className="border-t border-slate-200/80 bg-slate-50/40 px-3 py-3.5 sm:px-4">
+          <div className="space-y-3">
+            <DriverAuditGroup title="Identity">
+              <KeyValueRow label="Driver name" value={driver.driver_name || 'Not available'} />
+              <KeyValueRow label="Phone" value={driver.phone ? formatPhoneNumber(driver.phone) : 'Not available'} />
+            </DriverAuditGroup>
+
+            <DriverAuditGroup title="Access & SMS">
+              <KeyValueRow label="SMS status" value={smsState.effective ? 'SMS Active' : 'SMS Off'} />
+              <KeyValueRow label="Access code status" value={driver.access_code_status || 'Not requested'} />
+              <KeyValueRow label="Owner enabled" value={smsState.ownerEnabled ? 'Yes' : 'No'} />
+              <KeyValueRow label="Driver opted in" value={smsState.driverOptedIn ? 'Yes' : 'No'} />
+              <KeyValueRow label="SMS phone" value={smsState.normalizedPhone ? formatPhoneNumber(smsState.normalizedPhone) : 'Not available'} className="sm:col-span-2" />
+            </DriverAuditGroup>
+
+            <DriverAuditGroup title="Consent History">
+              <KeyValueRow label="Consent status" value={consentRecorded ? 'Recorded' : 'Not recorded'} />
+              <KeyValueRow label="Consent timestamp" value={formatDateTime(driverCode?.sms_consent_at)} />
+              <KeyValueRow label="Consent method" value={driverCode?.sms_consent_method} />
+              <KeyValueRow label="Opt-out timestamp" value={formatDateTime(driverCode?.sms_opted_out_at)} />
+              <KeyValueRow label="Intro/welcome sent" value={formatDateTime(driverCode?.sms_intro_sent_at)} className="sm:col-span-2" />
+            </DriverAuditGroup>
+
+            <DriverAuditGroup title="Protocols">
+              <KeyValueRow label={currentProtocolVersionLabel} value={protocolAck ? 'Recorded' : 'Not recorded'} />
+              <KeyValueRow label="Current version timestamp" value={formatDateTime(protocolAck?.accepted_at)} />
+              <KeyValueRow label="Latest acknowledged version" value={latestProtocolAck?.protocol_version || 'Not recorded'} />
+              <KeyValueRow label="Latest acknowledged timestamp" value={formatDateTime(latestProtocolAck?.accepted_at)} />
+            </DriverAuditGroup>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -402,6 +419,7 @@ export default function AdminCompanies() {
   const [companyPendingDelete, setCompanyPendingDelete] = useState(null);
   const [deleteAdminCode, setDeleteAdminCode] = useState('');
   const [deleteAdminCodeError, setDeleteAdminCodeError] = useState('');
+  const [expandedDriverIds, setExpandedDriverIds] = useState(() => new Set());
 
   const { data: companies = [], isLoading } = useQuery({ queryKey: ['companies'], queryFn: () => base44.entities.Company.list() });
   const { data: dispatches = [] } = useQuery({ queryKey: ['scoring-dispatches'], queryFn: () => base44.entities.Dispatch.list('-date', 1000) });
@@ -523,6 +541,10 @@ export default function AdminCompanies() {
     if (!map.has(code.company_id)) map.set(code.company_id, code);
     return map;
   }, new Map()), [accessCodes]);
+
+  useEffect(() => {
+    setExpandedDriverIds(new Set());
+  }, [selectedCompanyDetailId]);
 
   const openNew = () => {
     setEditing(null);
@@ -775,175 +797,129 @@ export default function AdminCompanies() {
       </Dialog>
 
       <Sheet open={!!selectedCompanyDetailId} onOpenChange={(openState) => !openState && setSelectedCompanyDetailId(null)}>
-        <SheetContent side="right" className="w-full sm:max-w-3xl overflow-y-auto">
+        <SheetContent side="right" className="w-full sm:max-w-3xl overflow-y-auto px-4 sm:px-6">
           <SheetHeader>
             <SheetTitle>{selectedCompanyDetail?.name || 'Company'} Details</SheetTitle>
           </SheetHeader>
-          {selectedCompanyDetail && (
-            <div className="mt-3 space-y-5 pb-6">
-              <div className="rounded-2xl border border-slate-200/80 bg-slate-100/60 p-2">
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-3 shadow-sm">
-                  <p className="text-[11px] uppercase tracking-wide text-slate-500">Status</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-900 capitalize">{formatDisplayValue(selectedCompanyDetail.status || 'active')}</p>
-                </div>
-                <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-3 shadow-sm">
-                  <p className="text-[11px] uppercase tracking-wide text-slate-500">Drivers</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-900">{(driversByCompany.get(selectedCompanyDetail.id) || []).length}</p>
-                </div>
-                <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-3 shadow-sm">
-                  <p className="text-[11px] uppercase tracking-wide text-slate-500">Trucks</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-900">{(selectedCompanyDetail.trucks || []).length}</p>
-                </div>
-                <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-3 shadow-sm">
-                  <p className="text-[11px] uppercase tracking-wide text-slate-500">SMS Contact</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-900">{getCompanySmsContact(selectedCompanyDetail).phone ? 'On file' : 'Not available'}</p>
-                </div>
-              </div>
-              </div>
-              <DrawerSection title="1. Company Overview" icon={Briefcase}>
-                <div className="grid sm:grid-cols-2 gap-3 text-sm">
-                  <div className="rounded-xl bg-slate-50/80 p-3.5 shadow-sm ring-1 ring-slate-200/70 sm:col-span-2">
+          {selectedCompanyDetail && (() => {
+            const companyDrivers = (driversByCompany.get(selectedCompanyDetail.id) || []).slice().sort((a, b) => (a.driver_name || '').localeCompare(b.driver_name || ''));
+            const smsContact = getCompanySmsContact(selectedCompanyDetail);
+            const ownerCode = ownerCodeByCompany.get(selectedCompanyDetail.id);
+            const ownerConsentRecorded = ownerCode?.sms_consent_given === true;
+            const ownerSmsEnabled = ownerCode?.sms_enabled === true;
+            return (
+              <div className="mt-3 space-y-5 pb-6">
+                <section className="sticky top-0 z-20 rounded-2xl border border-slate-200/80 bg-white/95 p-4 shadow-md backdrop-blur sm:p-5">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Company summary</p>
+                      <h3 className="mt-1 text-xl font-semibold text-slate-900 sm:text-2xl">{selectedCompanyDetail.name || 'Unnamed company'}</h3>
+                      <p className="mt-1 text-sm text-slate-500 whitespace-pre-line">{selectedCompanyDetail.address || 'Address not available'}</p>
+                    </div>
+                    <Badge variant="outline" className="h-fit self-start capitalize border-slate-300 bg-slate-100 text-slate-700">{formatDisplayValue(selectedCompanyDetail.status || 'active')}</Badge>
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+                    <KeyValueRow label="Drivers" value={companyDrivers.length} />
+                    <KeyValueRow label="Trucks" value={(selectedCompanyDetail.trucks || []).length} />
+                    <KeyValueRow label="SMS contact" value={smsContact.phone ? 'On file' : 'Not available'} />
+                    <KeyValueRow label="Owner SMS" value={ownerSmsEnabled ? 'Enabled' : 'Disabled'} />
+                  </div>
+                </section>
+
+                <DrawerSection title="B. Company Overview" subtitle="Address, contacts, and fleet details" icon={Briefcase}>
+                  <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-3.5">
                     <p className="text-[11px] uppercase tracking-wide text-slate-500">Address</p>
                     <p className={`mt-2 text-sm whitespace-pre-line ${selectedCompanyDetail.address ? 'font-semibold text-slate-900' : 'font-medium italic text-slate-500'}`}>{formatDisplayValue(selectedCompanyDetail.address)}</p>
                   </div>
-                  <div className="rounded-xl bg-slate-50/80 p-3.5 shadow-sm ring-1 ring-slate-200/70 sm:col-span-2">
-                    <p className="text-[11px] uppercase tracking-wide text-slate-500 mb-2">Contact methods</p>
-                    <div className="text-sm text-slate-900">{renderContactMethodsList(selectedCompanyDetail.contact_methods, formatDisplayValue(selectedCompanyDetail.contact_info), selectedCompanyDetail.additional_contact_name || '')}</div>
+                  <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-3.5">
+                    <p className="mb-2 text-[11px] uppercase tracking-wide text-slate-500">Contact methods</p>
+                    <div className="space-y-2 text-sm text-slate-900">{renderContactMethodsList(selectedCompanyDetail.contact_methods, formatDisplayValue(selectedCompanyDetail.contact_info), selectedCompanyDetail.additional_contact_name || '')}</div>
                   </div>
-                  <div className="rounded-xl bg-slate-50/80 p-3.5 shadow-sm ring-1 ring-slate-200/70 sm:col-span-2">
-                    <p className="text-[11px] uppercase tracking-wide text-slate-500 mb-2">Trucks</p>
-                      <div className="flex flex-wrap gap-1.5">{(selectedCompanyDetail.trucks || []).length ? selectedCompanyDetail.trucks.map((truck) => <Badge key={truck} variant="outline" className="font-mono text-xs">{truck}</Badge>) : <span className="text-slate-500 italic">Not available</span>}</div>
+                  <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-3.5">
+                    <p className="mb-2 text-[11px] uppercase tracking-wide text-slate-500">Trucks</p>
+                    <div className="flex flex-wrap gap-1.5">{(selectedCompanyDetail.trucks || []).length ? selectedCompanyDetail.trucks.map((truck) => <Badge key={truck} variant="outline" className="font-mono text-xs bg-white">{truck}</Badge>) : <span className="text-slate-500 italic">Not available</span>}</div>
                   </div>
-                </div>
-              </DrawerSection>
+                </DrawerSection>
 
-              <DrawerSection title="2. Company SMS / compliance" icon={MessageSquare}>
-                {(() => {
-                  const smsContact = getCompanySmsContact(selectedCompanyDetail);
-                  const ownerCode = ownerCodeByCompany.get(selectedCompanyDetail.id);
-                  const ownerConsentRecorded = ownerCode?.sms_consent_given === true;
-                  const ownerSmsEnabled = ownerCode?.sms_enabled === true;
-                  return (
-                    <div className="space-y-3.5 text-sm">
-                      <SubsectionBlock accent="amber" title="A. SMS Setup" icon={Smartphone} description="Primary SMS configuration for owner communications.">
-                        <div className="grid gap-2.5 sm:grid-cols-2">
-                          <InfoValueCard label="SMS contact" value={smsContact.phone ? formatPhoneNumber(smsContact.phone) : 'No SMS phone selected'} icon={Smartphone} tone={smsContact.phone ? 'neutral' : 'warning'} />
-                          <InfoValueCard
-                            label="Owner SMS enabled"
-                            value={ownerSmsEnabled ? 'Yes' : 'No'}
-                            icon={MessageSquare}
-                            tone={ownerSmsEnabled ? 'success' : 'warning'}
-                            badge={ownerSmsEnabled ? { label: 'SMS On', className: 'border-emerald-200 bg-emerald-50 text-emerald-700 text-[11px]' } : { label: 'SMS Off', className: 'border-amber-200 bg-amber-50 text-amber-700 text-[11px]' }}
-                          />
-                        </div>
-                      </SubsectionBlock>
-                      <SubsectionBlock accent="emerald" title="B. Consent / History" icon={ShieldCheck} description="Owner consent and messaging history.">
-                        <div className="grid gap-2.5 sm:grid-cols-2">
-                          <InfoValueCard label="Owner consent" value={ownerConsentRecorded ? 'Recorded' : 'Not recorded'} icon={ownerConsentRecorded ? ShieldCheck : ShieldAlert} tone={ownerConsentRecorded ? 'success' : 'danger'} />
-                          <InfoValueCard label="Owner consent timestamp" value={formatDateTime(ownerCode?.sms_consent_at)} icon={Clock3} />
-                          <InfoValueCard label="Owner opt-out timestamp" value={formatDateTime(ownerCode?.sms_opted_out_at)} icon={Clock3} tone={ownerCode?.sms_opted_out_at ? 'warning' : 'neutral'} />
-                          <InfoValueCard label="Owner intro/welcome sent" value={formatDateTime(ownerCode?.sms_intro_sent_at)} icon={MessageSquare} />
-                        </div>
-                      </SubsectionBlock>
+                <DrawerSection title="C. Company SMS / Compliance" subtitle="Messaging setup and owner consent history" icon={MessageSquare}>
+                  <div className="rounded-xl border border-slate-200/80 bg-white p-3.5">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">SMS Configuration</p>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <KeyValueRow label="SMS contact" value={smsContact.phone ? formatPhoneNumber(smsContact.phone) : 'No SMS phone selected'} />
+                      <KeyValueRow label="Owner SMS enabled" value={ownerSmsEnabled ? 'Yes' : 'No'} />
                     </div>
-                  );
-                })()}
-              </DrawerSection>
+                  </div>
+                  <div className="rounded-xl border border-slate-200/80 bg-white p-3.5">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Consent & Messaging History</p>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <KeyValueRow label="Owner consent" value={ownerConsentRecorded ? 'Recorded' : 'Not recorded'} />
+                      <KeyValueRow label="Owner consent timestamp" value={formatDateTime(ownerCode?.sms_consent_at)} />
+                      <KeyValueRow label="Owner opt-out timestamp" value={formatDateTime(ownerCode?.sms_opted_out_at)} />
+                      <KeyValueRow label="Owner intro/welcome sent" value={formatDateTime(ownerCode?.sms_intro_sent_at)} />
+                    </div>
+                  </div>
+                </DrawerSection>
 
-              <DrawerSection title="3. Drivers and driver SMS / compliance" icon={UserRound}>
-                {(() => {
-                  const companyDrivers = (driversByCompany.get(selectedCompanyDetail.id) || []).slice().sort((a, b) => (a.driver_name || '').localeCompare(b.driver_name || ''));
-                  if (companyDrivers.length === 0) {
-                    return <p className="text-sm text-slate-500">No drivers linked to this company.</p>;
-                  }
-                  return (
-                    <div className="space-y-4">
+                <DrawerSection title="D. Drivers" subtitle="Compact list with expandable compliance and protocol audit details" icon={UserRound}>
+                  {companyDrivers.length === 0 ? (
+                    <p className="text-sm text-slate-500">No drivers linked to this company.</p>
+                  ) : (
+                    <div className="space-y-3">
                       {companyDrivers.map((driver) => {
                         const smsState = getDriverSmsState(driver);
                         const driverCode = accessCodeById.get(driver.access_code_id);
-                        const consentRecorded = driverCode?.sms_consent_given === true;
                         const protocolAck = protocolAckByDriver.currentAckByDriver.get(driver.id);
                         const latestProtocolAck = protocolAckByDriver.latestAckByDriver.get(driver.id);
+                        const isExpanded = expandedDriverIds.has(driver.id);
                         return (
-                          <div key={driver.id} className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm space-y-3.5 text-sm">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex items-center gap-3">
-                                <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600">
-                                  {getInitials(driver.driver_name)}
-                                </div>
-                                <div>
-                                  <p className="text-sm font-semibold text-slate-900">{driver.driver_name || 'Unnamed driver'}</p>
-                                  <p className="text-xs text-slate-500 mt-1">{driver.phone ? formatPhoneNumber(driver.phone) : 'Not available'}</p>
-                                </div>
-                              </div>
-                              <Badge variant={smsState.effective ? 'default' : 'secondary'} className={smsState.effective ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100' : 'bg-amber-100 text-amber-700 hover:bg-amber-100'}>{smsState.effective ? 'SMS Active' : 'SMS Off'}</Badge>
-                            </div>
-                            <div className="grid gap-3 lg:grid-cols-2">
-                              <SubsectionBlock accent="blue" title="A. Driver Identity" icon={UserRound} description="Core profile and messaging status.">
-                                <div className="grid gap-2.5 sm:grid-cols-2">
-                                  <InfoValueCard label="Driver name" value={driver.driver_name || 'Not available'} icon={UserRound} />
-                                  <InfoValueCard label="Phone" value={driver.phone ? formatPhoneNumber(driver.phone) : 'Not available'} icon={Smartphone} />
-                                  <InfoValueCard label="SMS status" value={smsState.effective ? 'SMS Active' : 'SMS Off'} icon={MessageSquare} tone={smsState.effective ? 'success' : 'warning'} badge={smsState.effective ? { label: 'Active', className: 'border-emerald-200 bg-emerald-50 text-emerald-700 text-[11px]' } : { label: 'Off', className: 'border-amber-200 bg-amber-50 text-amber-700 text-[11px]' }} />
-                                </div>
-                              </SubsectionBlock>
-
-                              <SubsectionBlock accent="amber" title="B. Access / SMS" icon={KeyRound} description="Driver access state and SMS eligibility toggles.">
-                                <div className="grid gap-2.5 sm:grid-cols-2">
-                                  <InfoValueCard label="Access code status" value={driver.access_code_status || 'Not requested'} icon={KeyRound} />
-                                  <InfoValueCard label="Owner enabled" value={smsState.ownerEnabled ? 'Yes' : 'No'} icon={MessageSquare} tone={smsState.ownerEnabled ? 'success' : 'warning'} />
-                                  <InfoValueCard label="Driver opted in" value={smsState.driverOptedIn ? 'Yes' : 'No'} icon={UserRound} tone={smsState.driverOptedIn ? 'success' : 'neutral'} />
-                                  <InfoValueCard label="SMS phone" value={smsState.normalizedPhone ? formatPhoneNumber(smsState.normalizedPhone) : 'Not available'} icon={Smartphone} />
-                                </div>
-                              </SubsectionBlock>
-
-                              <SubsectionBlock accent="emerald" title="C. Consent / History" icon={ShieldCheck} description="Consent records and messaging timeline.">
-                                <div className="grid gap-2.5 sm:grid-cols-2">
-                                  <InfoValueCard label="Consent status" value={consentRecorded ? 'Recorded' : 'Not recorded'} icon={consentRecorded ? ShieldCheck : ShieldAlert} tone={consentRecorded ? 'success' : 'danger'} />
-                                  <InfoValueCard label="Consent timestamp" value={formatDateTime(driverCode?.sms_consent_at)} icon={Clock3} />
-                                  <InfoValueCard label="Consent method" value={driverCode?.sms_consent_method} icon={ShieldCheck} />
-                                  <InfoValueCard label="Opt-out timestamp" value={formatDateTime(driverCode?.sms_opted_out_at)} icon={Clock3} tone={driverCode?.sms_opted_out_at ? 'warning' : 'neutral'} />
-                                  <InfoValueCard label="Intro/welcome sent" value={formatDateTime(driverCode?.sms_intro_sent_at)} icon={MessageSquare} />
-                                </div>
-                              </SubsectionBlock>
-
-                              <SubsectionBlock accent="purple" title="D. Protocols" icon={ShieldAlert} description="Current and latest driver protocol acknowledgments.">
-                                <div className="grid gap-2.5 sm:grid-cols-2">
-                                  <InfoValueCard label={`Current protocol v${currentActiveProtocol?.version_number || '—'}`} value={protocolAck ? 'Recorded' : 'Not recorded'} icon={protocolAck ? ShieldCheck : ShieldAlert} tone={protocolAck ? 'success' : 'warning'} />
-                                  <InfoValueCard label="Current version timestamp" value={formatDateTime(protocolAck?.accepted_at)} icon={Clock3} />
-                                  <InfoValueCard label="Latest acknowledged version" value={latestProtocolAck?.protocol_version || 'Not recorded'} icon={ShieldCheck} />
-                                  <InfoValueCard label="Latest acknowledged timestamp" value={formatDateTime(latestProtocolAck?.accepted_at)} icon={Clock3} />
-                                </div>
-                              </SubsectionBlock>
-                            </div>
-                          </div>
+                          <DriverAccordionCard
+                            key={driver.id}
+                            driver={driver}
+                            smsState={smsState}
+                            driverCode={driverCode}
+                            protocolAck={protocolAck}
+                            latestProtocolAck={latestProtocolAck}
+                            currentProtocolVersionLabel={`Current protocol v${currentActiveProtocol?.version_number || '—'}`}
+                            isExpanded={isExpanded}
+                            onToggle={() => setExpandedDriverIds((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(driver.id)) next.delete(driver.id);
+                              else next.add(driver.id);
+                              return next;
+                            })}
+                          />
                         );
                       })}
                     </div>
-                  );
-                })()}
-              </DrawerSection>
+                  )}
+                </DrawerSection>
 
-              {selectedCompanyDetail.pending_profile_change?.status === 'Pending' && (
-                <Card>
-                  <CardContent className="p-4 space-y-3">
-                    <p className="text-sm font-semibold text-slate-800">5. Pending profile change request</p>
-                    <div className="grid sm:grid-cols-2 gap-2 text-xs text-slate-600">
-                      <div><p className="font-semibold text-slate-700">Company name</p><p>Current: {selectedCompanyDetail.pending_profile_change.current_name || selectedCompanyDetail.name || '—'}</p><p>Requested: {selectedCompanyDetail.pending_profile_change.requested_name || '—'}</p></div>
-                      <div><p className="font-semibold text-slate-700">Address</p><p className="whitespace-pre-line">Current: {selectedCompanyDetail.pending_profile_change.current_address || selectedCompanyDetail.address || '—'}</p><p className="whitespace-pre-line">Requested: {selectedCompanyDetail.pending_profile_change.requested_address || '—'}</p></div>
-                      <div className="sm:col-span-2">
-                        <p className="font-semibold text-slate-700">Contact methods</p>
-                        <div className="grid sm:grid-cols-2 gap-3">
-                          <div>
-                            <p className="font-medium text-slate-700 mb-1">Current</p>
+                {selectedCompanyDetail.pending_profile_change?.status === 'Pending' && (
+                  <DrawerSection title="E. Pending Profile Change" subtitle="Review requested profile updates before applying" icon={ShieldAlert}>
+                    <div className="grid gap-3 sm:grid-cols-2 text-xs text-slate-600">
+                      <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-3">
+                        <p className="font-semibold text-slate-800">Company name</p>
+                        <p className="mt-1"><span className="font-medium text-slate-700">Current:</span> {selectedCompanyDetail.pending_profile_change.current_name || selectedCompanyDetail.name || '—'}</p>
+                        <p className="mt-1"><span className="font-medium text-slate-700">Requested:</span> {selectedCompanyDetail.pending_profile_change.requested_name || '—'}</p>
+                      </div>
+                      <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-3">
+                        <p className="font-semibold text-slate-800">Address</p>
+                        <p className="mt-1 whitespace-pre-line"><span className="font-medium text-slate-700">Current:</span> {selectedCompanyDetail.pending_profile_change.current_address || selectedCompanyDetail.address || '—'}</p>
+                        <p className="mt-1 whitespace-pre-line"><span className="font-medium text-slate-700">Requested:</span> {selectedCompanyDetail.pending_profile_change.requested_address || '—'}</p>
+                      </div>
+                      <div className="sm:col-span-2 rounded-xl border border-slate-200/80 bg-slate-50/70 p-3">
+                        <p className="font-semibold text-slate-800">Contact methods</p>
+                        <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                          <div className="rounded-lg border border-slate-200 bg-white p-2.5">
+                            <p className="mb-1 font-medium text-slate-700">Current</p>
                             {renderContactMethodsList(
                               selectedCompanyDetail.pending_profile_change.current_contact_methods,
                               selectedCompanyDetail.pending_profile_change.current_contact_info || selectedCompanyDetail.contact_info || '—',
                               selectedCompanyDetail.pending_profile_change.current_additional_contact_name || selectedCompanyDetail.additional_contact_name || '',
                             )}
                           </div>
-                          <div>
-                            <p className="font-medium text-slate-700 mb-1">Requested</p>
+                          <div className="rounded-lg border border-slate-200 bg-white p-2.5">
+                            <p className="mb-1 font-medium text-slate-700">Requested</p>
                             {renderContactMethodsList(
                               selectedCompanyDetail.pending_profile_change.requested_contact_methods,
                               selectedCompanyDetail.pending_profile_change.requested_contact_info || '—',
@@ -953,15 +929,15 @@ export default function AdminCompanies() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button size="sm" className="bg-slate-900 hover:bg-slate-800" onClick={() => reviewProfileChangeMutation.mutate({ companyId: selectedCompanyDetail.id, action: 'approve' })} disabled={reviewProfileChangeMutation.isPending}>Approve</Button>
                       <Button size="sm" variant="outline" onClick={() => reviewProfileChangeMutation.mutate({ companyId: selectedCompanyDetail.id, action: 'reject' })} disabled={reviewProfileChangeMutation.isPending}>Reject</Button>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          )}
+                  </DrawerSection>
+                )}
+              </div>
+            );
+          })()}
         </SheetContent>
       </Sheet>
 
